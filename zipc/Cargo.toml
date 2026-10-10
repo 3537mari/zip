@@ -33,6 +33,10 @@ path = "../tests/тест_нативного.rs"
 name = "тест_управления"
 path = "../tests/тест_управления.rs"
 
+[[test]]
+name = "тест_печати"
+path = "../tests/тест_печати.rs"
+
 [features]
 default = []
 # Полноценный LLVM через inkwell (нужен LLVM 17 в системе):

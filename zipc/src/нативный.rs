@@ -10,7 +10,7 @@
 //! - отладочная информация (`.loc` / `.file`)
 
 use crate::промежуток::{
-    ИдентификаторФункции, Инструкция, Регистр, ФункцияПП, Тип,
+    ИдентификаторФункции, Инструкция, РежимПечати, Регистр, ФункцияПП, Тип,
 };
 use std::collections::HashMap;
 use std::fs;
@@ -40,6 +40,10 @@ pub struct ГенераторНативногоКода {
     опции: ОпцииНативнойСборки,
     функции: HashMap<ИдентификаторФункции, String>,
     ассемблер: String,
+    /// (метка, UTF-8 содержимое) для .rdata
+    строки: Vec<(String, String)>,
+    нужен_puts: bool,
+    нужен_printf: bool,
 }
 
 impl ГенераторНативногоКода {
@@ -50,6 +54,9 @@ impl ГенераторНативногоКода {
             опции,
             функции: HashMap::new(),
             ассемблер: String::new(),
+            строки: Vec::new(),
+            нужен_puts: false,
+            нужен_printf: false,
         }
     }
 
@@ -58,12 +65,18 @@ impl ГенераторНативногоКода {
             опции,
             функции: HashMap::new(),
             ассемблер: String::new(),
+            строки: Vec::new(),
+            нужен_puts: false,
+            нужен_printf: false,
         }
     }
 
     pub fn сгенерировать(&mut self, функции: &[ФункцияПП]) -> Result<(), String> {
         self.ассемблер.clear();
         self.функции.clear();
+        self.строки.clear();
+        self.нужен_puts = false;
+        self.нужен_printf = false;
 
         self.эмит_заголовок();
 
@@ -78,10 +91,55 @@ impl ГенераторНативногоКода {
             self.сгенерировать_функцию(ф)?;
         }
 
-        // 3. «Оптимизация» — пометка O3 / native в метаданных (реальные LLVM passes — при наличии inkwell)
+        // 3. Данные строк + extern libc
+        self.эмит_данные_и_экстерны();
+
+        // 4. «Оптимизация» — пометка O3 / native в метаданных (реальные LLVM passes — при наличии inkwell)
         self.ассемблер.push_str("\n# zip-opt: passes=simplifycfg,mem2reg,instcombine level=O3\n");
 
         Ok(())
+    }
+
+    fn добавить_строку(&mut self, значение: &str) -> String {
+        let метка = format!(".Lstr{}", self.строки.len());
+        self.строки.push((метка.clone(), значение.to_string()));
+        метка
+    }
+
+    fn эмит_данные_и_экстерны(&mut self) {
+        if self.нужен_puts {
+            self.ассемблер.push_str("\n.extern puts\n");
+        }
+        if self.нужен_printf {
+            self.ассемблер.push_str(".extern printf\n");
+        }
+        if self.нужен_printf {
+            // Форматные строки только ASCII
+            self.ассемблер.push_str("\n.section .rdata,\"dr\"\n");
+            self.ассемблер.push_str(".Lfmt_str:\n");
+            self.ассемблер.push_str("  .asciz \"%s\"\n");
+            self.ассемблер.push_str(".Lfmt_i64:\n");
+            self.ассемблер.push_str("  .asciz \"%lld\"\n");
+            self.ассемблер.push_str(".Lfmt_i64n:\n");
+            self.ассемблер.push_str("  .asciz \"%lld\\n\"\n");
+        } else if !self.строки.is_empty() {
+            self.ассемблер.push_str("\n.section .rdata,\"dr\"\n");
+        }
+        for (метка, содержимое) in &self.строки {
+            self.ассемблер.push_str(&format!("{}:\n", метка));
+            self.ассемблер.push_str("  .byte ");
+            let байты: Vec<String> = содержимое
+                .as_bytes()
+                .iter()
+                .map(|b| format!("0x{:02x}", b))
+                .chain(std::iter::once("0x00".to_string()))
+                .collect();
+            self.ассемблер.push_str(&байты.join(", "));
+            self.ассемблер.push('\n');
+        }
+        if !self.строки.is_empty() || self.нужен_printf {
+            self.ассемблер.push_str(".text\n");
+        }
     }
 
     fn эмит_заголовок(&mut self) {
@@ -249,9 +307,47 @@ impl ГенераторНативногоКода {
                 let dst = адрес_регистра(*назначение);
                 let bits = значение.to_bits() as i64;
                 строка.push_str(&format!(
-                    "  # f64 {}\n  mov rax, {}\n  mov qword ptr {}, rax\n",
-                    значение, bits, dst
+                    "  # f64 bits\n  mov rax, {}\n  mov qword ptr {}, rax\n",
+                    bits, dst
                 ));
+            }
+            Инструкция::КонстантаСтрока {
+                назначение,
+                значение,
+            } => {
+                let метка = self.добавить_строку(значение);
+                let dst = адрес_регистра(*назначение);
+                строка.push_str(&format!(
+                    "  lea rax, [rip + {}]\n  mov qword ptr {}, rax\n",
+                    метка, dst
+                ));
+            }
+            Инструкция::Печать { режим, значение } => {
+                let val = адрес_регистра(*значение);
+                match режим {
+                    РежимПечати::СоСтрокой => {
+                        self.нужен_puts = true;
+                        // Windows x64 ABI: shadow space 32 байта
+                        строка.push_str(&format!(
+                            "  mov rcx, qword ptr {}\n  sub rsp, 32\n  call puts\n  add rsp, 32\n",
+                            val
+                        ));
+                    }
+                    РежимПечати::БезНовойСтроки => {
+                        self.нужен_printf = true;
+                        строка.push_str(&format!(
+                            "  lea rcx, [rip + .Lfmt_str]\n  mov rdx, qword ptr {}\n  sub rsp, 32\n  call printf\n  add rsp, 32\n",
+                            val
+                        ));
+                    }
+                    РежимПечати::Число => {
+                        self.нужен_printf = true;
+                        строка.push_str(&format!(
+                            "  lea rcx, [rip + .Lfmt_i64n]\n  mov rdx, qword ptr {}\n  sub rsp, 32\n  call printf\n  add rsp, 32\n",
+                            val
+                        ));
+                    }
+                }
             }
             Инструкция::ОжиданиеИмпульса { регистр } => {
                 строка.push_str(&format!(
@@ -430,7 +526,9 @@ fn используемые_регистры(и: &Инструкция) -> Vec<�
     match и {
         Инструкция::Выделить { назначение, .. }
         | Инструкция::КонстантаЦелое { назначение, .. }
-        | Инструкция::КонстантаВещественное { назначение, .. } => vec![*назначение],
+        | Инструкция::КонстантаВещественное { назначение, .. }
+        | Инструкция::КонстантаСтрока { назначение, .. } => vec![*назначение],
+        Инструкция::Печать { значение, .. } => vec![*значение],
         Инструкция::Загрузить { назначение, адрес } => vec![*назначение, *адрес],
         Инструкция::Сохранить { адрес, значение } => vec![*адрес, *значение],
         Инструкция::Переместить {
