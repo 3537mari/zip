@@ -8,10 +8,7 @@ license = "MIT"
 [[bin]]
 name = "zip-debugger"
 path = "src/главное.rs"
-
-[[bin]]
-name = "зип-отладчик"
-path = "src/главное.rs"
+# Кириллический алиас: scripts/создать_алиасы.ps1 → зип-отладчик.exe (hard link)
 
 [dependencies]
 dap = "0.4.1-alpha1"

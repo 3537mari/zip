@@ -2,7 +2,6 @@
 
 use std::collections::HashMap;
 use std::fs::File;
-use std::io::BufWriter;
 use std::str::FromStr;
 use std::time::{Duration, Instant};
 
@@ -238,6 +237,8 @@ impl Профиль {
     }
 
     fn сохранить_flamegraph(&self, путь: &str) -> Result<()> {
+        use std::io::Write;
+
         let svg_path = if путь.ends_with(".svg") {
             путь.to_string()
         } else {
@@ -249,20 +250,34 @@ impl Профиль {
             format!("{svg_path}.folded")
         };
         let folded = self.folded_текст();
-        std::fs::write(&folded_path, &folded)?;
+        std::fs::write(&folded_path, folded.as_bytes())
+            .with_context(|| format!("не удалось записать {folded_path}"))?;
 
         let mut options = inferno::flamegraph::Options::default();
-        options.title = "ЗИП-профиль".into();
+        // ASCII title — избегаем проблем с кодировкой в части viewer'ов
+        options.title = "ZIP profile".into();
         options.count_name = "samples".into();
-        let файл = File::create(&svg_path)
-            .with_context(|| format!("не удалось создать {svg_path}"))?;
-        let writer = BufWriter::new(файл);
-        inferno::flamegraph::from_lines(&mut options, folded.lines(), writer)
-            .map_err(|е| anyhow::anyhow!("flamegraph: {е}"))?;
 
-        println!("✓ Flamegraph: {svg_path}");
-        println!("✓ Folded:     {folded_path}");
-        Ok(())
+        let mut буфер: Vec<u8> = Vec::new();
+        match inferno::flamegraph::from_lines(&mut options, folded.lines(), &mut буфер) {
+            Ok(()) => {
+                // UTF-8 BOM + тело (кириллические имена функций уже в UTF-8)
+                let mut файл = File::create(&svg_path)
+                    .with_context(|| format!("не удалось создать {svg_path}"))?;
+                файл.write_all(&[0xEF, 0xBB, 0xBF])?;
+                файл.write_all(&буфер)?;
+                println!("✓ Flamegraph: {svg_path}");
+                println!("✓ Folded:     {folded_path}");
+                Ok(())
+            }
+            Err(е) => {
+                // Fallback: только folded; SVG можно собрать flamegraph.pl
+                eprintln!("⚠ inferno SVG: {е}; оставлен folded для flamegraph.pl");
+                println!("✓ Folded:     {folded_path}");
+                println!("  SVG: flamegraph.pl {folded_path} > {svg_path}");
+                Ok(())
+            }
+        }
     }
 }
 
@@ -537,6 +552,11 @@ impl Профилировщик {
         локал: &mut HashMap<String, Знач>,
     ) -> Result<(i64, i64)> {
         match узел {
+            Узел::Диапазон { начало, конец } => {
+                let a = self.вычислить(начало, локал)?.как_целое()?;
+                let b = self.вычислить(конец, локал)?.как_целое()?;
+                Ok((a, b))
+            }
             Узел::ВызовФункции { имя, аргументы }
                 if имя == "диапазон" || имя == "Диапазон" =>
             {
@@ -547,7 +567,7 @@ impl Профилировщик {
                 let b = self.вычислить(&аргументы[1], локал)?.как_целое()?;
                 Ok((a, b))
             }
-            _ => bail!("цикл «для» ожидает диапазон(начало, конец)"),
+            _ => bail!("цикл «для» ожидает a..b или диапазон(начало, конец)"),
         }
     }
 

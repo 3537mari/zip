@@ -8,11 +8,7 @@ license = "MIT"
 [[bin]]
 name = "zipm"
 path = "src/главное.rs"
-
-# Cyrillic alias (Windows/Unix with UTF-8 FS)
-[[bin]]
-name = "зипм"
-path = "src/главное.rs"
+# Кириллический алиас: scripts/создать_алиасы.ps1 → зипм.exe (hard link)
 
 [[test]]
 name = "тест_зипм"

@@ -57,7 +57,8 @@ fn длина_токена(т: &Токен) -> u32 {
         | Токен::СкобкаЛевая | Токен::СкобкаПравая | Токен::ФигурнаяЛевая
         | Токен::ФигурнаяПравая | Токен::Запятая | Токен::Плюс | Токен::Звезда
         | Токен::Слеш => 1,
-        Токен::РавноРавно | Токен::НеРавно | Токен::БольшеРавно | Токен::МеньшеРавно => 2,
+        Токен::РавноРавно | Токен::НеРавно | Токен::БольшеРавно | Токен::МеньшеРавно
+        | Токен::Диапазон => 2,
         Токен::Корень(s) | Токен::Шаблон(s) | Токен::Слово(s) | Токен::Строка(s)
         | Токен::Директива(s) => s.chars().count() as u32,
         Токен::Целое(n) => n.to_string().len() as u32,
@@ -362,6 +363,12 @@ impl LanguageServer for ЗипLsp {
                         },
                     ),
                 ),
+                code_action_provider: Some(CodeActionProviderCapability::Options(
+                    CodeActionOptions {
+                        code_action_kinds: Some(vec![CodeActionKind::QUICKFIX]),
+                        ..Default::default()
+                    },
+                )),
                 ..Default::default()
             },
         })
@@ -584,6 +591,177 @@ impl LanguageServer for ЗипLsp {
             data,
         })))
     }
+
+    async fn code_action(
+        &self,
+        params: CodeActionParams,
+    ) -> LspResult<Option<CodeActionResponse>> {
+        let uri = params.text_document.uri;
+        let документы = self.документы.read().await;
+        let док = match документы.get(&uri) {
+            Some(д) => д,
+            None => return Ok(None),
+        };
+
+        let линия = params.range.start.line as usize;
+        let строка = док.текст.lines().nth(линия).unwrap_or("");
+        let мутации = латинские_замены_в_строке(строка, линия as u32);
+        if мутации.is_empty() {
+            return Ok(None);
+        }
+
+        let mut действия = Vec::new();
+        for (range, оригинал, замена) in мутации {
+            let mut changes = HashMap::new();
+            changes.insert(
+                uri.clone(),
+                vec![TextEdit {
+                    range,
+                    new_text: замена.clone(),
+                }],
+            );
+            действия.push(CodeActionOrCommand::CodeAction(CodeAction {
+                title: format!(
+                    "Заменить «{оригинал}» → «{замена}» (латиница запрещена в ZIP)"
+                ),
+                kind: Some(CodeActionKind::QUICKFIX),
+                diagnostics: Some(params.context.diagnostics.clone()),
+                edit: Some(WorkspaceEdit {
+                    changes: Some(changes),
+                    ..Default::default()
+                }),
+                is_preferred: Some(true),
+                ..Default::default()
+            }));
+        }
+
+        // Одна правка: заменить все латинские идентификаторы на строке
+        if действия.len() > 1 {
+            let все = латинские_замены_в_строке(строка, линия as u32);
+            let edits: Vec<TextEdit> = все
+                .into_iter()
+                .map(|(range, _, замена)| TextEdit {
+                    range,
+                    new_text: замена,
+                })
+                .collect();
+            let mut changes = HashMap::new();
+            changes.insert(uri.clone(), edits);
+            действия.insert(
+                0,
+                CodeActionOrCommand::CodeAction(CodeAction {
+                    title: "Заменить всю латиницу на строке кириллицей".into(),
+                    kind: Some(CodeActionKind::QUICKFIX),
+                    edit: Some(WorkspaceEdit {
+                        changes: Some(changes),
+                        ..Default::default()
+                    }),
+                    is_preferred: Some(true),
+                    ..Default::default()
+                }),
+            );
+        }
+
+        Ok(Some(действия))
+    }
+}
+
+fn латиница_в_кириллицу(символ: char) -> Option<char> {
+    let нижний = символ.to_ascii_lowercase();
+    let кир = match нижний {
+        'a' => 'а',
+        'b' => 'б',
+        'c' => 'ц',
+        'd' => 'д',
+        'e' => 'е',
+        'f' => 'ф',
+        'g' => 'г',
+        'h' => 'х',
+        'i' => 'и',
+        'j' => 'й',
+        'k' => 'к',
+        'l' => 'л',
+        'm' => 'м',
+        'n' => 'н',
+        'o' => 'о',
+        'p' => 'п',
+        'q' => 'к',
+        'r' => 'р',
+        's' => 'с',
+        't' => 'т',
+        'u' => 'у',
+        'v' => 'в',
+        'w' => 'в',
+        'x' => 'х',
+        'y' => 'у',
+        'z' => 'з',
+        _ => return None,
+    };
+    if символ.is_ascii_uppercase() {
+        кир.to_uppercase().next()
+    } else {
+        Some(кир)
+    }
+}
+
+/// Находит подряд идущие латинские идентификаторы на строке → (range, original, replacement).
+fn латинские_замены_в_строке(строка: &str, line: u32) -> Vec<(Range, String, String)> {
+    let mut out = Vec::new();
+    let chars: Vec<(usize, char)> = строка.char_indices().collect();
+    let mut i = 0;
+    while i < chars.len() {
+        let (byte_start, ch) = chars[i];
+        if !ch.is_ascii_alphabetic() {
+            i += 1;
+            continue;
+        }
+        // Не трогаем содержимое строк "..."
+        let перед = &строка[..byte_start];
+        let кавычек = перед.matches('"').count();
+        if кавычек % 2 == 1 {
+            i += 1;
+            continue;
+        }
+
+        let start_col = строка[..byte_start].chars().count() as u32;
+        let mut оригинал = String::new();
+        let mut замена = String::new();
+        while i < chars.len() {
+            let (_, c) = chars[i];
+            if c.is_ascii_alphabetic() || c == '_' || c.is_ascii_digit() {
+                оригинал.push(c);
+                if let Some(к) = латиница_в_кириллицу(c) {
+                    замена.push(к);
+                } else if c == '_' || c.is_ascii_digit() {
+                    замена.push(c);
+                } else {
+                    break;
+                }
+                i += 1;
+            } else {
+                break;
+            }
+        }
+        if оригинал.is_empty() || оригинал == замена {
+            continue;
+        }
+        let end_col = start_col + оригинал.chars().count() as u32;
+        out.push((
+            Range {
+                start: Position {
+                    line,
+                    character: start_col,
+                },
+                end: Position {
+                    line,
+                    character: end_col,
+                },
+            },
+            оригинал,
+            замена,
+        ));
+    }
+    out
 }
 
 #[tokio::main]

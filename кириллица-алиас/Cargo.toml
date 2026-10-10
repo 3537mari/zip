@@ -1,0 +1,14 @@
+[package]
+name = "cyrillic-alias"
+version = "0.1.0"
+edition = "2021"
+description = "Создание кириллических hardlink/symlink алиасов для ASCII-бинарников ZIP"
+license = "MIT"
+
+[[bin]]
+name = "cyrillic-alias"
+path = "src/главное.rs"
+
+[lib]
+name = "cyrillic_alias"
+path = "src/lib.rs"

@@ -8,10 +8,7 @@ license = "MIT"
 [[bin]]
 name = "zip-profile"
 path = "src/главное.rs"
-
-[[bin]]
-name = "зип-профиль"
-path = "src/главное.rs"
+# Кириллический алиас: scripts/создать_алиасы.ps1 → зип-профиль.exe (hard link)
 
 [dependencies]
 clap = { version = "4.5", features = ["derive"] }

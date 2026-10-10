@@ -212,6 +212,18 @@ impl ГенераторНативногоКода {
             ascii_тип(&функция.тип_возврата)
         ));
 
+        // Win64: rcx, rdx, r8, r9 → слоты параметров
+        let win_regs = ["rcx", "rdx", "r8", "r9"];
+        for (i, р) in функция.параметры.iter().enumerate() {
+            if let Some(reg) = win_regs.get(i) {
+                self.ассемблер.push_str(&format!(
+                    "  mov qword ptr {}, {}\n",
+                    адрес_регистра(*р),
+                    reg
+                ));
+            }
+        }
+
         for инстр in &функция.тело {
             self.сгенерировать_инструкцию(инстр)?;
         }

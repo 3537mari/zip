@@ -4,7 +4,7 @@
     {
       "label": "Профилировать ZIP",
       "type": "shell",
-      "command": "${workspaceFolder}/зип-профиль/target/release/zip-profile.exe",
+      "command": "${workspaceFolder}/zipc/target/release/zip-profile.exe",
       "args": [
         "${file}",
         "--тихо",

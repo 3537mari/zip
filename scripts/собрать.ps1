@@ -27,6 +27,10 @@ if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 Write-Host "Компилятор ZIP: zipc/target/release/zipc.exe"
 Write-Host "VM ZIP:         zip-vm/target/release/zip-vm.exe"
 Write-Host ""
+
+# Кириллические hardlink-алиасы (зип-профиль → zip-profile и т.д.)
+& (Join-Path $PSScriptRoot "создать_алиасы.ps1")
+
 Write-Host "Подсказка: для кириллических флагов используйте ASCII-алиасы:"
 Write-Host "  zipc файл.zip --bytecode -o выход"
 Write-Host "  zipc файл.zip --llvm -o выход"

@@ -89,7 +89,18 @@ fn эмит_функцию(
     };
 
     let mut out = String::new();
-    out.push_str(&format!("define i64 @{}() {{\n", fname));
+    // Сигнатура с параметрами (i64…)
+    let params_sig: Vec<String> = ф
+        .параметры
+        .iter()
+        .enumerate()
+        .map(|(i, _)| format!("i64 %arg{i}"))
+        .collect();
+    out.push_str(&format!(
+        "define i64 @{}({}) {{\n",
+        fname,
+        params_sig.join(", ")
+    ));
     out.push_str("entry:\n");
 
     let max_r = ф
@@ -102,6 +113,13 @@ fn эмит_функцию(
         .unwrap_or(0);
     for i in 0..=max_r {
         out.push_str(&format!("  %r{} = alloca i64, align 8\n", i));
+    }
+    // Скопировать аргументы в регистры-параметры
+    for (i, р) in ф.параметры.iter().enumerate() {
+        out.push_str(&format!(
+            "  store i64 %arg{i}, ptr %r{}, align 8\n",
+            р.0
+        ));
     }
 
     let mut str_map: HashMap<String, usize> = HashMap::new();
@@ -257,15 +275,29 @@ fn эмит_функцию(
             }
             Инструкция::Вызвать {
                 функция,
+                аргументы,
                 результат,
-                ..
             } => {
                 let имя = имена
                     .get(функция)
                     .cloned()
                     .unwrap_or_else(|| format!("zip_fn_{}", функция.0));
+                let mut loaded = Vec::new();
+                for арг in аргументы {
+                    let t = next_tmp();
+                    out.push_str(&format!(
+                        "  %t{} = load i64, ptr %r{}, align 8\n",
+                        t, арг.0
+                    ));
+                    loaded.push(format!("i64 %t{t}"));
+                }
                 let t = next_tmp();
-                out.push_str(&format!("  %t{} = call i64 @{}()\n", t, имя));
+                out.push_str(&format!(
+                    "  %t{} = call i64 @{}({})\n",
+                    t,
+                    имя,
+                    loaded.join(", ")
+                ));
                 if let Some(р) = результат {
                     out.push_str(&format!(
                         "  store i64 %t{}, ptr %r{}, align 8\n",

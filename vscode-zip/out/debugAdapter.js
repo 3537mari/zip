@@ -13,6 +13,8 @@ function findDebugger() {
 
   const repoRoot = path.resolve(__dirname, "..", "..");
   const candidates = [
+    path.join(repoRoot, "zipc", "target", "release", "zip-debugger.exe"),
+    path.join(repoRoot, "zipc", "target", "release", "зип-отладчик.exe"),
     path.join(repoRoot, "зип-отладчик", "target", "release", "zip-debugger.exe"),
     path.join(repoRoot, "зип-отладчик", "target", "release", "zip-debugger"),
     path.join(repoRoot, "зип-отладчик", "target", "release", "зип-отладчик.exe"),

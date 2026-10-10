@@ -8,10 +8,7 @@ license = "MIT"
 [[bin]]
 name = "zip-lsp"
 path = "src/главное.rs"
-
-[[bin]]
-name = "зип-lsp"
-path = "src/главное.rs"
+# Кириллический алиас: scripts/создать_алиасы.ps1 → зип-lsp.exe (hard link)
 
 [dependencies]
 tower-lsp = "0.20"
