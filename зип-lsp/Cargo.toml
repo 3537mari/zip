@@ -1,0 +1,22 @@
+[package]
+name = "zip-lsp"
+version = "0.1.0"
+edition = "2021"
+description = "ЗИП-LSP — Language Server Protocol для ZIP"
+license = "MIT"
+
+[[bin]]
+name = "zip-lsp"
+path = "src/главное.rs"
+
+[[bin]]
+name = "зип-lsp"
+path = "src/главное.rs"
+
+[dependencies]
+tower-lsp = "0.20"
+tokio = { version = "1.38", features = ["full"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+anyhow = "1.0"
+zipc = { path = "../zipc" }

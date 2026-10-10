@@ -1,0 +1,61 @@
+{
+  "name": "vscode-zip",
+  "displayName": "ZIP Language Support",
+  "description": "Поддержка языка ZIP: подсветка, LSP (автодополнение, hover, диагностика)",
+  "version": "0.1.0",
+  "publisher": "zip-lang",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": ["Programming Languages"],
+  "activationEvents": [
+    "onLanguage:zip"
+  ],
+  "main": "./src/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "zip",
+        "aliases": ["ZIP", "zip"],
+        "extensions": [".zip", ".зип"],
+        "configuration": "./language-configuration.json",
+        "icon": {
+          "light": "./icons/zip.svg",
+          "dark": "./icons/zip.svg"
+        }
+      }
+    ],
+    "grammars": [
+      {
+        "language": "zip",
+        "scopeName": "source.zip",
+        "path": "./syntaxes/zip.tmLanguage.json"
+      }
+    ],
+    "configuration": {
+      "title": "ZIP",
+      "properties": {
+        "zip.lsp.path": {
+          "type": "string",
+          "default": "",
+          "description": "Путь к LSP-серверу (zip-lsp / зип-lsp). Пусто = автопоиск рядом с репозиторием."
+        },
+        "zip.lsp.trace": {
+          "type": "string",
+          "enum": ["off", "messages", "verbose"],
+          "default": "off",
+          "description": "Трассировка LSP"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "package": "vsce package --no-dependencies"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1"
+  },
+  "devDependencies": {
+    "@vscode/vsce": "^2.32.0"
+  }
+}

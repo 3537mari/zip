@@ -1,0 +1,106 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "ZIP",
+  "scopeName": "source.zip",
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#directives" },
+    { "include": "#strings" },
+    { "include": "#keywords" },
+    { "include": "#verbs" },
+    { "include": "#operators" },
+    { "include": "#numbers" },
+    { "include": "#roots" },
+    { "include": "#templates" },
+    { "include": "#identifiers" }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.double-slash.zip",
+          "match": "//.*$"
+        }
+      ]
+    },
+    "directives": {
+      "patterns": [
+        {
+          "name": "keyword.control.directive.zip",
+          "match": "#[a-zA-Z_]+"
+        }
+      ]
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.zip",
+          "match": "\\b(если|иначе|пока|для|в|возврат|прервать|продолжить|функция|тип|модуль|импорт|истина|ложь|и|или|не)\\b"
+        }
+      ]
+    },
+    "verbs": {
+      "patterns": [
+        {
+          "name": "entity.name.function.zip",
+          "match": "\\b(печать_строки|печать_число|печать|САПАР|ЧАТАВ|ЖАВАТ|ПАХАД|САГАН|ТАРАГ|ЦАПАТ|САЯЗ|ВАДАТ|КАРАП|МАЗАГ|РАЗАМ|ПАРАЦ|ЛАГАК|ДАТАЧ|НАТАЛ|ВАРАМ|МАСТА|САБАТ|ЗАПАС)\\b"
+        }
+      ]
+    },
+    "operators": {
+      "patterns": [
+        {
+          "name": "keyword.operator.zip",
+          "match": ">>>|>>|\\|\\||==|!=|<=|>=|!|~|=|:|,|\\+|\\-|\\*|/"
+        }
+      ]
+    },
+    "numbers": {
+      "patterns": [
+        {
+          "name": "constant.numeric.zip",
+          "match": "\\b[0-9]+(\\.[0-9]+)?\\b"
+        }
+      ]
+    },
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.double.zip",
+          "begin": "\"",
+          "end": "\"",
+          "patterns": [
+            {
+              "name": "constant.character.escape.zip",
+              "match": "\\\\."
+            }
+          ]
+        }
+      ]
+    },
+    "roots": {
+      "patterns": [
+        {
+          "name": "constant.other.root.zip",
+          "match": "\\b[БВГДЖЗЙКЛМНПРСТФХЦЧШЩ]{3}\\b"
+        }
+      ]
+    },
+    "templates": {
+      "patterns": [
+        {
+          "name": "entity.name.type.template.zip",
+          "match": "\\b[БВГДЖЗЙКЛМНПРСТФХЦЧШЩ][АЕЁИОУЫЭЮЯ][БВГДЖЗЙКЛМНПРСТФХЦЧШЩ][АЕЁИОУЫЭЮЯР]\\b"
+        }
+      ]
+    },
+    "identifiers": {
+      "patterns": [
+        {
+          "name": "variable.other.zip",
+          "match": "\\b[А-Яа-яЁё_][А-Яа-яЁё0-9_]*\\b"
+        }
+      ]
+    }
+  }
+}

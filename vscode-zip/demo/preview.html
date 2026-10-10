@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>ZIP in VS Code — preview</title>
+  <style>
+    :root {
+      --bg: #1e1e1e;
+      --sidebar: #252526;
+      --tab: #2d2d2d;
+      --fg: #d4d4d4;
+      --line: #858585;
+      --kw: #c586c0;
+      --fn: #dcdcaa;
+      --str: #ce9178;
+      --num: #b5cea8;
+      --op: #d4d4d4;
+      --root: #4fc1ff;
+      --tmpl: #4ec9b0;
+      --cmt: #6a9955;
+      --accent: #1a5f4a;
+      --popup: #252526;
+      --sel: #264f78;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      background: #111;
+      color: var(--fg);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .window {
+      width: min(920px, 100%);
+      background: var(--bg);
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 24px 80px rgba(0,0,0,.55);
+      border: 1px solid #333;
+    }
+    .titlebar {
+      background: #3c3c3c;
+      padding: 10px 14px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      font-size: 12px;
+    }
+    .dot { width: 10px; height: 10px; border-radius: 50%; }
+    .dot.r { background: #ff5f57; }
+    .dot.y { background: #febc2e; }
+    .dot.g { background: #28c840; }
+    .title { margin-left: 10px; opacity: .85; }
+    .body { display: grid; grid-template-columns: 48px 1fr; min-height: 420px; }
+    .gutter {
+      background: var(--sidebar);
+      color: var(--line);
+      font-family: Consolas, "Cascadia Mono", monospace;
+      font-size: 13px;
+      line-height: 1.55;
+      padding: 16px 8px;
+      text-align: right;
+    }
+    .editor {
+      position: relative;
+      font-family: Consolas, "Cascadia Mono", monospace;
+      font-size: 14px;
+      line-height: 1.55;
+      padding: 16px 18px;
+      white-space: pre;
+    }
+    .kw { color: var(--kw); }
+    .fn { color: var(--fn); }
+    .str { color: var(--str); }
+    .num { color: var(--num); }
+    .op { color: var(--op); }
+    .root { color: var(--root); font-weight: 600; }
+    .tmpl { color: var(--tmpl); }
+    .cmt { color: var(--cmt); }
+    .caret {
+      display: inline-block;
+      width: 2px;
+      height: 1.1em;
+      background: #fff;
+      vertical-align: text-bottom;
+      animation: blink 1s step-end infinite;
+    }
+    @keyframes blink { 50% { opacity: 0; } }
+    .completion {
+      position: absolute;
+      left: 210px;
+      top: 118px;
+      width: 280px;
+      background: var(--popup);
+      border: 1px solid #454545;
+      border-radius: 4px;
+      box-shadow: 0 8px 24px rgba(0,0,0,.45);
+      font-size: 13px;
+      overflow: hidden;
+    }
+    .completion .hdr {
+      padding: 6px 10px;
+      background: var(--accent);
+      font-size: 11px;
+      letter-spacing: .04em;
+    }
+    .completion .item {
+      padding: 6px 10px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .completion .item.active { background: var(--sel); }
+    .badge {
+      font-size: 10px;
+      padding: 1px 5px;
+      border-radius: 3px;
+      background: #3a3a3a;
+      color: #9cdcfe;
+    }
+    .badge.fn { color: var(--fn); }
+    .badge.kw { color: var(--kw); }
+    .detail { opacity: .65; font-size: 11px; margin-left: auto; }
+    .statusbar {
+      background: var(--accent);
+      padding: 4px 12px;
+      font-size: 12px;
+      display: flex;
+      justify-content: space-between;
+    }
+  </style>
+</head>
+<body>
+  <div class="window">
+    <div class="titlebar">
+      <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+      <span class="title">привет.zip — ZIP Language Support — Cursor</span>
+    </div>
+    <div class="body">
+      <div class="gutter">1<br>2<br>3<br>4<br>5<br>6<br>7<br>8</div>
+      <div class="editor">
+<span class="cmt">// Поток ZIP: глагол >> фиксация</span>
+<span class="root">СПР</span> <span class="op">=</span> <span class="op">{</span>
+  <span class="kw">А</span><span class="op">-</span><span class="kw">А</span><span class="op">:</span> <span class="tmpl">САПАР</span><span class="op">,</span>
+  <span class="kw">О</span><span class="op">-</span><span class="kw">О</span><span class="op">:</span> <span class="tmpl">СПОРО</span>
+<span class="op">}</span>
+
+<span class="tmpl">САПАР</span><span class="op">(</span><span class="num">1</span><span class="op">,</span> <span class="num">2</span><span class="op">)</span> <span class="op">>></span> <span class="tmpl">ЧАТАВ</span><span class="op">!</span>
+<span class="fn">печать_строки</span><span class="op">(</span><span class="str">"Привет из ZIP!"</span><span class="op">)</span>
+<span class="fn">печ</span><span class="caret"></span>
+        <div class="completion">
+          <div class="hdr">ЗИП-LSP · Completion</div>
+          <div class="item active"><span class="badge fn">fn</span> печать_строки <span class="detail">Вывод строки</span></div>
+          <div class="item"><span class="badge fn">fn</span> печать_число <span class="detail">Вывод числа</span></div>
+          <div class="item"><span class="badge fn">fn</span> печать <span class="detail">Без \\n</span></div>
+          <div class="item"><span class="badge kw">kw</span> пока <span class="detail">Цикл</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="statusbar">
+      <span>ZIP · UTF-8 · Ln 8, Col 4</span>
+      <span>ЗИП-LSP ✓</span>
+    </div>
+  </div>
+</body>
+</html>
