@@ -119,6 +119,14 @@ fn main() -> Result<()> {
         return Ok(());
     }
 
+    // 3b. #runtime("...") → clang -O3 по C-зеркалу STD (пока нет полного lowering массивов)
+    if let Some(rt) = найти_runtime(&дерево) {
+        let exe = скомпилировать_runtime(&rt, &аргументы.выходной_файл)?;
+        println!("✓ Runtime «{}» → {}", rt, exe.display());
+        println!("  (clang -O3 -march=native, зеркало ZIP STD)");
+        return Ok(());
+    }
+
     // 4. Генерация ПП
     let mut генератор_пп = промежуток::ГенераторПП::новый();
     let функции_пп = генератор_пп
@@ -236,6 +244,75 @@ fn with_extension(path: &PathBuf, ext: &str) -> PathBuf {
     путь
 }
 
+fn найти_runtime(узел: &Узел) -> Option<String> {
+    match узел {
+        Узел::Runtime { имя } => Some(имя.clone()),
+        Узел::Программа { объявления } => объявления.iter().find_map(найти_runtime),
+        Узел::Блок(эл) => эл.iter().find_map(найти_runtime),
+        _ => None,
+    }
+}
+
+fn корень_репозитория() -> PathBuf {
+    // zipc/ → ..
+    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .map(|p| p.to_path_buf())
+        .unwrap_or_else(|| PathBuf::from("."))
+}
+
+fn скомпилировать_runtime(имя: &str, выход: &PathBuf) -> Result<PathBuf> {
+    use std::process::Command;
+
+    let корень = корень_репозитория();
+    let (источник, макрос, libs): (PathBuf, &str, &[&str]) = match имя {
+        "bench_gemm" => (
+            корень.join("zip-std/runtime/gemm.c"),
+            "ZIP_BENCH_MAIN",
+            &[],
+        ),
+        "train_xor" => (
+            корень.join("zip-std/runtime/nn_xor.c"),
+            "ZIP_XOR_MAIN",
+            &[],
+        ),
+        "lexer_zip" => (корень.join("zip-self/лексика_rt.c"), "ZIP_LEXER_MAIN", &[]),
+        другой => bail!("неизвестный #runtime(\"{}\")", другой),
+    };
+
+    if !источник.exists() {
+        bail!("файл runtime не найден: {}", источник.display());
+    }
+
+    let mut exe = выход.clone();
+    if cfg!(windows) && exe.extension().is_none() {
+        exe.set_extension("exe");
+    }
+
+    let mut cmd = Command::new("clang");
+    cmd.arg(&источник)
+        .arg("-O3")
+        .arg("-march=native")
+        .arg(format!("-D{}", макрос))
+        .arg("-o")
+        .arg(&exe);
+    // libm on non-Windows
+    if !cfg!(windows) {
+        cmd.arg("-lm");
+    }
+    for lib in libs {
+        cmd.arg(lib);
+    }
+
+    let статус = cmd
+        .status()
+        .with_context(|| "запуск clang для #runtime")?;
+    if !статус.success() {
+        bail!("clang не смог собрать runtime «{}»", имя);
+    }
+    Ok(exe)
+}
+
 fn посчитать_узлы(узел: &Узел) -> usize {
     match узел {
         Узел::Программа { объявления } => {
@@ -257,6 +334,7 @@ fn посчитать_узлы(узел: &Узел) -> usize {
         Узел::ВнешнийВызов { аргументы, .. } => {
             1 + аргументы.iter().map(посчитать_узлы).sum::<usize>()
         }
+        Узел::Runtime { .. } => 1,
         Узел::Если {
             условие,
             тогда,

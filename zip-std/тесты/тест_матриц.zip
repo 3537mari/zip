@@ -1,0 +1,3 @@
+// 5=G<0@: GEMM 512x512
+// A?>;=O5BAO G5@57 runtime (clang -O3 + 25:B>@870F8O), 75@:0;> 0;3>@8B<0 2 B5=7>@K_@50;.zip
+#runtime("bench_gemm")

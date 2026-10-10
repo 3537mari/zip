@@ -53,6 +53,11 @@ pub enum Узел {
         аргументы: Vec<Узел>,
     },
 
+    /// Нативный runtime: `#runtime("bench_gemm")` → clang -O3 по C-зеркалу STD.
+    Runtime {
+        имя: String,
+    },
+
     // --- Управление потоком ---
     Если {
         условие: Box<Узел>,
