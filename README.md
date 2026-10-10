@@ -1,11 +1,53 @@
 # ZIP (Zero-Immunity-Pulse)
 
+[![тесты](https://img.shields.io/badge/%D1%82%D0%B5%D1%81%D1%82%D1%8B-127%20%E2%9C%85-%D0%B7%D0%B5%D0%BB%D1%91%D0%BD%D1%8B%D0%B9)](МАСТЕР-ПЛАН.md)
+[![LLVM](https://img.shields.io/badge/LLVM-19%C3%97%20%D0%B1%D1%8B%D1%81%D1%82%D1%80%D0%B5%D0%B5-%D0%B7%D0%B5%D0%BB%D1%91%D0%BD%D1%8B%D0%B9)](МАСТЕР-ПЛАН.md)
+[![GEMM](https://img.shields.io/badge/GEMM-4.2%C3%97%20%D0%BE%D1%82%20NumPy-%D0%B7%D0%B5%D0%BB%D1%91%D0%BD%D1%8B%D0%B9)](МАСТЕР-ПЛАН.md)
+[![XOR](https://img.shields.io/badge/XOR-%D0%BE%D0%B1%D1%83%D1%87%D0%B5%D0%BD-%D0%B7%D0%B5%D0%BB%D1%91%D0%BD%D1%8B%D0%B9)](zip-std/примеры/xor_обучение.zip)
+
 **ZIP** — императивный потоковый язык программирования на кириллице.  
 Программа — семантический поток действий (VSO: Глагол–Субъект–Объект), а не набор объектов.  
 Данные текут через импульсы `>>`, параллелятся хором `||`, фиксируются в PERFECT через `!`.  
 Компилятор `zipc` транслирует `.zip` в нативный код (ассемблер x86-64 / LLVM).  
 Язык рассчитан на ИИ-агентов, нейросети, системное и сетевое программирование.  
 Полный план: **[МАСТЕР-ПЛАН.md](МАСТЕР-ПЛАН.md)**.
+
+## Быстрый старт
+
+### Установка
+
+```bash
+git clone https://github.com/zip-lang/zip
+cd zip-lang
+cargo build --release --manifest-path zipc/Cargo.toml
+```
+
+На Windows: `powershell -File scripts/build.ps1` (или `scripts/собрать.ps1`).
+
+### Первая программа
+
+```bash
+cat > пример.zip << 'EOF'
+ПечатьСтроки("Привет, мир!")
+EOF
+
+./zipc/target/release/zipc пример.zip -o пример --llvm
+./пример
+# Привет, мир!
+```
+
+### Нейросеть XOR
+
+```bash
+./zipc/target/release/zipc zip-std/примеры/xor_обучение.zip -o xor --llvm
+./xor
+# Эпоха 0: ошибка = 1.082502
+# ...
+# [0,0] -> 0.0079
+# [0,1] -> 0.9973
+# [1,0] -> 0.9973
+# [1,1] -> 0.0019
+```
 
 ## Плюсы ZIP
 
@@ -22,11 +64,11 @@
 | Этап | Название | Срок | Статус |
 |------|----------|------|--------|
 | 1 | Фундамент (лексер, парсер, AST, IR, ASM) | Месяц 1 | ✅ |
-| 2 | Полноценный компилятор (типы, LLVM, оптимизации) | Месяцы 2–3 | 🔄 |
-| 3 | Виртуальная машина и байт-код `.zipc` | Месяц 4 | ⏳ |
+| 2 | Полноценный компилятор (типы, LLVM, оптимизации) | Месяцы 2–3 | ✅ |
+| 3 | Виртуальная машина и байт-код `.zipc` | Месяц 4 | ✅ |
 | 4 | Стандартная библиотека | Месяцы 5–6 | 🔄 |
-| 5 | ИИ и нейросети | Месяцы 7–8 | ⏳ |
-| 6 | Самокомпиляция ZIP на ZIP | Месяц 9 | ⏳ |
+| 5 | ИИ и нейросети | Месяцы 7–8 | 🔄 |
+| 6 | Самокомпиляция ZIP на ZIP | Месяц 9 | 🔄 |
 | 7 | Экосистема (зипм, LSP, IDE, сообщество) | Месяцы 10–12 | ⏳ |
 
 ## Документация
@@ -48,7 +90,59 @@ cd zipc && cargo build --release
 ./target/release/zipc examples/привет.zip -o привет --вывод-ассемблера
 ```
 
-Скрипт сборки: `scripts/собрать.sh`.
+Скрипт сборки: `scripts/собрать.sh` (Unix) / `scripts/собрать.ps1` или `scripts/build.ps1` (Windows).
+
+## Работа на Windows
+
+### Требования
+- **PowerShell 7+** (не 5.1 — он портит UTF-8 в аргументах и путях)
+- **LLVM 17+** (`winget install LLVM.LLVM`)
+- **Rust 1.75+** (`winget install Rustlang.Rustup`)
+- **Python 3.10+** (для скриптов проверки кодировки)
+
+### Установка UTF-8 в PowerShell 7
+
+```powershell
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+[Console]::InputEncoding = [System.Text.Encoding]::UTF8
+$OutputEncoding = [System.Text.Encoding]::UTF8
+chcp 65001
+```
+
+Или запускайте сборку через готовый скрипт:
+
+```powershell
+powershell -File ./scripts/build.ps1
+```
+
+### Кириллица в CLI
+
+PowerShell 5.1 и некоторые терминалы искажают флаги вроде `--байткод`.  
+Используйте ASCII-алиасы:
+
+| Кириллица | Алиас |
+|-----------|--------|
+| `--байткод` | `--bytecode` |
+
+Пример:
+
+```powershell
+./zipc/target/release/zipc.exe examples/vm_demo.zip --bytecode -o examples/vm_demo
+./zip-vm/target/release/zip-vm.exe examples/vm_demo.zipc
+```
+
+### Проверка и починка UTF-8 исходников
+
+Все `.zip` в репозитории — **текстовые** исходники языка (не архивы).  
+Кодировка: **UTF-8 без BOM**, переводы строк LF (см. `.gitattributes`).
+
+```powershell
+python scripts/fix_utf8.py      # пересохранить в UTF-8
+python scripts/check_utf8.py     # проверить (exit 1 при ошибках)
+python scripts/restore_std_utf8.py  # восстановить STD при повреждении
+```
+
+Кириллические имена: `scripts/исправить_utf8.py`, `scripts/проверить_utf8.py`.
 
 ## Структура репозитория
 
@@ -58,6 +152,7 @@ cd zipc && cargo build --release
 | `zipc/` | Компилятор ZIP |
 | `zip-vm/` | Виртуальная машина |
 | `zip-std/` | Стандартная библиотека |
+| `zip-self/` | Самокомпиляция (лексер на ZIP) |
 | `examples/` | Примеры программ |
 | `tests/` | Тесты |
 | `docs/` | Документация |
