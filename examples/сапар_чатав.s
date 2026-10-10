@@ -17,14 +17,14 @@ zip_glavnaya:
   sub rsp, 32
   ; return_type: Несовершенный
   mov rcx, qword ptr [rbp - 8]
-  call zip______
+  call zip_u0421u0410u041fu0410u0420
   mov qword ptr [rbp - 24], rax
   ; impulse/move noundef
   mov rax, qword ptr [rbp - 24]
   mov qword ptr [rbp - 32], rax
   mov qword ptr [rbp - 24], 0
   mov rcx, qword ptr [rbp - 32]
-  call zip______
+  call zip_u0427u0410u0422u0410u0412
   mov qword ptr [rbp - 32], rax
   ; llvm.invariant.start r3 (PERFECT)
   ; memory readonly
@@ -37,8 +37,8 @@ zip_glavnaya:
   ret
 .loc 1 1 1
 
-.globl zip______
-zip______:
+.globl zip_u0421u0410u041fu0410u0420
+zip_u0421u0410u041fu0410u0420:
   push rbp
   mov rbp, rsp
   sub rsp, 16
@@ -50,8 +50,8 @@ zip______:
   ret
 .loc 1 1 1
 
-.globl zip______
-zip______:
+.globl zip_u0427u0410u0422u0410u0412
+zip_u0427u0410u0422u0410u0412:
   push rbp
   mov rbp, rsp
   sub rsp, 48
