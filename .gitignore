@@ -10,3 +10,9 @@ target/
 привет.o
 *.s
 
+
+*.ll
+*.exe
+zipc/*.exe
+zipc/Р±РµРЅС‡_*
+zipc/РїСЂРёРІРµС‚_*

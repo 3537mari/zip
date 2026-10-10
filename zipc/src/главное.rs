@@ -10,6 +10,8 @@ mod парсер;
 mod промежуток;
 #[path = "нативный.rs"]
 mod нативный;
+#[path = "llvm_ir.rs"]
+mod llvm_ir;
 
 use anyhow::{bail, Context, Result};
 use clap::Parser;
@@ -45,6 +47,14 @@ struct Аргументы {
     /// Вывод ассемблера (.s) и останов
     #[arg(long = "вывод-ассемблера")]
     вывод_ассемблера: bool,
+
+    /// LLVM-бэкенд: эмит .ll + clang -O3 (mem2reg/instcombine/vectorize)
+    #[arg(long = "llvm")]
+    llvm: bool,
+
+    /// Только вывести LLVM IR (.ll) и останов
+    #[arg(long = "вывод-llvm")]
+    вывод_llvm: bool,
 
     /// Уровень оптимизации 0–3
     #[arg(short = 'O', default_value = "3")]
@@ -123,17 +133,43 @@ fn main() -> Result<()> {
         return Ok(());
     }
 
-    // 5. Генерация нативного кода (текстовый x86-64 бэкенд;
-    //    полноценный inkwell/LLVM — feature `llvm`, когда toolchain установлен)
-    let mut опции = нативный::ОпцииНативнойСборки::default();
-    опции.opt_level = аргументы.уровень_оптимизации;
-    опции.target_cpu_native = аргументы.целевой_процессор == "native";
-    опции.имя_модуля = аргументы
+    let имя_модуля = аргументы
         .входной_файл
         .file_stem()
         .and_then(|s| s.to_str())
         .unwrap_or("zip_модуль")
         .to_string();
+
+    // 5a. LLVM IR → clang -O3
+    if аргументы.llvm || аргументы.вывод_llvm {
+        let ir = llvm_ir::сгенерировать_llvm_ir(&функции_пп, &имя_модуля)
+            .map_err(|е| anyhow::anyhow!("{}", е))?;
+        let путь_ll = with_extension(&аргументы.выходной_файл, "ll");
+        fs::write(&путь_ll, &ir).with_context(|| format!("запись {}", путь_ll.display()))?;
+        println!("LLVM IR: {}", путь_ll.display());
+        println!("  Passes: {}", llvm_ir::LLVM_PASSES.join(", "));
+
+        if аргументы.вывод_llvm {
+            return Ok(());
+        }
+
+        match llvm_ir::скомпилировать_llvm(&функции_пп, &имя_модуля, &аргументы.выходной_файл) {
+            Ok((exe, ll)) => {
+                println!("✓ LLVM+clang -O3: {}", exe.display());
+                println!("  IR: {}", ll.display());
+            }
+            Err(е) => {
+                eprintln!("✗ LLVM-сборка не удалась: {}", е);
+            }
+        }
+        return Ok(());
+    }
+
+    // 5b. ASM-бэкенд (x86-64)
+    let mut опции = нативный::ОпцииНативнойСборки::default();
+    опции.opt_level = аргументы.уровень_оптимизации;
+    опции.target_cpu_native = аргументы.целевой_процессор == "native";
+    опции.имя_модуля = имя_модуля;
 
     let mut генератор = нативный::ГенераторНативногоКода::с_опциями(опции);
     генератор
