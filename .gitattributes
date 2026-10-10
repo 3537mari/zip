@@ -1,6 +1,19 @@
 * text=auto eol=lf
-*.zip text eol=lf
-*.md text eol=lf
-*.rs text eol=lf
-*.toml text eol=lf
+
+*.zip text working-tree-encoding=UTF-8
+*.md text working-tree-encoding=UTF-8
+*.rs text working-tree-encoding=UTF-8
+*.c text working-tree-encoding=UTF-8
+*.h text working-tree-encoding=UTF-8
+*.toml text working-tree-encoding=UTF-8
+*.py text working-tree-encoding=UTF-8
+*.ps1 text working-tree-encoding=UTF-8
 *.sh text eol=lf
+
+# Бинарные файлы
+*.exe binary
+*.o binary
+*.zipc binary
+*.ll binary
+*.s binary
+*.bin binary
