@@ -16,3 +16,7 @@ path = "src/main.rs"
 [[test]]
 name = "тест_лексики"
 path = "../tests/тест_лексики.rs"
+
+[[test]]
+name = "тест_парсера"
+path = "../tests/тест_парсера.rs"
