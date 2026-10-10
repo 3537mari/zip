@@ -461,7 +461,118 @@ static int write_file(const char *path, const void *data, int len) {
 
 static int run_clang_ll(const char *ll, const char *exe) {
     char cmd[2048];
+#ifdef _WIN32
+    snprintf(cmd, sizeof(cmd),
+             "clang \"%s\" -O3 -march=native -Wl,/Brepro -o \"%s\"", ll, exe);
+#else
     snprintf(cmd, sizeof(cmd), "clang \"%s\" -O3 -march=native -o \"%s\"", ll, exe);
+#endif
+    return system(cmd);
+}
+
+static int file_exists(const char *p) {
+    FILE *f = fopen(p, "rb");
+    if (!f) return 0;
+    fclose(f);
+    return 1;
+}
+
+static int join_path(char *out, int outn, const char *a, const char *b) {
+    return snprintf(out, (size_t)outn, "%s/%s", a, b) < outn;
+}
+
+/* Locate zip-self/<file> from cwd / ZIP_ROOT / input path. */
+static int find_zip_self_file(const char *fname, const char *hint_path, char *out, int outn) {
+    const char *env = getenv("ZIP_ROOT");
+    if (env && env[0]) {
+        snprintf(out, (size_t)outn, "%s/zip-self/%s", env, fname);
+        if (file_exists(out)) return 1;
+    }
+    snprintf(out, (size_t)outn, "zip-self/%s", fname);
+    if (file_exists(out)) return 1;
+    snprintf(out, (size_t)outn, "%s", fname);
+    if (file_exists(out)) return 1;
+    if (hint_path) {
+        char dir[512];
+        strncpy(dir, hint_path, sizeof(dir) - 1);
+        dir[sizeof(dir) - 1] = 0;
+        char *slash = strrchr(dir, '/');
+        char *bslash = strrchr(dir, '\\');
+        char *cut = slash > bslash ? slash : bslash;
+        if (cut) {
+            *cut = 0;
+            snprintf(out, (size_t)outn, "%s/%s", dir, fname);
+            if (file_exists(out)) return 1;
+            snprintf(out, (size_t)outn, "%s/../%s", dir, fname);
+            if (file_exists(out)) return 1;
+        }
+    }
+    /* walk up */
+    const char *prefixes[] = {".", "..", "../..", "../../..", NULL};
+    for (int i = 0; prefixes[i]; i++) {
+        snprintf(out, (size_t)outn, "%s/zip-self/%s", prefixes[i], fname);
+        if (file_exists(out)) return 1;
+    }
+    return 0;
+}
+
+static const char *find_runtime_name(Node *n) {
+    if (!n) return NULL;
+    if (n->kind == N_RUNTIME && n->name) return n->name;
+    if (n->kind == N_PROG || n->kind == N_BLOCK) {
+        for (int i = 0; i < n->nkids; i++) {
+            const char *r = find_runtime_name(n->kids[i]);
+            if (r) return r;
+        }
+    }
+    return NULL;
+}
+
+static int map_runtime(const char *name, const char **c_file, const char **macro) {
+    if (!name) return 0;
+    if (strcmp(name, "native_rt") == 0 || strcmp(name, "нативный") == 0 ||
+        strcmp(name, "нативный_rt") == 0) {
+        *c_file = "нативный_rt.c";
+        *macro = "ZIP_NATIVE_MAIN";
+        return 1;
+    }
+    if (strcmp(name, "lexer_zip") == 0) {
+        *c_file = "лексика_rt.c";
+        *macro = "ZIP_LEXER_MAIN";
+        return 1;
+    }
+    if (strcmp(name, "parser_zip") == 0 || strcmp(name, "parser_rt") == 0 ||
+        strcmp(name, "parser_ast") == 0) {
+        *c_file = "парсер_rt.c";
+        *macro = "ZIP_PARSER_MAIN";
+        return 1;
+    }
+    if (strcmp(name, "ir_zip") == 0 || strcmp(name, "ir_ast") == 0 ||
+        strcmp(name, "промежуток") == 0 || strcmp(name, "промежуток_rt") == 0) {
+        *c_file = "промежуток_rt.c";
+        *macro = "ZIP_IR_MAIN";
+        return 1;
+    }
+    /* ASCII aliases */
+    if (strcmp(name, "native_rt") == 0) {
+        *c_file = "native_rt.c";
+        *macro = "ZIP_NATIVE_MAIN";
+        return 1;
+    }
+    return 0;
+}
+
+static int compile_runtime_c(const char *c_path, const char *macro, const char *exe_path) {
+    char cmd[4096];
+#ifdef _WIN32
+    snprintf(cmd, sizeof(cmd),
+             "clang \"%s\" -O3 -march=native -D%s -Wl,/Brepro -o \"%s\"", c_path, macro,
+             exe_path);
+#else
+    snprintf(cmd, sizeof(cmd), "clang \"%s\" -O3 -march=native -D%s -o \"%s\"", c_path, macro,
+             exe_path);
+#endif
+    printf("  clang runtime: %s -D%s → %s\n", c_path, macro, exe_path);
     return system(cmd);
 }
 
@@ -520,6 +631,51 @@ int main(int argc, char **argv) {
     P.pos = 0;
     Node *ast = parse_program(&P);
 
+    char exe_path[512];
+    strncpy(exe_path, out_path, sizeof(exe_path) - 1);
+    exe_path[sizeof(exe_path) - 1] = 0;
+#ifdef _WIN32
+    {
+        size_t el = strlen(exe_path);
+        if (el < 4 || (strcmp(exe_path + el - 4, ".exe") != 0 && strcmp(exe_path + el - 4, ".EXE") != 0))
+            strncat(exe_path, ".exe", sizeof(exe_path) - el - 1);
+    }
+#endif
+
+    /* #runtime("...") → clang C-mirror (same as Rust zipc bootstrap) */
+    {
+        const char *rt = find_runtime_name(ast);
+        const char *cfile = NULL;
+        const char *macro = NULL;
+        if (rt && map_runtime(rt, &cfile, &macro)) {
+            char cpath[1024];
+            if (!find_zip_self_file(cfile, in_path, cpath, sizeof(cpath))) {
+                /* try ASCII alias for native */
+                if (strcmp(macro, "ZIP_NATIVE_MAIN") == 0 &&
+                    find_zip_self_file("native_rt.c", in_path, cpath, sizeof(cpath))) {
+                    /* ok */
+                } else {
+                    fprintf(stderr, "runtime «%s»: не найден %s\n", rt, cfile);
+                    return 1;
+                }
+            }
+            if (emit_only) {
+                fprintf(stderr, "runtime «%s» — нет .ll (C-зеркало)\n", rt);
+                return 1;
+            }
+            int rc = compile_runtime_c(cpath, macro, exe_path);
+            if (rc != 0) {
+                fprintf(stderr, "Ошибка clang runtime (код %d)\n", rc);
+                return 1;
+            }
+            printf("✓ Runtime «%s» → %s\n", rt, exe_path);
+            for (int i = 0; i < L.ntoks; i++) free(L.toks[i].sval);
+            free(L.toks);
+            free(src);
+            return 0;
+        }
+    }
+
     Gen G;
     generate(&G, ast);
 
@@ -560,17 +716,6 @@ int main(int argc, char **argv) {
         fwrite(b.data, 1, (size_t)b.len, stdout);
         return 0;
     }
-
-    char exe_path[512];
-    strncpy(exe_path, out_path, sizeof(exe_path) - 1);
-    exe_path[sizeof(exe_path) - 1] = 0;
-#ifdef _WIN32
-    {
-        size_t el = strlen(exe_path);
-        if (el < 4 || (strcmp(exe_path + el - 4, ".exe") != 0 && strcmp(exe_path + el - 4, ".EXE") != 0))
-            strncat(exe_path, ".exe", sizeof(exe_path) - el - 1);
-    }
-#endif
 
     int rc = run_clang_ll(ll_path, exe_path);
     if (rc != 0) {

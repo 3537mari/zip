@@ -1,0 +1,36 @@
+name: Проверка самокомпиляции
+
+on:
+  push:
+    paths:
+      - "zip-self/**"
+      - "zipc/**"
+      - "scripts/**"
+      - ".github/workflows/selfhost.yml"
+  pull_request:
+    paths:
+      - "zip-self/**"
+      - "zipc/**"
+      - "scripts/**"
+
+jobs:
+  selfhost:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Установить Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Установить LLVM/clang
+        shell: pwsh
+        run: |
+          choco install llvm -y --no-progress
+          clang --version
+
+      - name: Собрать бутстрэп zipc
+        run: cargo build --release --manifest-path zipc/Cargo.toml
+
+      - name: Проверить самокомпиляцию (3 итерации)
+        shell: pwsh
+        run: pwsh -File scripts/check_selfhost.ps1

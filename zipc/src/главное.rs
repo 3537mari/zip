@@ -371,6 +371,10 @@ fn скомпилировать_runtime(имя: &str, выход: &PathBuf) -> R
         .arg(format!("-D{}", макрос))
         .arg("-o")
         .arg(&exe);
+    // Deterministic PE on Windows (stable self-host hashes)
+    if cfg!(windows) {
+        cmd.arg("-Wl,/Brepro");
+    }
     // Avoid duplicate main when http_client.c is linked with https_client.c
     if имя == "https_client" {
         cmd.arg("-DZIP_HTTP_MAIN_DISABLED");
