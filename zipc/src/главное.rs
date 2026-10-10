@@ -39,7 +39,7 @@ struct Аргументы {
     только_лексика: bool,
 
     /// Только парсинг (вывод AST)
-    #[arg(long = "только-парсинг")]
+    #[arg(long = "только-парсинг", alias = "parse-only")]
     только_парсинг: bool,
 
     /// Вывод промежуточного представления
@@ -306,6 +306,12 @@ fn скомпилировать_runtime(имя: &str, выход: &PathBuf) -> R
         "lexer_zip" => (
             vec![корень.join("zip-self/лексика_rt.c")],
             "ZIP_LEXER_MAIN",
+            false,
+            false,
+        ),
+        "parser_zip" | "parser_rt" | "parser_ast" => (
+            vec![корень.join("zip-self/парсер_rt.c")],
+            "ZIP_PARSER_MAIN",
             false,
             false,
         ),
