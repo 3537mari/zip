@@ -321,6 +321,12 @@ fn скомпилировать_runtime(имя: &str, выход: &PathBuf) -> R
             false,
             false,
         ),
+        "native_rt" | "нативный" | "нативный_rt" => (
+            vec![корень.join("zip-self/нативный_rt.c")],
+            "ZIP_NATIVE_MAIN",
+            false,
+            false,
+        ),
         "http_client" => (
             vec![корень.join("zip-std/runtime/http_client.c")],
             "ZIP_HTTP_MAIN",
