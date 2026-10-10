@@ -261,20 +261,82 @@ fn корень_репозитория() -> PathBuf {
         .unwrap_or_else(|| PathBuf::from("."))
 }
 
+fn найти_openssl_префикс() -> Option<PathBuf> {
+    let кандидаты = [
+        PathBuf::from(r"C:\Program Files\FireDaemon OpenSSL 4"),
+        PathBuf::from(r"C:\Program Files\OpenSSL-Win64"),
+        PathBuf::from(r"C:\Program Files\OpenSSL"),
+        PathBuf::from(r"C:\OpenSSL-Win64"),
+        PathBuf::from("/usr"),
+        PathBuf::from("/usr/local"),
+        PathBuf::from("/opt/homebrew"),
+    ];
+    for п in кандидаты {
+        if п.join("include/openssl/ssl.h").exists() {
+            return Some(п);
+        }
+    }
+    // vcpkg / env
+    if let Ok(root) = std::env::var("OPENSSL_ROOT_DIR") {
+        let п = PathBuf::from(root);
+        if п.join("include/openssl/ssl.h").exists() {
+            return Some(п);
+        }
+    }
+    None
+}
+
 fn скомпилировать_runtime(имя: &str, выход: &PathBuf) -> Result<PathBuf> {
     use std::process::Command;
 
     let корень = корень_репозитория();
-    let (источник, макрос): (PathBuf, &str) = match имя {
-        "bench_gemm" => (корень.join("zip-std/runtime/gemm.c"), "ZIP_BENCH_MAIN"),
-        "train_xor" => (корень.join("zip-std/runtime/nn_xor.c"), "ZIP_XOR_MAIN"),
-        "lexer_zip" => (корень.join("zip-self/лексика_rt.c"), "ZIP_LEXER_MAIN"),
-        "http_client" => (корень.join("zip-std/runtime/http_client.c"), "ZIP_HTTP_MAIN"),
+    let (источники, макрос, openssl, winsock): (Vec<PathBuf>, &str, bool, bool) = match имя {
+        "bench_gemm" => (
+            vec![корень.join("zip-std/runtime/gemm.c")],
+            "ZIP_BENCH_MAIN",
+            false,
+            false,
+        ),
+        "train_xor" => (
+            vec![корень.join("zip-std/runtime/nn_xor.c")],
+            "ZIP_XOR_MAIN",
+            false,
+            false,
+        ),
+        "lexer_zip" => (
+            vec![корень.join("zip-self/лексика_rt.c")],
+            "ZIP_LEXER_MAIN",
+            false,
+            false,
+        ),
+        "http_client" => (
+            vec![корень.join("zip-std/runtime/http_client.c")],
+            "ZIP_HTTP_MAIN",
+            false,
+            true,
+        ),
+        "https_client" => (
+            vec![
+                корень.join("zip-std/runtime/http_client.c"),
+                корень.join("zip-std/runtime/https_client.c"),
+            ],
+            "ZIP_HTTPS_MAIN",
+            true,
+            true,
+        ),
+        "crypto" => (
+            vec![корень.join("zip-std/runtime/crypto.c")],
+            "ZIP_CRYPTO_MAIN",
+            true,
+            false,
+        ),
         другой => bail!("неизвестный #runtime(\"{}\")", другой),
     };
 
-    if !источник.exists() {
-        bail!("файл runtime не найден: {}", источник.display());
+    for источник in &источники {
+        if !источник.exists() {
+            bail!("файл runtime не найден: {}", источник.display());
+        }
     }
 
     let mut exe = выход.clone();
@@ -283,17 +345,55 @@ fn скомпилировать_runtime(имя: &str, выход: &PathBuf) -> R
     }
 
     let mut cmd = Command::new("clang");
-    cmd.arg(&источник)
-        .arg("-O3")
+    for источник in &источники {
+        cmd.arg(источник);
+    }
+    cmd.arg("-O3")
         .arg("-march=native")
         .arg(format!("-D{}", макрос))
         .arg("-o")
         .arg(&exe);
+    // Avoid duplicate main when http_client.c is linked with https_client.c
+    if имя == "https_client" {
+        cmd.arg("-DZIP_HTTP_MAIN_DISABLED");
+    }
+
+    if openssl {
+        let префикс = найти_openssl_префикс().ok_or_else(|| {
+            anyhow::anyhow!(
+                "OpenSSL не найден (ожидался include/openssl/ssl.h). Установите ShiningLight.OpenSSL.Dev"
+            )
+        })?;
+        cmd.arg(format!("-I{}/include", префикс.display()));
+        let lib = префикс.join("lib");
+        if lib.exists() {
+            cmd.arg(format!("-L{}", lib.display()));
+        }
+        let vc_lib = префикс.join("lib/VC/x64/MD");
+        if vc_lib.exists() {
+            cmd.arg(format!("-L{}", vc_lib.display()));
+        }
+        // Windows: libssl.lib / libcrypto.lib; Unix: -lssl -lcrypto
+        if cfg!(windows) {
+            let ssl = lib.join("libssl.lib");
+            let crypto = lib.join("libcrypto.lib");
+            if ssl.exists() && crypto.exists() {
+                cmd.arg(ssl).arg(crypto);
+            } else {
+                cmd.arg("-llibssl").arg("-llibcrypto");
+            }
+        } else {
+            cmd.arg("-lssl").arg("-lcrypto");
+        }
+        println!("  OpenSSL: {}", префикс.display());
+    }
+
     if !cfg!(windows) {
         cmd.arg("-lm");
     }
-    if имя == "http_client" && cfg!(windows) {
+    if winsock && cfg!(windows) {
         cmd.arg("-lws2_32");
+        cmd.arg("-lcrypt32");
     }
 
     let статус = cmd

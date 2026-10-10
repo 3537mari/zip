@@ -1,0 +1,2 @@
+// Реальный API-запрос (GitHub)
+#runtime("https_client")

@@ -204,7 +204,7 @@ const char *zip_http_body(const char *response) {
     return response;
 }
 
-#ifdef ZIP_HTTP_MAIN
+#if defined(ZIP_HTTP_MAIN) && !defined(ZIP_HTTP_MAIN_DISABLED)
 static void print_resp(const char *resp) {
     size_t n = strlen(resp);
     if (n > 1200) {
