@@ -1,0 +1,11 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "zip",
+      "request": "launch",
+      "name": "Отладка ZIP (отладка_тест)",
+      "программа": "${workspaceFolder}/examples/отладка_тест.zip"
+    }
+  ]
+}

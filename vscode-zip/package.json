@@ -9,10 +9,66 @@
   },
   "categories": ["Programming Languages"],
   "activationEvents": [
-    "onLanguage:zip"
+    "onLanguage:zip",
+    "onDebug"
   ],
   "main": "./src/extension.js",
   "contributes": {
+    "debuggers": [
+      {
+        "type": "zip",
+        "label": "Отладчик ZIP",
+        "program": "./out/debugAdapter.js",
+        "runtime": "node",
+        "languages": ["zip"],
+        "configurationAttributes": {
+          "launch": {
+            "required": ["программа"],
+            "properties": {
+              "программа": {
+                "type": "string",
+                "description": "Путь к .zip файлу",
+                "default": "${workspaceFolder}/src/главная.zip"
+              },
+              "program": {
+                "type": "string",
+                "description": "Путь к .zip файлу (синоним программа)"
+              },
+              "аргументы": {
+                "type": "array",
+                "description": "Аргументы командной строки",
+                "items": { "type": "string" },
+                "default": []
+              },
+              "рабочийКаталог": {
+                "type": "string",
+                "default": "${workspaceFolder}"
+              }
+            }
+          }
+        },
+        "initialConfigurations": [
+          {
+            "type": "zip",
+            "request": "launch",
+            "name": "Отладка ZIP",
+            "программа": "${workspaceFolder}/src/главная.zip"
+          }
+        ],
+        "configurationSnippets": [
+          {
+            "label": "ZIP: запуск отладки",
+            "description": "Запустить .zip программу под отладчиком",
+            "body": {
+              "type": "zip",
+              "request": "launch",
+              "name": "Отладка ZIP",
+              "программа": "${workspaceFolder}/${1:examples/отладка_тест.zip}"
+            }
+          }
+        ]
+      }
+    ],
     "languages": [
       {
         "id": "zip",
