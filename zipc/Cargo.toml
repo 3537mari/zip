@@ -24,3 +24,16 @@ path = "../tests/тест_парсера.rs"
 [[test]]
 name = "тест_промежутка"
 path = "../tests/тест_промежутка.rs"
+
+[[test]]
+name = "тест_нативного"
+path = "../tests/тест_нативного.rs"
+
+[features]
+default = []
+# Полноценный LLVM через inkwell требует LLVM 17 в системе:
+#   LLVM_SYS_170_PREFIX=... cargo test --features llvm
+llvm = ["dep:inkwell"]
+
+[dependencies]
+inkwell = { version = "0.4", features = ["llvm17-0"], optional = true }
