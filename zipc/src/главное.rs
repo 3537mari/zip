@@ -43,7 +43,7 @@ struct Аргументы {
     только_парсинг: bool,
 
     /// Вывод промежуточного представления
-    #[arg(long = "вывод-пп")]
+    #[arg(long = "вывод-пп", alias = "dump-ir")]
     вывод_пп: bool,
 
     /// Вывод ассемблера (.s) и останов
@@ -312,6 +312,12 @@ fn скомпилировать_runtime(имя: &str, выход: &PathBuf) -> R
         "parser_zip" | "parser_rt" | "parser_ast" => (
             vec![корень.join("zip-self/парсер_rt.c")],
             "ZIP_PARSER_MAIN",
+            false,
+            false,
+        ),
+        "ir_zip" | "ir_ast" | "промежуток" | "промежуток_rt" => (
+            vec![корень.join("zip-self/промежуток_rt.c")],
+            "ZIP_IR_MAIN",
             false,
             false,
         ),
