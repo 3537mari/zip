@@ -1,0 +1,22 @@
+[package]
+name = "zip-vm"
+version = "0.1.0"
+edition = "2021"
+description = "Виртуальная машина байт-кода ZIP (.zipc)"
+license = "MIT"
+
+[lib]
+name = "zip_vm"
+path = "src/lib.rs"
+
+[[bin]]
+name = "zip-vm"
+path = "src/главное.rs"
+
+[[test]]
+name = "тест_vm"
+path = "tests/тест_vm.rs"
+
+[dependencies]
+clap = { version = "4.5", features = ["derive"] }
+anyhow = "1.0"

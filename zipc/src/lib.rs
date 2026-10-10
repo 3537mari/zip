@@ -18,6 +18,9 @@ pub mod нативный;
 #[path = "llvm_ir.rs"]
 pub mod llvm_ir;
 
+#[path = "байткод_эмиттер.rs"]
+pub mod байткод_эмиттер;
+
 #[cfg(feature = "inkwell-llvm")]
 #[path = "llvm_backend.rs"]
 pub mod llvm_backend;

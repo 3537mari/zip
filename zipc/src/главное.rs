@@ -12,6 +12,8 @@ mod промежуток;
 mod нативный;
 #[path = "llvm_ir.rs"]
 mod llvm_ir;
+#[path = "байткод_эмиттер.rs"]
+mod байткод_эмиттер;
 
 use anyhow::{bail, Context, Result};
 use clap::Parser;
@@ -55,6 +57,10 @@ struct Аргументы {
     /// Только вывести LLVM IR (.ll) и останов
     #[arg(long = "вывод-llvm")]
     вывод_llvm: bool,
+
+    /// Сгенерировать байт-код .zipc для zip-vm
+    #[arg(long = "байткод", alias = "bytecode")]
+    байткод: bool,
 
     /// Уровень оптимизации 0–3
     #[arg(short = 'O', default_value = "3")]
@@ -140,7 +146,17 @@ fn main() -> Result<()> {
         .unwrap_or("zip_модуль")
         .to_string();
 
-    // 5a. LLVM IR → clang -O3
+    // 5a. Байт-код .zipc для zip-vm
+    if аргументы.байткод {
+        let путь = with_extension(&аргументы.выходной_файл, "zipc");
+        байткод_эмиттер::записать_zipc(&функции_пп, &путь)
+            .map_err(|е| anyhow::anyhow!("{}", е))?;
+        println!("✓ Байт-код: {}", путь.display());
+        println!("  Запуск: zip-vm {}", путь.display());
+        return Ok(());
+    }
+
+    // 5b. LLVM IR → clang -O3
     if аргументы.llvm || аргументы.вывод_llvm {
         let ir = llvm_ir::сгенерировать_llvm_ir(&функции_пп, &имя_модуля)
             .map_err(|е| anyhow::anyhow!("{}", е))?;
