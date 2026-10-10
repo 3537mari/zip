@@ -265,18 +265,11 @@ fn скомпилировать_runtime(имя: &str, выход: &PathBuf) -> R
     use std::process::Command;
 
     let корень = корень_репозитория();
-    let (источник, макрос, libs): (PathBuf, &str, &[&str]) = match имя {
-        "bench_gemm" => (
-            корень.join("zip-std/runtime/gemm.c"),
-            "ZIP_BENCH_MAIN",
-            &[],
-        ),
-        "train_xor" => (
-            корень.join("zip-std/runtime/nn_xor.c"),
-            "ZIP_XOR_MAIN",
-            &[],
-        ),
-        "lexer_zip" => (корень.join("zip-self/лексика_rt.c"), "ZIP_LEXER_MAIN", &[]),
+    let (источник, макрос): (PathBuf, &str) = match имя {
+        "bench_gemm" => (корень.join("zip-std/runtime/gemm.c"), "ZIP_BENCH_MAIN"),
+        "train_xor" => (корень.join("zip-std/runtime/nn_xor.c"), "ZIP_XOR_MAIN"),
+        "lexer_zip" => (корень.join("zip-self/лексика_rt.c"), "ZIP_LEXER_MAIN"),
+        "http_client" => (корень.join("zip-std/runtime/http_client.c"), "ZIP_HTTP_MAIN"),
         другой => bail!("неизвестный #runtime(\"{}\")", другой),
     };
 
@@ -296,12 +289,11 @@ fn скомпилировать_runtime(имя: &str, выход: &PathBuf) -> R
         .arg(format!("-D{}", макрос))
         .arg("-o")
         .arg(&exe);
-    // libm on non-Windows
     if !cfg!(windows) {
         cmd.arg("-lm");
     }
-    for lib in libs {
-        cmd.arg(lib);
+    if имя == "http_client" && cfg!(windows) {
+        cmd.arg("-lws2_32");
     }
 
     let статус = cmd
