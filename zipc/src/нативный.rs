@@ -402,9 +402,10 @@ fn sanitize(s: &str) -> String {
     s.chars()
         .map(|c| {
             if c.is_ascii_alphanumeric() {
-                c
+                c.to_string()
             } else {
-                '_'
+                // Кириллица → стабильный ASCII-манглинг без коллизий
+                format!("u{:04x}", c as u32)
             }
         })
         .collect()
