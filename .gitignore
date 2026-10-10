@@ -3,3 +3,10 @@ target/
 *.zipc
 *.bin
 .DS_Store
+
+привет
+привет.exe
+привет.s
+привет.o
+*.s
+
