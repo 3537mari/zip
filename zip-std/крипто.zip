@@ -1,0 +1,55 @@
+// ============================================
+// ZIP STD:  " $/
+// ============================================
+
+// === %5H8 ===
+DC=:F8O sha256(40==K5, 4;8=0) {
+    #link("libcrypto")
+    1CD5@ = ?0<OBL_2K45;8BL(32)
+    SHA256(40==K5, 4;8=0, 1CD5@)
+    2>72@0B(1CD5@, 32)
+}
+
+// === !8<<5B@8G=>5 H8D@>20=85 (AES-256-GCM) ===
+DC=:F8O aes_H8D@>20BL(40==K5, 4;8=0, :;NG) {
+    #link("libcrypto")
+    // EVP_EncryptInit_ex / EncryptUpdate / EncryptFinal_ex
+    2KE>4 = ?0<OBL_2K45;8BL(4;8=0 + 16)
+    2>72@0B(2KE>4, 4;8=0)
+}
+
+DC=:F8O aes_@0AH8D@>20BL(40==K5, 4;8=0, :;NG) {
+    #link("libcrypto")
+    // EVP_DecryptInit_ex / DecryptUpdate / DecryptFinal_ex
+    2KE>4 = ?0<OBL_2K45;8BL(4;8=0)
+    2>72@0B(2KE>4, 4;8=0)
+}
+
+// === >AB:20=B>20O :@8?B>3@0D8O ===
+DC=:F8O :N15@_H8D@>20BL(40==K5, ?C1;8G=K9_:;NG) {
+    #link("liboqs")
+    // Kyber-1024: OQS_KEM_enc
+    H8D@B5:AB = ?0<OBL_2K45;8BL(1568)
+    >1I89_A5:@5B = ?0<OBL_2K45;8BL(32)
+    2>72@0B(H8D@B5:AB, >1I89_A5:@5B)
+}
+
+DC=:F8O :N15@_@0AH8D@>20BL(H8D@B5:AB, ?@820B=K9_:;NG) {
+    #link("liboqs")
+    // OQS_KEM_dec
+    >1I89_A5:@5B = ?0<OBL_2K45;8BL(32)
+    2>72@0B(>1I89_A5:@5B)
+}
+
+DC=:F8O 48;8B8C<_?>4?8A0BL(40==K5, 4;8=0, ?@820B=K9_:;NG) {
+    #link("liboqs")
+    // Dilithium-5: OQS_SIG_sign
+    ?>4?8AL = ?0<OBL_2K45;8BL(4595)
+    2>72@0B(?>4?8AL, 4595)
+}
+
+DC=:F8O 48;8B8C<_?@>25@8BL(40==K5, 4;8=0, ?>4?8AL, ?C1;8G=K9_:;NG) {
+    #link("liboqs")
+    // OQS_SIG_verify
+    2>72@0B(1)
+}
