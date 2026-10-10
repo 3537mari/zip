@@ -1,4 +1,4 @@
-//! Генератор нативного кода ZIP.
+﻿//! Генератор нативного кода ZIP.
 //!
 //! Полноценный `inkwell`/LLVM 17 требует установленного LLVM toolchain.
 //! Здесь — детерминированный эмиттер x86-64 ассемблера (Intel syntax) из ПП,
@@ -14,7 +14,8 @@ use crate::промежуток::{
 };
 use std::collections::HashMap;
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
+use std::process::Command;
 
 #[derive(Debug, Clone)]
 pub struct ОпцииНативнойСборки {
@@ -78,26 +79,29 @@ impl ГенераторНативногоКода {
         }
 
         // 3. «Оптимизация» — пометка O3 / native в метаданных (реальные LLVM passes — при наличии inkwell)
-        self.ассемблер.push_str("\n; zip-opt: passes=simplifycfg,mem2reg,instcombine level=O3\n");
+        self.ассемблер.push_str("\n# zip-opt: passes=simplifycfg,mem2reg,instcombine level=O3\n");
 
         Ok(())
     }
 
     fn эмит_заголовок(&mut self) {
         let cpu = if self.опции.target_cpu_native {
-            "native (AVX2/AVX-512 enabled)"
+            "native"
         } else {
             "generic"
         };
+        // Только ASCII: интегрированный ассемблер clang на Windows
+        // отклоняет кириллицу даже в комментариях.
+        let модуль = sanitize(&self.опции.имя_модуля);
         self.ассемблер.push_str(&format!(
-            "; module: {}\n; target-cpu={}\n; opt-level=-O{}\n; debug={}\n",
-            self.опции.имя_модуля, cpu, self.опции.opt_level, self.опции.отладка
+            "# module: {}\n# target-cpu: {}\n# opt-level: O{}\n# debug: {}\n",
+            модуль, cpu, self.опции.opt_level, self.опции.отладка
         ));
         self.ассемблер.push_str(".intel_syntax noprefix\n");
         self.ассемблер.push_str(".text\n");
         if self.опции.отладка {
             self.ассемблер
-                .push_str(&format!(".file 1 \"{}.zip\"\n", self.опции.имя_модуля));
+                .push_str(&format!(".file 1 \"{}.zip\"\n", модуль));
         }
     }
 
@@ -112,12 +116,11 @@ impl ГенераторНативногоКода {
             self.ассемблер.push_str(&format!(".loc 1 1 1\n"));
         }
 
-        let глобал = if функция.имя == "главная" {
-            "\n.globl zip_main\nzip_main:\n"
-        } else {
-            ""
-        };
-        self.ассемблер.push_str(глобал);
+        // CRT ищет `main`; `zip_main` — стабильное имя для тестов и FFI.
+        if функция.имя == "главная" {
+            self.ассемблер
+                .push_str("\n.globl main\nmain:\n.globl zip_main\nzip_main:\n");
+        }
         self.ассемблер.push_str(&format!("\n.globl {}\n", метка));
         self.ассемблер.push_str(&format!("{}:\n", метка));
         self.ассемблер.push_str("  push rbp\n");
@@ -141,14 +144,14 @@ impl ГенераторНативногоКода {
 
         // атрибуты ZIP
         if функция.асинхронная {
-            self.ассемблер.push_str("  ; attribute: async/IMPERFECT\n");
+            self.ассемблер.push_str("  # attribute: async/IMPERFECT\n");
         }
         if функция.совершенная {
-            self.ассемблер.push_str("  ; attribute: PERFECT (immutable)\n");
+            self.ассемблер.push_str("  # attribute: PERFECT (immutable)\n");
         }
         self.ассемблер.push_str(&format!(
-            "  ; return_type: {:?}\n",
-            функция.тип_возврата
+            "  # return_type: {}\n",
+            ascii_тип(&функция.тип_возврата)
         ));
 
         for инстр in &функция.тело {
@@ -175,7 +178,7 @@ impl ГенераторНативногоКода {
             Инструкция::Выделить { назначение, размер } => {
                 let слот = адрес_регистра(*назначение);
                 строка.push_str(&format!(
-                    "  ; alloca r{} size {}\n  mov qword ptr {}, 0\n",
+                    "  # alloca r{} size {}\n  mov qword ptr {}, 0\n",
                     назначение.0, размер, слот
                 ));
             }
@@ -203,7 +206,7 @@ impl ГенераторНативногоКода {
             } => {
                 let dst = адрес_регистра(*назначение);
                 let src = адрес_регистра(*источник);
-                строка.push_str("  ; impulse/move noundef\n");
+                строка.push_str("  # impulse/move noundef\n");
                 строка.push_str(&format!("  mov rax, qword ptr {}\n", src));
                 строка.push_str(&format!("  mov qword ptr {}, rax\n", dst));
                 строка.push_str(&format!("  mov qword ptr {}, 0\n", src));
@@ -246,13 +249,13 @@ impl ГенераторНативногоКода {
                 let dst = адрес_регистра(*назначение);
                 let bits = значение.to_bits() as i64;
                 строка.push_str(&format!(
-                    "  ; f64 {}\n  mov rax, {}\n  mov qword ptr {}, rax\n",
+                    "  # f64 {}\n  mov rax, {}\n  mov qword ptr {}, rax\n",
                     значение, bits, dst
                 ));
             }
             Инструкция::ОжиданиеИмпульса { регистр } => {
                 строка.push_str(&format!(
-                    "  ; await impulse r{}\n  lfence\n",
+                    "  # await impulse r{}\n  lfence\n",
                     регистр.0
                 ));
             }
@@ -273,7 +276,7 @@ impl ГенераторНативногоКода {
                     .get(функция)
                     .cloned()
                     .unwrap_or_else(|| format!("zip_fn_{}", функция.0));
-                строка.push_str("  ; choir spawn (std::thread)\n");
+                строка.push_str("  # choir spawn (std::thread)\n");
                 for (i, арг) in аргументы.iter().enumerate() {
                     let reg = ["rcx", "rdx", "r8", "r9"].get(i).copied().unwrap_or("rax");
                     строка.push_str(&format!(
@@ -285,11 +288,11 @@ impl ГенераторНативногоКода {
                 строка.push_str(&format!("  call {}\n", имя));
             }
             Инструкция::СобратьХор { регистры } => {
-                строка.push_str(&format!("  ; choir join {} regs\n", регистры.len()));
+                строка.push_str(&format!("  # choir join {} regs\n", регистры.len()));
             }
             Инструкция::Зафиксировать { регистр } => {
                 строка.push_str(&format!(
-                    "  ; llvm.invariant.start r{} (PERFECT)\n  ; memory readonly\n",
+                    "  # llvm.invariant.start r{} (PERFECT)\n  # memory readonly\n",
                     регистр.0
                 ));
             }
@@ -300,8 +303,9 @@ impl ГенераторНативногоКода {
                 результат,
             } => {
                 строка.push_str(&format!(
-                    "  ; extern \"C\" {}::{}\n",
-                    библиотека, функция
+                    "  # extern C {}::{}\n",
+                    sanitize(библиотека),
+                    sanitize(функция)
                 ));
                 for (i, арг) in аргументы.iter().enumerate() {
                     let reg = ["rcx", "rdx", "r8", "r9"].get(i).copied().unwrap_or("rax");
@@ -379,7 +383,7 @@ impl ГенераторНативногоКода {
 
     pub fn записать_объектный_файл(&self, путь: &str) -> Result<(), String> {
         // Без LLVM пишем «объектный» контейнер: тот же ассемблер + заголовок ZIPOBJ
-        let mut buf = String::from("; ZIPOBJ stub (assemble with nasm/gas when LLVM unavailable)\n");
+        let mut buf = String::from("# ZIPOBJ stub (assemble with nasm/gas when LLVM unavailable)\n");
         buf.push_str(&self.ассемблер);
         fs::write(Path::new(путь), buf).map_err(|е| е.to_string())?;
         Ok(())
@@ -388,6 +392,17 @@ impl ГенераторНативногоКода {
 
 fn адрес_регистра(регистр: Регистр) -> String {
     format!("[rbp - {}]", (регистр.0 + 1) * 8)
+}
+
+fn ascii_тип(т: &Тип) -> &'static str {
+    match т {
+        Тип::Целое64 => "i64",
+        Тип::Вещественное64 => "f64",
+        Тип::Несовершенный => "imperfect",
+        Тип::Совершенный => "perfect",
+        Тип::Указатель(_) => "ptr",
+        Тип::Тензор(_) => "tensor",
+    }
 }
 
 fn mangled_имя(имя: &str) -> String {
@@ -458,6 +473,80 @@ pub fn скомпилировать_в_ассемблер(исходник: &str
     let mut ген = ГенераторНативногоКода::новый("zip");
     ген.сгенерировать(&функции)?;
     Ok(ген.текст_ассемблера().to_string())
+}
+
+/// Найти доступный линкер/драйвер в PATH.
+/// Приоритет: clang → gcc → cl (MSVC) → cc.
+pub fn найти_линкер() -> Option<String> {
+    for кандидат in ["clang", "gcc", "cl", "cc"] {
+        if линкер_доступен(кандидат) {
+            return Some(кандидат.to_string());
+        }
+    }
+    None
+}
+
+fn линкер_доступен(имя: &str) -> bool {
+    // Наличие в PATH (where/which). Для clang/gcc дополнительно пробуем --version.
+    let в_пути = Command::new(if cfg!(windows) { "where" } else { "which" })
+        .arg(имя)
+        .output()
+        .map(|о| о.status.success())
+        .unwrap_or(false);
+    if !в_пути {
+        return false;
+    }
+    if имя == "cl" {
+        return true;
+    }
+    Command::new(имя)
+        .arg("--version")
+        .output()
+        .map(|о| о.status.success() || !о.stdout.is_empty() || !о.stderr.is_empty())
+        .unwrap_or(true)
+}
+
+/// Слинковать ассемблер `.s` в исполняемый файл.
+pub fn линковать(путь_асм: &Path, выход: &Path) -> Result<PathBuf, String> {
+    let линкер = найти_линкер().ok_or_else(|| {
+        "не найдены clang/gcc/cl/cc в PATH (установите LLVM или MinGW)".to_string()
+    })?;
+
+    let mut выход = выход.to_path_buf();
+    if cfg!(windows) && выход.extension().is_none() {
+        выход.set_extension("exe");
+    }
+
+    let статус = match линкер.as_str() {
+        "cl" => {
+            // MSVC: cl не ест GAS `.s` напрямую — пробуем как есть; иначе ошибка.
+            Command::new("cl")
+                .arg(путь_асм)
+                .arg(format!("/Fe:{}", выход.display()))
+                .status()
+        }
+        имя => {
+            let mut команда = Command::new(имя);
+            команда.arg(путь_асм).arg("-o").arg(&выход);
+            // POSIX-флаги только для gcc/cc; clang на Windows MSVC их не любит.
+            if имя == "gcc" || имя == "cc" {
+                команда.arg("-pthread").arg("-lm");
+            }
+            команда.status()
+        }
+    }
+    .map_err(|е| format!("не удалось запустить {}: {}", линкер, е))?;
+
+    if статус.success() {
+        Ok(выход)
+    } else {
+        Err(format!(
+            "{} завершился с кодом {:?} при линковке {}",
+            линкер,
+            статус.code(),
+            путь_асм.display()
+        ))
+    }
 }
 
 #[allow(dead_code)]

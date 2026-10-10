@@ -11,7 +11,7 @@ path = "src/lib.rs"
 
 [[bin]]
 name = "zipc"
-path = "src/main.rs"
+path = "src/главное.rs"
 
 [[test]]
 name = "тест_лексики"

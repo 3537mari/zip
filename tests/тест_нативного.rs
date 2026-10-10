@@ -12,9 +12,8 @@ fn asm(исходник: &str) -> String {
 #[test]
 fn н01_заголовок_o3_native() {
     let т = asm("САПАР");
-    assert!(т.contains("opt-level=-O3"));
-    assert!(т.contains("target-cpu=native"));
-    assert!(т.contains("AVX2"));
+    assert!(т.contains("opt-level: O3"));
+    assert!(т.contains("target-cpu: native"));
 }
 
 #[test]
