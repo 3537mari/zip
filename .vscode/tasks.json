@@ -1,0 +1,25 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Профилировать ZIP",
+      "type": "shell",
+      "command": "${workspaceFolder}/зип-профиль/target/release/zip-profile.exe",
+      "args": [
+        "${file}",
+        "--тихо",
+        "--топ",
+        "10",
+        "--json",
+        "${fileDirname}/${fileBasenameNoExtension}.profile.json",
+        "--svg",
+        "${fileDirname}/${fileBasenameNoExtension}.flamegraph"
+      ],
+      "problemMatcher": [],
+      "group": {
+        "kind": "test",
+        "isDefault": false
+      }
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+/target/
+**/*.rs.bk
+Cargo.lock
+*.profile.json
+profile.json
+*.folded
+*.svg
+flamegraph*
