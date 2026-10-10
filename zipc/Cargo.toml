@@ -1,0 +1,18 @@
+[package]
+name = "zipc"
+version = "0.1.0"
+edition = "2021"
+description = "Компилятор языка ZIP (Zero-Immunity-Pulse)"
+license = "MIT"
+
+[lib]
+name = "zipc"
+path = "src/lib.rs"
+
+[[bin]]
+name = "zipc"
+path = "src/main.rs"
+
+[[test]]
+name = "тест_лексики"
+path = "../tests/тест_лексики.rs"
