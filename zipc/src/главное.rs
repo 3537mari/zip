@@ -20,6 +20,8 @@ mod владение;
 mod компилятор_времени;
 #[path = "комплементарность.rs"]
 mod комплементарность;
+#[path = "аннотации.rs"]
+mod аннотации;
 
 use anyhow::{bail, Context, Result};
 use clap::Parser;
@@ -143,6 +145,43 @@ fn main() -> Result<()> {
         .сгенерировать(&дерево)
         .map_err(|е| anyhow::anyhow!("{}", е))?;
     println!("Функций ПП: {}", функции_пп.len());
+
+    // 4epi. Идея 2 — лог применённых аннотаций + автогенерация @тест
+    {
+        let с_флагами: Vec<_> = функции_пп
+            .iter()
+            .filter(|ф| !аннотации::описание_флагов(ф).is_empty())
+            .collect();
+        if !с_флагами.is_empty() {
+            println!("Применение аннотаций:");
+            for ф in &с_флагами {
+                println!("  {}: {}", ф.имя, аннотации::описание_флагов(ф).join(", "));
+            }
+        }
+        let с_тестами: Vec<_> = функции_пп
+            .iter()
+            .filter(|ф| ф.тест_случай.is_some())
+            .collect();
+        if !с_тестами.is_empty() {
+            let mut файл_тестов = String::from("// Автоматически сгенерированные тесты (Идея 2)\n\n");
+            for функция in &с_тестами {
+                let случай = функция.тест_случай.unwrap_or(0);
+                файл_тестов.push_str(&format!("// Тесты для {}\n", функция.имя));
+                for i in 0..случай {
+                    let вход = ((i as i64) * 17 + 3) % 100;
+                    файл_тестов.push_str(&format!(
+                        "@тест_функция({}, {})\n",
+                        функция.имя, вход
+                    ));
+                }
+                файл_тестов.push('\n');
+            }
+            let путь_тестов = format!("{}_тесты.zip", аргументы.выходной_файл.display());
+            fs::write(&путь_тестов, файл_тестов)
+                .with_context(|| format!("запись {}", путь_тестов))?;
+            println!("  Тесты: {}", путь_тестов);
+        }
+    }
 
     // 4a. R2 — comptime: свернуть @comptime-вызовы в константы
     let есть_comptime = функции_пп.iter().any(|ф| ф.comptime);
@@ -411,6 +450,18 @@ fn скомпилировать_runtime(имя: &str, выход: &PathBuf) -> R
             false,
             false,
         ),
+        "cache" => (
+            vec![корень.join("zip-std/runtime/cache.c")],
+            "ZIP_CACHE_MAIN",
+            false,
+            false,
+        ),
+        "parallel" => (
+            vec![корень.join("zip-std/runtime/parallel.c")],
+            "ZIP_PARALLEL_MAIN",
+            false,
+            false,
+        ),
         другой => bail!("неизвестный #runtime(\"{}\")", другой),
     };
 
@@ -479,6 +530,9 @@ fn скомпилировать_runtime(имя: &str, выход: &PathBuf) -> R
     if winsock && cfg!(windows) {
         cmd.arg("-lws2_32");
         cmd.arg("-lcrypt32");
+    }
+    if имя == "parallel" && !cfg!(windows) {
+        cmd.arg("-lpthread");
     }
 
     let статус = cmd

@@ -61,6 +61,10 @@ path = "../tests/тест_итераторов.rs"
 name = "тест_комплементарности"
 path = "../tests/тест_комплементарности.rs"
 
+[[test]]
+name = "тест_эпигенетики"
+path = "../tests/тест_эпигенетики.rs"
+
 [features]
 default = []
 # LLVM IR + clang -O3 (встроенный эмиттер llvm_ir.rs).
