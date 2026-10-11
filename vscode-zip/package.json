@@ -10,10 +10,45 @@
   "categories": ["Programming Languages"],
   "activationEvents": [
     "onLanguage:zip",
-    "onDebug"
+    "onDebug",
+    "onCommand:zip.showAssociations",
+    "onCommand:zip.showGraph"
   ],
   "main": "./src/extension.js",
   "contributes": {
+    "commands": [
+      {
+        "command": "zip.showAssociations",
+        "title": "ZIP: Показать ассоциации"
+      },
+      {
+        "command": "zip.showGraph",
+        "title": "ZIP: Визуализировать граф"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "zip.showAssociations",
+          "when": "editorLangId == zip",
+          "group": "zip@1"
+        },
+        {
+          "command": "zip.showGraph",
+          "when": "editorLangId == zip",
+          "group": "zip@2"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "zip.showAssociations",
+          "when": "editorLangId == zip"
+        },
+        {
+          "command": "zip.showGraph"
+        }
+      ]
+    },
     "debuggers": [
       {
         "type": "zip",

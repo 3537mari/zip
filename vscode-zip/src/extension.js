@@ -2,6 +2,7 @@ const vscode = require("vscode");
 const path = require("path");
 const fs = require("fs");
 const { LanguageClient, TransportKind } = require("vscode-languageclient/node");
+const { активироватьГраф } = require("./граф");
 
 /** @type {LanguageClient | undefined} */
 let client;
@@ -15,8 +16,12 @@ function findLspBinary(configured) {
   const candidates = [
     path.join(repoRoot, "зип-lsp", "target", "release", "zip-lsp.exe"),
     path.join(repoRoot, "зип-lsp", "target", "release", "зип-lsp.exe"),
+    path.join(repoRoot, "зип-lsp", "target", "debug", "zip-lsp.exe"),
     path.join(repoRoot, "зип-lsp", "target", "release", "zip-lsp"),
     path.join(repoRoot, "зип-lsp", "target", "release", "зип-lsp"),
+    path.join(repoRoot, "зип-lsp", "target", "debug", "zip-lsp"),
+    path.join(repoRoot, "zipc", "target", "release", "zip-lsp.exe"),
+    path.join(repoRoot, "zipc", "target", "debug", "zip-lsp.exe"),
     path.join(repoRoot, "zip-lsp", "target", "release", "zip-lsp.exe"),
     "zip-lsp",
     "зип-lsp",
@@ -53,6 +58,7 @@ function activate(context) {
 
   client = new LanguageClient("zip-lsp", "ЗИП-LSP", serverOptions, clientOptions);
   context.subscriptions.push(client.start());
+  активироватьГраф(client, context);
   vscode.window.setStatusBarMessage(`ZIP LSP: ${serverPath}`, 5000);
 }
 

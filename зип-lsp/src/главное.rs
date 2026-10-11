@@ -7,6 +7,8 @@ use tokio::sync::RwLock;
 use tower_lsp::jsonrpc::Result as LspResult;
 use tower_lsp::lsp_types::*;
 use tower_lsp::{Client, LanguageServer, LspService, Server};
+use serde_json::Value;
+use zipc::ассоциации::{ГрафАссоциаций, ТипСвязи};
 use zipc::{
     проанализировать_функции, разобрать_исходник, ГенераторПП, Лексер, Токен, ТокенСПозицией,
     Узел,
@@ -31,6 +33,96 @@ struct Документ {
 struct ЗипLsp {
     клиент: Client,
     документы: Arc<RwLock<HashMap<Url, Документ>>>,
+    /// Идея 6: граф семантических ассоциаций
+    граф: Arc<ГрафАссоциаций>,
+}
+
+fn описание_связи(тип: ТипСвязи) -> &'static str {
+    match тип {
+        ТипСвязи::Ассоциация => "связанное",
+        ТипСвязи::Противоположность => "противоположное",
+        ТипСвязи::Следствие => "следствие",
+        ТипСвязи::Причина => "причина",
+        ТипСвязи::Категория => "категория",
+        ТипСвязи::Аналог => "аналог",
+    }
+}
+
+fn hover_графа(граф: &ГрафАссоциаций, слово: &str) -> Option<String> {
+    let сущность = граф.сущность(слово)?;
+    let mut содержимое = format!(
+        "**{}** ({:?})\n\n{}\n\n",
+        сущность.имя, сущность.тип, сущность.описание
+    );
+    if !сущность.категории.is_empty() {
+        содержимое.push_str(&format!(
+            "*Категории:* {}\n\n",
+            сущность.категории.join(", ")
+        ));
+    }
+    let ассоциации = граф.ассоциации(слово);
+    if !ассоциации.is_empty() {
+        содержимое.push_str("**Связанные:**\n");
+        for (связанное, тип) in ассоциации {
+            содержимое.push_str(&format!(
+                "- {} {} _{}_\n",
+                тип.иконка(),
+                связанное,
+                описание_связи(тип)
+            ));
+        }
+    }
+    Some(содержимое)
+}
+
+fn ассоциации_value(граф: &ГрафАссоциаций, слово: &str) -> Value {
+    let список: Vec<Value> = граф
+        .ассоциации(слово)
+        .into_iter()
+        .map(|(к, тип)| {
+            serde_json::json!({
+                "связанное": к,
+                "тип": тип.метка(),
+                "иконка": тип.иконка(),
+            })
+        })
+        .collect();
+    let сущность = граф.сущность(слово);
+    serde_json::json!({
+        "слово": слово,
+        "описание": сущность.map(|с| с.описание.as_str()).unwrap_or(""),
+        "тип": сущность.map(|с| format!("{:?}", с.тип)).unwrap_or_default(),
+        "категории": сущность.map(|с| с.категории.clone()).unwrap_or_default(),
+        "ассоциации": список,
+    })
+}
+
+fn граф_value(граф: &ГрафАссоциаций) -> Value {
+    let узлы: Vec<Value> = граф
+        .сущности
+        .values()
+        .map(|с| {
+            serde_json::json!({
+                "имя": с.имя,
+                "тип": format!("{:?}", с.тип),
+                "описание": с.описание,
+                "категории": с.категории,
+            })
+        })
+        .collect();
+    let рёбра: Vec<Value> = граф
+        .рёбра()
+        .into_iter()
+        .map(|(от, к, тип)| {
+            serde_json::json!({
+                "от": от,
+                "к": к,
+                "тип": тип.метка(),
+                "иконка": тип.иконка(),
+            })
+        })
+        .collect();
+    serde_json::json!({ "узлы": узлы, "рёбра": рёбра })
 }
 
 fn поз(строка: usize, столбец: usize) -> Position {
@@ -402,6 +494,13 @@ impl LanguageServer for ЗипLsp {
                         ..Default::default()
                     },
                 )),
+                execute_command_provider: Some(ExecuteCommandOptions {
+                    commands: vec![
+                        "zip.associations".into(),
+                        "zip.graph".into(),
+                    ],
+                    ..Default::default()
+                }),
                 ..Default::default()
             },
         })
@@ -440,7 +539,10 @@ impl LanguageServer for ЗипLsp {
             .await;
     }
 
-    async fn completion(&self, _: CompletionParams) -> LspResult<Option<CompletionResponse>> {
+    async fn completion(
+        &self,
+        params: CompletionParams,
+    ) -> LspResult<Option<CompletionResponse>> {
         let mut элементов = Vec::new();
 
         let ключевые = [
@@ -505,6 +607,52 @@ impl LanguageServer for ЗипLsp {
             });
         }
 
+        // Идея 6: умное автодополнение по графу ассоциаций
+        let uri = &params.text_document_position.text_document.uri;
+        let позиция = params.text_document_position.position;
+        let документы = self.документы.read().await;
+        if let Some(док) = документы.get(uri) {
+            if let Some((слово, _)) = слово_в_позиции(&док.текст, позиция) {
+                let префикс = слово.as_str();
+                // Точные ассоциации текущего слова
+                for (связанное, тип_связи) in self.граф.ассоциации(префикс) {
+                    let detail = format!(
+                        "{} {}",
+                        тип_связи.иконка(),
+                        описание_связи(тип_связи)
+                    );
+                    элементов.push(CompletionItem {
+                        label: связанное.clone(),
+                        kind: Some(CompletionItemKind::REFERENCE),
+                        detail: Some(detail),
+                        documentation: Some(Documentation::String(format!(
+                            "Связь с {}: {}",
+                            префикс,
+                            описание_связи(тип_связи)
+                        ))),
+                        sort_text: Some(format!("0_{связанное}")),
+                        ..Default::default()
+                    });
+                }
+                // Сущности, чьё имя начинается с префикса
+                if !префикс.is_empty() {
+                    for имя in self.граф.сущности.keys() {
+                        if имя.starts_with(префикс) && имя != префикс {
+                            if let Some(с) = self.граф.сущность(имя) {
+                                элементов.push(CompletionItem {
+                                    label: имя.clone(),
+                                    kind: Some(CompletionItemKind::CLASS),
+                                    detail: Some(с.описание.clone()),
+                                    sort_text: Some(format!("1_{имя}")),
+                                    ..Default::default()
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         Ok(Some(CompletionResponse::Array(элементов)))
     }
 
@@ -519,9 +667,9 @@ impl LanguageServer for ЗипLsp {
         let Some((слово, range)) = слово_в_позиции(&док.текст, позиция) else {
             return Ok(None);
         };
-        let содержимое = hover_для(&слово).unwrap_or_else(|| {
-            format!("**`{слово}`** — идентификатор ZIP")
-        });
+        let содержимое = hover_графа(&self.граф, &слово)
+            .or_else(|| hover_для(&слово))
+            .unwrap_or_else(|| format!("**`{слово}`** — идентификатор ZIP"));
         Ok(Some(Hover {
             contents: HoverContents::Markup(MarkupContent {
                 kind: MarkupKind::Markdown,
@@ -529,6 +677,25 @@ impl LanguageServer for ЗипLsp {
             }),
             range: Some(range),
         }))
+    }
+
+    async fn execute_command(
+        &self,
+        params: ExecuteCommandParams,
+    ) -> LspResult<Option<Value>> {
+        match params.command.as_str() {
+            "zip.associations" => {
+                let слово = params
+                    .arguments
+                    .first()
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("")
+                    .to_string();
+                Ok(Some(ассоциации_value(&self.граф, &слово)))
+            }
+            "zip.graph" => Ok(Some(граф_value(&self.граф))),
+            _ => Ok(None),
+        }
     }
 
     async fn goto_definition(
@@ -805,6 +972,7 @@ async fn main() {
     let (service, socket) = LspService::new(|клиент| ЗипLsp {
         клиент,
         документы: Arc::new(RwLock::new(HashMap::new())),
+        граф: Arc::new(ГрафАссоциаций::новый()),
     });
 
     Server::new(stdin, stdout, socket).serve(service).await;
