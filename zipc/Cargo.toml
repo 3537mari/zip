@@ -109,6 +109,11 @@ path = "../tests/тест_генератора_тестов.rs"
 name = "тест_потоков_агентов"
 path = "../tests/тест_потоков_агентов.rs"
 
+[[test]]
+name = "тест_нейрогенеза"
+path = "../tests/тест_нейрогенеза.rs"
+
+
 [features]
 default = []
 # LLVM IR + clang -O3 (встроенный эмиттер llvm_ir.rs).

@@ -32,7 +32,8 @@ mod ассоциации;
 mod корни;
 #[path = "генератор_тестов.rs"]
 mod генератор_тестов;
-
+#[path = "нейрогенез.rs"]
+mod нейрогенез;
 use anyhow::{bail, Context, Result};
 use clap::{Parser, Subcommand};
 use дерево::Узел;
@@ -100,6 +101,7 @@ struct Аргументы {
     /// Целевой процессор (native, generic, znver3, skylake)
     #[arg(long = "целевой-процессор", default_value = "native")]
     целевой_процессор: String,
+
 }
 
 #[derive(Subcommand, Debug)]
@@ -381,6 +383,7 @@ fn выполнить_сборку(аргументы: Аргументы) -> Re
         .сгенерировать(&дерево)
         .map_err(|е| anyhow::anyhow!("{}", е))?;
     println!("Функций ПП: {}", функции_пп.len());
+
 
     // 4epi. Идея 2 — лог применённых аннотаций + автогенерация @тест
     {
