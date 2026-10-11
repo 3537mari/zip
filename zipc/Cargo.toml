@@ -178,6 +178,10 @@ path = "../tests/тест_datetime.rs"
 name = "тест_архива"
 path = "../tests/тест_архива.rs"
 
+[[test]]
+name = "тест_плагинов"
+path = "../tests/тест_плагинов.rs"
+
 [profile.release]
 opt-level = 3
 lto = true

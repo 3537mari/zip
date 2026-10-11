@@ -42,10 +42,15 @@ fn скомпилировать_json(макрос: &str, имя: &str) -> Option
     let clang = найти_clang()?;
     let корень = корень_репо();
     let источник = корень.join("zip-std/runtime/json_parser.c");
+    let uniq = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_nanos())
+        .unwrap_or(0);
     let out = std::env::temp_dir().join(format!(
-        "zip_json_{}_{}.{}",
+        "zip_json_{}_{}_{}.{}",
         имя,
         std::process::id(),
+        uniq,
         if cfg!(windows) { "exe" } else { "out" }
     ));
     let статус = Command::new(&clang)
