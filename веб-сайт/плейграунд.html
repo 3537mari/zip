@@ -65,17 +65,18 @@
   <script type="module">
     const status = document.getElementById("status");
     const out = document.getElementById("out");
-    let api = null;
+    let compileFn = null;
 
     async function load() {
       try {
         const mod = await import("./wasm/zipc.js");
         await mod.default();
-        api = mod;
-        status.textContent = "ZIP " + (mod.версия ? mod.версия() : "?") + " · WASM готов";
+        compileFn = mod.compileZip || mod.скомпилировать || mod.compile;
+        const ver = mod.versionZip || mod.версия || mod.version;
+        status.textContent = "ZIP " + (ver ? ver() : "?") + " · WASM готов";
       } catch (e) {
         status.textContent = "WASM не собран — fallback-анализатор (лексер JS)";
-        api = null;
+        compileFn = null;
         console.warn(e);
       }
     }
@@ -90,19 +91,14 @@
         "главная: " + (hasMain ? "да" : "нет"),
         "печать: " + (hasPrint ? "да" : "нет"),
         "",
-        "Соберите WASM:",
-        "  cd zipc && wasm-pack build --target web --features wasm --out-dir ../веб-сайт/wasm",
+        "Сборка WASM выполняется в GitHub Actions при деплое сайта.",
       ].join("\n");
     }
 
     window.run = function () {
       const src = document.getElementById("code").value;
       try {
-        if (api && api.скомпилировать) {
-          out.textContent = api.скомпилировать(src);
-        } else {
-          out.textContent = fallback(src);
-        }
+        out.textContent = compileFn ? compileFn(src) : fallback(src);
       } catch (e) {
         out.textContent = "Ошибка: " + e;
       }

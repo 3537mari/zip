@@ -1,16 +1,20 @@
 title: ZIP
 description: Язык программирования на кириллице
 theme: minima
-baseurl: ""
-url: "https://zip-lang.org"
+# Проектный сайт: https://3537mari.github.io/zip/
+# При подключении домена zip-lang.org смените baseurl на "" и url на https://zip-lang.org
+baseurl: "/zip"
+url: "https://3537mari.github.io"
 github_username: 3537mari
 markdown: kramdown
 kramdown:
   input: GFM
 plugins:
   - jekyll-feed
+  - jekyll-seo-tag
+  - jekyll-sitemap
 header_pages:
   - установка.md
   - туториал.md
-  - сообщество.md
+  - документация.md
   - плейграунд.html

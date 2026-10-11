@@ -138,7 +138,7 @@ anyhow = "1.0"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 sha2 = "0.10"
-wasm-bindgen = { version = "0.2", optional = true }
+wasm-bindgen = { version = "=0.2.100", optional = true }
 js-sys = { version = "0.3", optional = true }
 # Полный SDK LLVM 22+ (не входит в winget runtime). См. docs / llvm_ir.rs.
 inkwell = { version = "0.10", features = ["llvm22-1"], optional = true }

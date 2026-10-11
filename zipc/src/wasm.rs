@@ -5,7 +5,7 @@
 use wasm_bindgen::prelude::*;
 
 /// Разбор исходника: лексика → AST → IR (без нативной линковки).
-#[wasm_bindgen]
+#[wasm_bindgen(js_name = compileZip)]
 pub fn скомпилировать(исходник: &str) -> String {
     let mut лексер = crate::Лексер::новый(исходник);
     let токены = match лексер.разобрать() {
@@ -37,7 +37,7 @@ pub fn скомпилировать(исходник: &str) -> String {
     )
 }
 
-#[wasm_bindgen]
+#[wasm_bindgen(js_name = versionZip)]
 pub fn версия() -> String {
     env!("CARGO_PKG_VERSION").to_string()
 }

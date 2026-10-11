@@ -5,10 +5,18 @@ on:
     branches: [master]
     paths:
       - "веб-сайт/**"
+      - "zipc/src/wasm.rs"
+      - "zipc/Cargo.toml"
+      - "zipc/Cargo.lock"
       - ".github/workflows/deploy-site.yml"
+  workflow_dispatch:
 
 permissions:
   contents: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
 
 jobs:
   deploy:
@@ -16,19 +24,34 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Build WASM playground
+        working-directory: zipc
+        run: |
+          cargo install wasm-bindgen-cli --version 0.2.100 --force
+          cargo update -p wasm-bindgen --precise 0.2.100 || true
+          cargo build --lib --target wasm32-unknown-unknown --features wasm --release
+          wasm-bindgen --target web --out-dir ../веб-сайт/wasm \
+            target/wasm32-unknown-unknown/release/zipc.wasm
+          ls -la ../веб-сайт/wasm
+
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: "3.2"
           bundler-cache: true
           working-directory: веб-сайт
 
-      - name: Build site
+      - name: Build Jekyll site
         working-directory: веб-сайт
         run: |
           bundle install
           bundle exec jekyll build
 
-      - name: Deploy
+      - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
