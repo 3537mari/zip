@@ -60,3 +60,9 @@ node_modules/
 привет.s
 привет.o
 zipc/*.exe
+
+# Bootstrap local probes
+bootstrap/тест.*
+bootstrap/t_hello.*
+bootstrap/*.zipb
+
