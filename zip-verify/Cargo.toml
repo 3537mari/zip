@@ -1,0 +1,25 @@
+[package]
+name = "zip-verify"
+version = "0.1.0"
+edition = "2021"
+description = "Формальная верификация байт-кода ZIP v3"
+license = "MIT"
+
+[lib]
+name = "zip_verify"
+path = "src/lib.rs"
+
+[[bin]]
+name = "zip-verify"
+path = "src/главное.rs"
+
+[[test]]
+name = "тест_верификации"
+path = "tests/тест_верификации.rs"
+
+[dependencies]
+zip-vm = { path = "../zip-vm" }
+clap = { version = "4.5", features = ["derive"] }
+anyhow = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
