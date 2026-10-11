@@ -13,6 +13,8 @@ pub mod загрузчик;
 pub mod исполнитель;
 #[path = "jit.rs"]
 pub mod jit;
+#[path = "параллельный_jit.rs"]
+pub mod параллельный_jit;
 #[path = "память.rs"]
 pub mod память;
 #[path = "планировщик.rs"]
@@ -25,3 +27,4 @@ pub use байткод_в_llvm::байткод_в_llvm_ir;
 pub use загрузчик::{загрузить, разобрать, сериализовать};
 pub use исполнитель::Исполнитель;
 pub use jit::JitКомпилятор;
+pub use параллельный_jit::ПараллельныйJIT;

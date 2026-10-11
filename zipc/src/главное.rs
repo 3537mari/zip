@@ -16,6 +16,10 @@ mod промежуток;
 mod нативный;
 #[path = "llvm_ir.rs"]
 mod llvm_ir;
+#[path = "simd.rs"]
+mod simd;
+#[path = "пул_памяти.rs"]
+mod пул_памяти;
 #[path = "байткод_эмиттер.rs"]
 mod байткод_эмиттер;
 #[path = "владение.rs"]
@@ -83,6 +87,10 @@ struct Аргументы {
     #[arg(long = "llvm")]
     llvm: bool,
 
+    /// Явные SIMD-флаги clang (AVX-512 / AVX2 / NEON) + анализ циклов
+    #[arg(long = "simd")]
+    simd: bool,
+
     /// Только вывести LLVM IR (.ll) и останов
     #[arg(long = "вывод-llvm")]
     вывод_llvm: bool,
@@ -134,6 +142,8 @@ enum Команда {
         выходной_файл: Option<PathBuf>,
         #[arg(long)]
         llvm: bool,
+        #[arg(long)]
+        simd: bool,
     },
 
     /// Скомпилировать и запустить (R7 — cargo-script)
@@ -142,6 +152,8 @@ enum Команда {
         входной_файл: PathBuf,
         #[arg(long)]
         llvm: bool,
+        #[arg(long)]
+        simd: bool,
         /// Аргументы для программы
         #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
         аргументы: Vec<String>,
@@ -153,6 +165,8 @@ enum Команда {
         входной_файл: PathBuf,
         #[arg(long)]
         llvm: bool,
+        #[arg(long)]
+        simd: bool,
     },
 
     /// Показать версию
@@ -191,13 +205,15 @@ fn main() -> Result<()> {
         Some(Команда::Запустить {
             входной_файл,
             llvm,
+            simd,
             аргументы: арг,
         }) => {
-            return команда_запустить(&входной_файл, llvm, &арг);
+            return команда_запустить(&входной_файл, llvm || simd, &арг);
         }
         Some(Команда::Тест {
             входной_файл,
             llvm,
+            simd: _,
         }) => {
             return команда_тест(&входной_файл, llvm);
         }
@@ -205,12 +221,14 @@ fn main() -> Result<()> {
             входной_файл,
             выходной_файл,
             llvm,
+            simd,
         }) => {
             let а = Аргументы {
                 команда: None,
                 входной_файл: Some(входной_файл),
                 выходной_файл: выходной_файл.unwrap_or(аргументы.выходной_файл),
-                llvm: llvm || аргументы.llvm,
+                llvm: llvm || аргументы.llvm || simd || аргументы.simd,
+                simd: simd || аргументы.simd,
                 только_лексика: аргументы.только_лексика,
                 только_парсинг: аргументы.только_парсинг,
                 вывод_пп: аргументы.вывод_пп,
@@ -682,8 +700,16 @@ fn выполнить_сборку(аргументы: Аргументы) -> Re
         return Ok(());
     }
 
-    // 5b. LLVM IR → clang -O3
-    if аргументы.llvm || аргументы.вывод_llvm {
+    // 5b. LLVM IR → clang -O3 (+ SIMD при --simd)
+    if аргументы.llvm || аргументы.вывод_llvm || аргументы.simd {
+        if аргументы.simd {
+            let (н, лог) = simd::аннотировать_функции(&функции_пп);
+            println!("SIMD: найдено векторизуемых циклов: {}", н);
+            for строка in лог {
+                println!("  {}", строка);
+            }
+            println!("  SIMD-проходы: {}", llvm_ir::LLVM_PASSES_SIMD);
+        }
         let ir = llvm_ir::сгенерировать_llvm_ir(&функции_пп, &имя_модуля)
             .map_err(|е| anyhow::anyhow!("{}", е))?;
         let путь_ll = with_extension(&аргументы.выходной_файл, "ll");
@@ -695,9 +721,18 @@ fn выполнить_сборку(аргументы: Аргументы) -> Re
             return Ok(());
         }
 
-        match llvm_ir::скомпилировать_llvm(&функции_пп, &имя_модуля, &аргументы.выходной_файл) {
+        match llvm_ir::скомпилировать_llvm_с_опциями(
+            &функции_пп,
+            &имя_модуля,
+            &аргументы.выходной_файл,
+            аргументы.simd,
+        ) {
             Ok((exe, ll)) => {
-                println!("✓ LLVM+clang -O3: {}", exe.display());
+                if аргументы.simd {
+                    println!("✓ LLVM+clang -O3 -march=native +SIMD: {}", exe.display());
+                } else {
+                    println!("✓ LLVM+clang -O3: {}", exe.display());
+                }
                 println!("  IR: {}", ll.display());
             }
             Err(е) => {

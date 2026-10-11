@@ -22,6 +22,9 @@ pub const LLVM_PASSES: &[&str] = &[
     "slp-vectorizer",
 ];
 
+/// Явные SIMD-проходы (pipeline string для документации / opt).
+pub const LLVM_PASSES_SIMD: &str = "vectorize[vectorize-loops,vectorize-slp],unroll-loops";
+
 /// Сгенерировать текстовый LLVM IR (opaque pointers, LLVM 15+).
 pub fn сгенерировать_llvm_ir(функции: &[ФункцияПП], имя_модуля: &str) -> Result<String, String> {
     let mut out = String::new();
@@ -33,6 +36,7 @@ pub fn сгенерировать_llvm_ir(функции: &[ФункцияПП],
     out.push_str("target triple = \"x86_64-pc-windows-msvc\"\n\n");
     out.push_str("; Проходы: mem2reg, instcombine, simplifycfg, ");
     out.push_str("loop-unroll, loop-vectorize, slp-vectorizer\n");
+    out.push_str(&format!("; SIMD-проходы: {}\n", LLVM_PASSES_SIMD));
     out.push_str("; Для горячих функций: aggressive-inline, ");
     out.push_str("loop-unroll-full, vectorize-width=512\n\n");
 
@@ -628,11 +632,21 @@ fn escape_llvm_string(s: &str) -> String {
     out
 }
 
-/// Записать .ll и собрать через clang -O3.
+/// Записать .ll и собрать через clang -O3 (-march=native).
 pub fn скомпилировать_llvm(
     функции: &[ФункцияПП],
     имя_модуля: &str,
     выход: &Path,
+) -> Result<(PathBuf, PathBuf), String> {
+    скомпилировать_llvm_с_опциями(функции, имя_модуля, выход, false)
+}
+
+/// Сборка LLVM IR с опциональными явными SIMD-флагами (`--simd`).
+pub fn скомпилировать_llvm_с_опциями(
+    функции: &[ФункцияПП],
+    имя_модуля: &str,
+    выход: &Path,
+    simd: bool,
 ) -> Result<(PathBuf, PathBuf), String> {
     let ir = сгенерировать_llvm_ir(функции, имя_модуля)?;
     let mut ll = выход.to_path_buf();
@@ -644,14 +658,18 @@ pub fn скомпилировать_llvm(
         exe.set_extension("exe");
     }
 
-    let статус = Command::new("clang")
-        .arg(&ll)
-        .arg("-O3")
-        .arg("-march=native")
-        .arg("-o")
-        .arg(&exe)
-        .status()
-        .map_err(|е| format!("clang: {}", е))?;
+    let mut cmd = Command::new("clang");
+    cmd.arg(&ll).arg("-O3").arg("-march=native");
+    if simd {
+        for флаг in crate::simd::флаги_clang_simd() {
+            if флаг != "-march=native" {
+                cmd.arg(флаг);
+            }
+        }
+    }
+    cmd.arg("-o").arg(&exe);
+
+    let статус = cmd.status().map_err(|е| format!("clang: {}", е))?;
 
     if статус.success() {
         Ok((exe, ll))

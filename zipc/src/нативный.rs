@@ -780,6 +780,20 @@ pub fn линковать(путь_асм: &Path, выход: &Path) -> Result<P
         }
         имя => {
             let mut команда = Command::new(имя);
+            // clang: -O3 -march=native (+ AVX-512 на x86_64)
+            if имя == "clang" {
+                if cfg!(target_arch = "x86_64") {
+                    команда
+                        .arg("-O3")
+                        .arg("-march=native")
+                        .arg("-mavx512f")
+                        .arg("-mavx512vl");
+                } else if cfg!(target_arch = "aarch64") {
+                    команда.arg("-O3").arg("-march=native");
+                } else {
+                    команда.arg("-O3");
+                }
+            }
             команда.arg(путь_асм).arg("-o").arg(&выход);
             // POSIX-флаги только для gcc/cc; clang на Windows MSVC их не любит.
             if имя == "gcc" || имя == "cc" {
