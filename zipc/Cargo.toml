@@ -53,6 +53,10 @@ path = "../tests/тест_comptime.rs"
 name = "тест_гласных"
 path = "../tests/тест_гласных.rs"
 
+[[test]]
+name = "тест_итераторов"
+path = "../tests/тест_итераторов.rs"
+
 [features]
 default = []
 # LLVM IR + clang -O3 (встроенный эмиттер llvm_ir.rs).
