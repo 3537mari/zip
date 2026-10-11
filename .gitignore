@@ -1,6 +1,9 @@
 # Cargo / build
 /target/
 **/target/
+**/Cargo.lock
+
+# Native / IR artifacts
 **/*.exe
 **/*.dll
 **/*.lib
@@ -12,10 +15,17 @@
 **/*.s
 **/*.ll
 
+# Generated tests (Idea 20)
+*_автотесты.zip
+*_тесты.zip
+**/*_автотесты.zip
+**/*_тесты.zip
+
 # Logs & temp
 *.log
 build-release.log
 **/build-release.log
+zipc/build-release.log
 
 # Local helper scripts (not part of the product)
 tools/_*.py
