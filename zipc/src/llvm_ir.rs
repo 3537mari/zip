@@ -51,14 +51,33 @@ pub fn сгенерировать_llvm_ir(функции: &[ФункцияПП],
     out.push_str("@.fmt_type_err = private unnamed_addr constant [40 x i8] c\"type error: no matching specialization\\0A\\00\"\n\n");
 
     let mut строки: Vec<String> = Vec::new();
+    let mut глобалы: Vec<String> = Vec::new();
     for ф in функции {
         for и in &ф.тело {
-            if let Инструкция::КонстантаСтрока { значение, .. } = и {
-                if !строки.iter().any(|s| s == значение) {
-                    строки.push(значение.clone());
+            match и {
+                Инструкция::КонстантаСтрока { значение, .. } => {
+                    if !строки.iter().any(|s| s == значение) {
+                        строки.push(значение.clone());
+                    }
                 }
+                Инструкция::ЗагрузитьГлобал { имя, .. }
+                | Инструкция::СохранитьГлобал { имя, .. } => {
+                    if !глобалы.iter().any(|g| g == имя) {
+                        глобалы.push(имя.clone());
+                    }
+                }
+                _ => {}
             }
         }
+    }
+    for имя in &глобалы {
+        out.push_str(&format!(
+            "@{} = global i64 0, align 8\n",
+            mangled(имя)
+        ));
+    }
+    if !глобалы.is_empty() {
+        out.push('\n');
     }
     for (i, s) in строки.iter().enumerate() {
         let bytes = escape_llvm_string(s);
@@ -125,6 +144,9 @@ fn эмит_функцию(
     }
     if ф.имя == "zip_ошибка_типа" {
         return Ok(эмит_ошибка_типа(&fname));
+    }
+    if ф.имя == "zip_агент_отправить" {
+        return Ok(эмит_агент_отправить(&fname));
     }
 
     let mut out = String::new();
@@ -442,6 +464,26 @@ fn эмит_функцию(
                     назначение.0
                 ));
             }
+            Инструкция::ЗагрузитьГлобал { назначение, имя } => {
+                let t = next_tmp();
+                out.push_str(&format!(
+                    "  %t{} = load i64, ptr @{}, align 8\n  store i64 %t{}, ptr %r{}, align 8\n",
+                    t,
+                    mangled(имя),
+                    t,
+                    назначение.0
+                ));
+            }
+            Инструкция::СохранитьГлобал { имя, значение } => {
+                let t = next_tmp();
+                out.push_str(&format!(
+                    "  %t{} = load i64, ptr %r{}, align 8\n  store i64 %t{}, ptr @{}, align 8\n",
+                    t,
+                    значение.0,
+                    t,
+                    mangled(имя)
+                ));
+            }
             _ => out.push_str("  ; stub\n"),
         }
     }
@@ -485,6 +527,8 @@ fn regs_of(и: &Инструкция) -> Vec<Регистр> {
         Инструкция::ВетвлениеИмпульса { условие, .. } => vec![*условие],
         Инструкция::Вернуть { значение } => значение.iter().copied().collect(),
         Инструкция::Вызвать { результат, .. } => результат.iter().copied().collect(),
+        Инструкция::ЗагрузитьГлобал { назначение, .. } => vec![*назначение],
+        Инструкция::СохранитьГлобал { значение, .. } => vec![*значение],
         _ => vec![],
     }
 }
@@ -540,6 +584,19 @@ entry:
   call i32 (ptr, ...) @printf(ptr @.fmt_type_err)
   call void @exit(i32 1)
   unreachable
+}}
+"#
+    )
+}
+
+/// Идея 17: печать сообщения агента (указатель строки как i64).
+fn эмит_агент_отправить(fname: &str) -> String {
+    format!(
+        r#"define i64 @{fname}(i64 %arg0) {{
+entry:
+  %p = inttoptr i64 %arg0 to ptr
+  call i32 @puts(ptr %p)
+  ret i64 0
 }}
 "#
     )
