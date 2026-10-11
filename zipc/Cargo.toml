@@ -191,6 +191,26 @@ path = "../tests/тест_плагинов.rs"
 name = "тест_самокомпиляции"
 path = "../tests/тест_самокомпиляции.rs"
 
+[[test]]
+name = "тест_лексики_крайние"
+path = "../tests/тест_лексики_крайние.rs"
+
+[[test]]
+name = "тест_парсера_полный"
+path = "../tests/тест_парсера_полный.rs"
+
+[[test]]
+name = "тест_ir_полный"
+path = "../tests/тест_ir_полный.rs"
+
+[[test]]
+name = "тест_эмиттеров"
+path = "../tests/тест_эмиттеров.rs"
+
+[[test]]
+name = "тест_покрытия_ядра"
+path = "../tests/тест_покрытия_ядра.rs"
+
 [profile.release]
 opt-level = 3
 lto = true
