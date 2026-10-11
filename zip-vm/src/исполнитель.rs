@@ -572,6 +572,130 @@ impl Исполнитель {
                 // Заглушка fopen: ненулевой «дескриптор»
                 Ok(Some(Значение::Целое(1)))
             }
+
+            // Идея 12: TTL `[данные][created_ms][ttl_мс][активно]`
+            "zip_создать_ttl" | "эфемерное" => {
+                let данные = аргументы.first().map(|з| з.как_i64()).transpose()?.unwrap_or(0);
+                let ttl = аргументы.get(1).map(|з| з.как_i64()).transpose()?.unwrap_or(0);
+                let сейчас = std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .map(|d| d.as_millis() as i64)
+                    .unwrap_or(0);
+                let адр = self.память.выделить(32)?;
+                self.память.записать_i64(адр, данные)?;
+                self.память.записать_i64(адр + 8, сейчас)?;
+                self.память.записать_i64(адр + 16, ttl)?;
+                self.память.записать_i64(адр + 24, 1)?;
+                Ok(Some(Значение::Целое(адр as i64)))
+            }
+            "zip_ttl_жив" | "эфемерное_жив" => {
+                let p = аргументы.first().map(|з| з.как_i64()).transpose()?.unwrap_or(0) as usize;
+                if p == 0 {
+                    return Ok(Some(Значение::Целое(0)));
+                }
+                let активно = self.память.читать_i64(p + 24)?;
+                if активно == 0 {
+                    return Ok(Some(Значение::Целое(0)));
+                }
+                let создан = self.память.читать_i64(p + 8)?;
+                let ttl = self.память.читать_i64(p + 16)?;
+                let сейчас = std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .map(|d| d.as_millis() as i64)
+                    .unwrap_or(0);
+                if сейчас - создан > ttl {
+                    self.память.записать_i64(p + 24, 0)?;
+                    Ok(Some(Значение::Целое(0)))
+                } else {
+                    Ok(Some(Значение::Целое(1)))
+                }
+            }
+            "zip_ttl_получить" | "эфемерное_значение" => {
+                let p = аргументы.first().map(|з| з.как_i64()).transpose()?.unwrap_or(0) as usize;
+                if p == 0 {
+                    return Ok(Some(Значение::Целое(0)));
+                }
+                let активно = self.память.читать_i64(p + 24)?;
+                if активно == 0 {
+                    return Ok(Some(Значение::Целое(0)));
+                }
+                let создан = self.память.читать_i64(p + 8)?;
+                let ttl = self.память.читать_i64(p + 16)?;
+                let сейчас = std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .map(|d| d.as_millis() as i64)
+                    .unwrap_or(0);
+                if сейчас - создан > ttl {
+                    self.память.записать_i64(p + 24, 0)?;
+                    return Ok(Some(Значение::Целое(0)));
+                }
+                Ok(Some(Значение::Целое(self.память.читать_i64(p)?)))
+            }
+            "zip_ttl_освободить" | "эфемерное_освободить" => {
+                let p = аргументы.first().map(|з| з.как_i64()).transpose()?.unwrap_or(0) as usize;
+                if p != 0 {
+                    self.память.записать_i64(p + 24, 0)?;
+                }
+                Ok(Some(Значение::Целое(0)))
+            }
+
+            // Идея 13: измерение `[значение][единица]`
+            "zip_создать_измерение" | "измерить" => {
+                let зн = аргументы.first().map(|з| з.как_i64()).transpose()?.unwrap_or(0);
+                let ед = аргументы.get(1).map(|з| з.как_i64()).transpose()?.unwrap_or(0);
+                let адр = self.память.выделить(16)?;
+                self.память.записать_i64(адр, зн)?;
+                self.память.записать_i64(адр + 8, ед)?;
+                Ok(Some(Значение::Целое(адр as i64)))
+            }
+            "zip_единицы_совместимы" | "совместимо" => {
+                let a = аргументы.first().map(|з| з.как_i64()).transpose()?.unwrap_or(0) as usize;
+                let b = аргументы.get(1).map(|з| з.как_i64()).transpose()?.unwrap_or(0) as usize;
+                if a == 0 || b == 0 {
+                    return Ok(Some(Значение::Целое(0)));
+                }
+                let ea = self.память.читать_i64(a + 8)?;
+                let eb = self.память.читать_i64(b + 8)?;
+                Ok(Some(Значение::Целое(if ea == eb { 1 } else { 0 })))
+            }
+            "zip_измерения_сложить" | "измерить_сложить" => {
+                let a = аргументы.first().map(|з| з.как_i64()).transpose()?.unwrap_or(0) as usize;
+                let b = аргументы.get(1).map(|з| з.как_i64()).transpose()?.unwrap_or(0) as usize;
+                if a == 0 || b == 0 {
+                    return Ok(Some(Значение::Целое(0)));
+                }
+                let ea = self.память.читать_i64(a + 8)?;
+                let eb = self.память.читать_i64(b + 8)?;
+                if ea != eb {
+                    return Err(ОшибкаVM::новый("несовместимые единицы измерения"));
+                }
+                let va = self.память.читать_i64(a)?;
+                let vb = self.память.читать_i64(b)?;
+                let адр = self.память.выделить(16)?;
+                self.память.записать_i64(адр, va + vb)?;
+                self.память.записать_i64(адр + 8, ea)?;
+                Ok(Some(Значение::Целое(адр as i64)))
+            }
+            "zip_измерение_печать" | "измерить_печать" => {
+                let p = аргументы.first().map(|з| з.как_i64()).transpose()?.unwrap_or(0) as usize;
+                if p == 0 {
+                    return Ok(Some(Значение::Целое(0)));
+                }
+                let v = self.память.читать_i64(p)?;
+                let ед = self.память.читать_i64(p + 8)?;
+                let суффикс = match ед {
+                    1 => "мс",
+                    2 => "м",
+                    3 => "кг",
+                    4 => "байт",
+                    5 => "Гц",
+                    6 => "°",
+                    7 => "%",
+                    _ => "",
+                };
+                println!("{} {}", v, суффикс);
+                Ok(Some(Значение::Целое(v)))
+            }
             _ => Ok(None),
         }
     }

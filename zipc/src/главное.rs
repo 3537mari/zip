@@ -472,6 +472,18 @@ fn скомпилировать_runtime(имя: &str, выход: &PathBuf) -> R
             false,
             false,
         ),
+        "ttl" => (
+            vec![корень.join("zip-std/runtime/ttl.c")],
+            "ZIP_TTL_MAIN",
+            false,
+            false,
+        ),
+        "units" => (
+            vec![корень.join("zip-std/runtime/units.c")],
+            "ZIP_UNITS_MAIN",
+            false,
+            false,
+        ),
         другой => bail!("неизвестный #runtime(\"{}\")", другой),
     };
 
@@ -543,6 +555,10 @@ fn скомпилировать_runtime(имя: &str, выход: &PathBuf) -> R
     }
     if имя == "parallel" && !cfg!(windows) {
         cmd.arg("-lpthread");
+    }
+    // clock_gettime на старых Linux — librt
+    if имя == "ttl" && !cfg!(windows) {
+        cmd.arg("-lrt");
     }
 
     let статус = cmd
