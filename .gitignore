@@ -1,18 +1,44 @@
-target/
-*.o
-*.zipc
-*.bin
-.DS_Store
+# Cargo / build
+/target/
+**/target/
+**/*.exe
+**/*.dll
+**/*.lib
+**/*.pdb
+**/*.o
+**/*.obj
+**/*.bin
+**/*.zipc
+**/*.s
+**/*.ll
 
+# Logs & temp
+*.log
+build-release.log
+**/build-release.log
+
+# Local helper scripts (not part of the product)
+tools/_*.py
+
+# Profiler / flamegraph outputs (keep icons under vscode-zip/icons/)
+*.profile.json
+profile.json
+*.folded
+**/flamegraph*.svg
+docs/flamegraph-demo.svg
+docs/zip-debugger-vscode.jpg
+docs/zip-lsp-quickfix-latin.jpg
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode-test/
+*.vsix
+node_modules/
+
+# Legacy one-off binaries in repo root
 привет
 привет.exe
 привет.s
 привет.o
-*.s
-
-
-*.ll
-*.exe
 zipc/*.exe
-zipc/Р±РµРЅС‡_*
-zipc/РїСЂРёРІРµС‚_*
