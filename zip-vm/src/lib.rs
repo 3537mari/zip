@@ -21,9 +21,18 @@ pub mod загрузчик;
 pub mod исполнитель;
 #[path = "исполнитель_v3.rs"]
 pub mod исполнитель_v3;
+#[cfg(not(target_arch = "wasm32"))]
 #[path = "jit.rs"]
 pub mod jit;
+#[cfg(target_arch = "wasm32")]
+#[path = "jit_stub.rs"]
+pub mod jit;
+
+#[cfg(not(target_arch = "wasm32"))]
 #[path = "параллельный_jit.rs"]
+pub mod параллельный_jit;
+#[cfg(target_arch = "wasm32")]
+#[path = "параллельный_jit_stub.rs"]
 pub mod параллельный_jit;
 #[path = "память.rs"]
 pub mod память;

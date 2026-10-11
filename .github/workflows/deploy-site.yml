@@ -8,6 +8,7 @@ on:
       - "zipc/src/wasm.rs"
       - "zipc/Cargo.toml"
       - "zipc/Cargo.lock"
+      - "zip-vm/**"
       - ".github/workflows/deploy-site.yml"
   workflow_dispatch:
 
