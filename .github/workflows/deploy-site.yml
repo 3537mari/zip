@@ -21,6 +21,9 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    env:
+      LANG: C.UTF-8
+      LC_ALL: C.UTF-8
     steps:
       - uses: actions/checkout@v4
 
@@ -33,26 +36,34 @@ jobs:
         working-directory: zipc
         run: |
           cargo install wasm-bindgen-cli --version 0.2.100 --force
-          cargo update -p wasm-bindgen --precise 0.2.100 || true
           cargo build --lib --target wasm32-unknown-unknown --features wasm --release
           wasm-bindgen --target web --out-dir ../веб-сайт/wasm \
             target/wasm32-unknown-unknown/release/zipc.wasm
           ls -la ../веб-сайт/wasm
 
+      # Bundler ломается на кириллическом пути — собираем из ASCII-копии
+      - name: Prepare ASCII build directory
+        run: |
+          rm -rf website
+          cp -a веб-сайт website
+          rm -f website/Gemfile.lock
+
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: "3.2"
-          bundler-cache: true
-          working-directory: веб-сайт
+          bundler-cache: false
+          working-directory: website
 
       - name: Build Jekyll site
-        working-directory: веб-сайт
+        working-directory: website
         run: |
+          gem install bundler -v 2.4.19
           bundle install
           bundle exec jekyll build
+          ls -la _site | head
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./веб-сайт/_site
+          publish_dir: ./website/_site
