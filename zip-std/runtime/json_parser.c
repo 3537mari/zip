@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #define JSON_ОБЪЕКТ 1
 #define JSON_МАССИВ 2
@@ -621,6 +622,38 @@ ZipJsonЗначение *zip_json_сделать_строку(const char *s) {
     if (з) з->строка = zip_strdup(s ? s : "");
     return з;
 }
+
+
+#ifdef ZIP_JSON_BENCH
+int main(void) {
+    const int N = 10000;
+    size_t cap = 64 + (size_t)N * 32;
+    char *buf = (char *)malloc(cap);
+    if (!buf) return 1;
+    size_t pos = 0;
+    pos += (size_t)snprintf(buf + pos, cap - pos, "{\"данные\":[");
+    for (int i = 0; i < N; i++) {
+        if (i) pos += (size_t)snprintf(buf + pos, cap - pos, ",");
+        pos += (size_t)snprintf(buf + pos, cap - pos, "{\"id\":%d}", i);
+        if (pos + 64 >= cap) {
+            cap *= 2;
+            char *nb = (char *)realloc(buf, cap);
+            if (!nb) { free(buf); return 1; }
+            buf = nb;
+        }
+    }
+    pos += (size_t)snprintf(buf + pos, cap - pos, "]}");
+
+    clock_t t0 = clock();
+    ZipJsonЗначение *v = zip_json_разобрать(buf, pos);
+    clock_t t1 = clock();
+    long ms = (long)((t1 - t0) * 1000.0 / CLOCKS_PER_SEC);
+    if (v) zip_json_освободить(v);
+    free(buf);
+    printf("%ld\n", ms);
+    return 0;
+}
+#endif
 
 #ifdef ZIP_JSON_MAIN
 int main(void) {

@@ -907,6 +907,24 @@ fn скомпилировать_runtime(имя: &str, выход: &PathBuf) -> R
             false,
             false,
         ),
+        "bench_json" => (
+            vec![корень.join("zip-std/runtime/json_parser.c")],
+            "ZIP_JSON_BENCH",
+            false,
+            false,
+        ),
+        "bench_strings" => (
+            vec![корень.join("zip-std/runtime/bench_strings.c")],
+            "ZIP_STRINGS_BENCH",
+            false,
+            false,
+        ),
+        "bench_http" => (
+            vec![корень.join("zip-std/runtime/bench_http.c")],
+            "ZIP_HTTP_BENCH",
+            false,
+            false,
+        ),
         "train_xor" => (
             vec![корень.join("zip-std/runtime/nn_xor.c")],
             "ZIP_XOR_MAIN",

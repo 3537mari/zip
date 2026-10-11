@@ -1,0 +1,2 @@
+#!/usr/bin/env zipc
+#runtime("bench_gemm")
