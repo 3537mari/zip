@@ -30,36 +30,34 @@ static int write_file(const char *path, Buf *b) {
 }
 
 static void usage(const char *argv0) {
+    fprintf(stderr, "ZIP bootstrap compiler v%s\n", ZIPC_BOOTSTRAP_VERSION);
     fprintf(stderr, "Использование: %s <вход.zip> <выход.zipb>\n", argv0);
-    fprintf(stderr, "         %s --version\n", argv0);
-    fprintf(stderr, "\n");
-    fprintf(stderr, "Bootstrap-компилятор ZIP на C v%s\n", ZIPC_BOOTSTRAP_VERSION);
-    fprintf(stderr, "Компилирует .zip в байт-код ZIPB v3 (.zipb).\n");
-    fprintf(stderr, "Зависимости: только C-компилятор (gcc/clang).\n");
+    fprintf(stderr, "         %s --version | --help\n", argv0);
+    fprintf(stderr, "\nКомпилирует .zip → ZIPB v3 (.zipb). Только C-зависимости.\n");
 }
 
 int main(int argc, char **argv) {
-    if (argc == 2 && (!strcmp(argv[1], "--help") || !strcmp(argv[1], "-h")
-                      || !strcmp(argv[1], "--version") || !strcmp(argv[1], "версия"))) {
-        if (!strcmp(argv[1], "--version") || !strcmp(argv[1], "версия"))
-            printf("ZIP bootstrap compiler v%s\n", ZIPC_BOOTSTRAP_VERSION);
-        else
-            usage(argv[0]);
+    if (argc == 2 && (!strcmp(argv[1], "--help") || !strcmp(argv[1], "-h"))) {
+        usage(argv[0]);
         return 0;
+    }
+    if (argc == 2 && (!strcmp(argv[1], "--version") || !strcmp(argv[1], "версия"))) {
+        printf("ZIP bootstrap compiler v%s\n", ZIPC_BOOTSTRAP_VERSION);
+        return 0;
+    }
+    if (argc == 3 && !strcmp(argv[1], "--dump")) {
+        return dump_file(argv[2]);
     }
     if (argc < 3) {
         usage(argv[0]);
         return 1;
     }
 
-    const char *in_path = argv[1];
-    const char *out_path = argv[2];
-
     size_t len = 0;
-    char *src = read_file(in_path, &len);
+    char *src = read_file(argv[1], &len);
     if (!src) return 1;
 
-    printf("Компиляция: %s (%zu байт)\n", in_path, len);
+    printf("Компиляция: %s (%zu байт)\n", argv[1], len);
 
     size_t ntok = 0;
     Token *toks = lex(src, &ntok);
@@ -72,28 +70,27 @@ int main(int argc, char **argv) {
     Node *ast = parse(toks, ntok);
     if (!ast) {
         free(src);
-        free(toks);
+        tokens_free(toks, ntok);
         return 1;
     }
+    int verr = validate_ast(ast);
+    if (verr) fprintf(stderr, "предупреждений AST: %d\n", verr);
     printf("AST создан\n");
 
     Buf *bc = codegen(ast);
     printf("Байт-код: %zu байт\n", bc->len);
 
-    if (write_file(out_path, bc) != 0) {
+    if (write_file(argv[2], bc) != 0) {
         free(src);
-        for (size_t i = 0; i < ntok; i++) free(toks[i].str);
-        free(toks);
+        tokens_free(toks, ntok);
         node_free(ast);
         buf_free(bc);
         return 1;
     }
-
-    printf("OK: записано %s\n", out_path);
+    printf("OK: записано %s\n", argv[2]);
 
     free(src);
-    for (size_t i = 0; i < ntok; i++) free(toks[i].str);
-    free(toks);
+    tokens_free(toks, ntok);
     node_free(ast);
     buf_free(bc);
     return 0;

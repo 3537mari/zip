@@ -40,12 +40,13 @@
 
 **Дата релиза:** 2026-10-11
 
-## v3.0.0 (2026-10-11) — Bootstrap на C — ✅ ЗАВЕРШЁН
+## v3.0.0 (2026-10-11) — ✅ ЗАВЕРШЁН
 
-- [x] Bootstrap на C — [`bootstrap/`](bootstrap/)
-- [x] Убрать обязательный LLVM (по умолчанию ZIPB + VM) ✅
-- [x] Installers (.msi / .deb / .dmg / offline) — [`installers/`](installers/)
-- [x] CI сборки installers — [`.github/workflows/build-installers.yml`](.github/workflows/build-installers.yml)
+- [x] Bootstrap на C (~1650+ строк, расширение к ~5000) ✅
+- [x] Fixed-point самокомпиляция (детерминизм C-bootstrap) ✅
+- [x] Убрать LLVM из основного пути ✅
+- [x] Installers (4 платформы) ✅
+- [x] Offline installer ✅
 - [ ] JIT v3 (бэклог)
 - [ ] Homebrew / Chocolatey (бэклог)
 
@@ -60,12 +61,14 @@
 - [ ] STD полностью на ZIP
 - [ ] Bootstrap на ZIP
 
+См. [ROADMAP_V4.md](ROADMAP_V4.md)
+
 ## v5.0.0 (2028) — план
 
-- [ ] Собственная ОС-абстракция
 - [ ] Кросс-компиляция (ARM, RISC-V, WASM)
 - [ ] Мобильные биндинги
 - [ ] GPU-вычисления
+- [ ] Собственная ОС-абстракция
 - [ ] Пакетный реестр
 - [ ] ИИ-советник 2.0
 

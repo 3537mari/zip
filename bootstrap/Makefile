@@ -1,13 +1,13 @@
-# Bootstrap ZIP (C)
+# Bootstrap ZIP (C) — полный путь
 CC ?= gcc
-CFLAGS ?= -O3 -Wall -Wextra -std=c11
+CFLAGS ?= -O3 -Wall -Wextra -std=c11 -D_CRT_SECURE_NO_WARNINGS
 LDFLAGS ?=
 
-SOURCES = утилиты.c лексер.c парсер.c генератор.c главное.c
+SOURCES = утилиты.c таблицы.c лексер.c парсер.c генератор.c дамп.c проверка.c главное.c
 OBJECTS = $(SOURCES:.c=.o)
 TARGET = zipc
 
-.PHONY: all clean test windows clang
+.PHONY: all clean test windows clang loc
 
 all: $(TARGET)
 
@@ -18,18 +18,15 @@ $(TARGET): $(OBJECTS)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 clean:
-	rm -f $(OBJECTS) $(TARGET) $(TARGET).exe тест_привет.zip тест_привет.zipb
+	rm -f $(OBJECTS) $(TARGET) $(TARGET).exe t_*.zip t_*.zipb
 
 test: $(TARGET)
-	@echo "=== Тест: ПечатьЧисло(42) ==="
-	@printf '%s\n' 'ПечатьЧисло(42)' > тест_привет.zip
-	./$(TARGET) тест_привет.zip тест_привет.zipb
-	@echo "=== Заголовок ==="
-	@od -An -tx1 -N16 тест_привет.zipb || xxd -l 16 тест_привет.zipb || true
-	@rm -f тест_привет.zip тест_привет.zipb
+	@printf '%s\n' 'ПечатьЧисло(2+3)' > t_arith.zip
+	./$(TARGET) t_arith.zip t_arith.zipb
+	@od -An -tx1 -N16 t_arith.zipb 2>/dev/null || xxd -l 16 t_arith.zipb || true
 
-windows:
-	clang -O3 -o $(TARGET).exe $(SOURCES)
+windows clang:
+	clang $(CFLAGS) -o $(TARGET).exe $(SOURCES)
 
-clang:
-	clang -O3 -Wall -Wextra -std=c11 -o $(TARGET) $(SOURCES)
+loc:
+	@wc -l zipb.h $(SOURCES) 2>/dev/null || (Get-Content zipb.h,утилиты.c,таблицы.c,лексер.c,парсер.c,генератор.c,главное.c | Measure-Object -Line)

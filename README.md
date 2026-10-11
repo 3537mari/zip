@@ -23,31 +23,57 @@
 
 ### Установка
 
-#### Bootstrap на C (минимальный)
+#### Вариант 1: C-bootstrap (минимальный)
 
-**Требования:** gcc или clang.
+**Требования:** только C-компилятор (gcc/clang).
 
 ```bash
 git clone https://github.com/3537mari/zip.git
 cd zip/bootstrap
-make          # Linux/macOS
-# Windows: pwsh ./build.ps1
-./zipc --version
-# ZIP bootstrap compiler v3.0.0
+make
+./zipc ../zip-self/компилятор.zip /tmp/selfc.zipb
 ```
 
-#### Полная сборка (разработка)
+Готово! Компилятор `zipc` собран без Rust и LLVM.
+
+#### Вариант 2: Готовые пакеты
+
+Скачайте с [GitHub Releases](https://github.com/3537mari/zip/releases):
+- Windows: `ZIP-3.0.0-x64.msi`
+- Debian/Ubuntu: `zip-lang_3.0.0_amd64.deb`
+- Red Hat/Fedora: `zip-lang-3.0.0-1.x86_64.rpm`
+- macOS: `ZIP-3.0.0-macos.dmg`
+- Universal: `ZIP-3.0.0-offline-installer.sh`
+
+Скрипты сборки: [`installers/`](installers/).
+
+#### Вариант 3: Полная сборка (для разработки)
+
+**Требования:** Rust 1.75+.
 
 ```bash
 cargo build --release --manifest-path zipc/Cargo.toml
 cargo build --release --manifest-path zip-vm/Cargo.toml
 ```
 
-**Требования:** Rust 1.75+. LLVM опционален (`--llvm`).
+### Проверка
 
-#### Готовые пакеты
+```bash
+zipc --version
+# ZIP compiler v3.0.0 / ZIP bootstrap compiler v3.1.0
 
-Скрипты: [`installers/`](installers/) · релизы: [GitHub Releases](https://github.com/3537mari/zip/releases)
+echo 'ПечатьСтроки("Привет, мир!")' > тест.zip
+zipc собрать тест.zip -o тест
+zip-vm тест.zipb
+# Привет, мир!
+```
+
+### Способы компиляции
+
+| Режим | Команда | Требования | Скорость |
+|-------|---------|------------|----------|
+| **VM v3** (по умолчанию) | `zipc собрать тест.zip -o тест` | Только C / Rust | ×1 |
+| **LLVM** (опционально) | `zipc собрать тест.zip --llvm` | + LLVM | ×1.25 |
 
 ### Первая программа
 
@@ -56,7 +82,7 @@ cat > привет.zip << 'EOF'
 ПечатьСтроки("Привет, мир!")
 EOF
 
-# По умолчанию (v3.0): байт-код ZIPB → zip-vm
+# По умолчанию (v3): байт-код ZIPB → zip-vm
 ./zipc/target/release/zipc собрать привет.zip -o привет
 ./zip-vm/target/release/zip-vm привет.zipb
 

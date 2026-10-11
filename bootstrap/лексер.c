@@ -2,15 +2,12 @@
 
 typedef struct {
     const unsigned char *data;
-    size_t len;
-    size_t pos;
-    int line;
-    int col;
+    size_t len, pos;
+    int line, col;
 } Lexer;
 
-static int is_cyr_start(const unsigned char *b, size_t rem) {
-    if (rem < 2) return 0;
-    return (b[0] == 0xD0 || b[0] == 0xD1) && b[1] >= 0x80 && b[1] <= 0xBF;
+static int is_cyr(const unsigned char *b, size_t rem) {
+    return rem >= 2 && (b[0] == 0xD0 || b[0] == 0xD1) && b[1] >= 0x80 && b[1] <= 0xBF;
 }
 
 static unsigned char cur(Lexer *L) {
@@ -67,17 +64,29 @@ static Token tok_num(Lexer *L) {
 }
 
 static Token tok_str(Lexer *L) {
-    adv(L); /* " */
-    size_t start = L->pos;
+    adv(L);
+    Buf *tmp = buf_new();
     while (L->pos < L->len && cur(L) != '"') {
-        if (cur(L) == '\\') adv(L);
-        adv(L);
+        if (cur(L) == '\\' && L->pos + 1 < L->len) {
+            adv(L);
+            unsigned char e = cur(L);
+            if (e == 'n') buf_byte(tmp, '\n');
+            else if (e == 't') buf_byte(tmp, '\t');
+            else if (e == 'r') buf_byte(tmp, '\r');
+            else if (e == '\\') buf_byte(tmp, '\\');
+            else if (e == '"') buf_byte(tmp, '"');
+            else buf_byte(tmp, e);
+            adv(L);
+        } else {
+            buf_byte(tmp, cur(L));
+            adv(L);
+        }
     }
-    size_t n = L->pos - start;
-    char *s = (char *)zip_alloc(n + 1);
-    memcpy(s, L->data + start, n);
-    s[n] = 0;
     if (cur(L) == '"') adv(L);
+    char *s = (char *)zip_alloc(tmp->len + 1);
+    memcpy(s, tmp->data, tmp->len);
+    s[tmp->len] = 0;
+    buf_free(tmp);
     Token t = {0};
     t.type = TK_STRING;
     t.str = s;
@@ -85,35 +94,12 @@ static Token tok_str(Lexer *L) {
     return t;
 }
 
-static TokenType kw(const char *w) {
-    if (!strcmp(w, "если")) return TK_IF;
-    if (!strcmp(w, "иначе")) return TK_ELSE;
-    if (!strcmp(w, "пока")) return TK_WHILE;
-    if (!strcmp(w, "для")) return TK_FOR;
-    if (!strcmp(w, "в")) return TK_IN;
-    if (!strcmp(w, "возврат")) return TK_RETURN;
-    if (!strcmp(w, "прервать")) return TK_BREAK;
-    if (!strcmp(w, "продолжить")) return TK_CONTINUE;
-    if (!strcmp(w, "функция")) return TK_FUNCTION;
-    if (!strcmp(w, "тип")) return TK_TYPE;
-    if (!strcmp(w, "агент")) return TK_AGENT;
-    if (!strcmp(w, "истина")) return TK_TRUE;
-    if (!strcmp(w, "ложь")) return TK_FALSE;
-    if (!strcmp(w, "и")) return TK_AND;
-    if (!strcmp(w, "или")) return TK_OR;
-    if (!strcmp(w, "не")) return TK_NOT;
-    if (!strcmp(w, "ничто")) return TK_NOTHING;
-    if (!strcmp(w, "нечто")) return TK_SOMETHING;
-    if (!strcmp(w, "успех")) return TK_SUCCESS;
-    if (!strcmp(w, "ошибка")) return TK_ERROR;
-    return TK_IDENT;
-}
-
 static Token tok_word(Lexer *L) {
     size_t start = L->pos;
+    int cyr_chars = 0;
     while (L->pos < L->len) {
         const unsigned char *b = L->data + L->pos;
-        if (is_cyr_start(b, L->len - L->pos)) { adv(L); adv(L); }
+        if (is_cyr(b, L->len - L->pos)) { adv(L); adv(L); cyr_chars++; }
         else if ((cur(L) >= 'a' && cur(L) <= 'z') || (cur(L) >= 'A' && cur(L) <= 'Z')
                  || cur(L) == '_' || isdigit(cur(L))) {
             adv(L);
@@ -125,17 +111,20 @@ static Token tok_word(Lexer *L) {
     w[n] = 0;
     Token t = {0};
     t.str = w;
-    t.type = kw(w);
+    t.type = keyword_lookup(w);
     t.line = L->line; t.col = L->col;
-    /* 3 Cyrillic letters (6 UTF-8 bytes) → root candidate */
-    if (t.type == TK_IDENT && n == 6 && is_cyr_start((const unsigned char *)w, n))
+    /* 3 Cyrillic letters, not a keyword → root */
+    if (t.type == TK_IDENT && cyr_chars == 3 && n == 6)
         t.type = TK_ROOT;
+    /* 5 Cyrillic letters pattern like САПАР → template */
+    if (t.type == TK_IDENT && cyr_chars == 5 && n == 10)
+        t.type = TK_TEMPLATE;
     return t;
 }
 
 Token *lex(const char *src, size_t *out_n) {
     Lexer L = { (const unsigned char *)src, strlen(src), 0, 1, 1 };
-    size_t cap = 256;
+    size_t cap = 512;
     Token *toks = (Token *)zip_alloc(cap * sizeof(Token));
     size_t n = 0;
 
@@ -149,16 +138,16 @@ Token *lex(const char *src, size_t *out_n) {
         if (c == '>' && L.pos + 1 < L.len && L.data[L.pos + 1] == '>') {
             adv(&L); adv(&L);
             if (cur(&L) == '>') { adv(&L); t.type = TK_NET; }
+            else if (cur(&L) == '=') { /* shouldn't */ t.type = TK_IMPULSE; }
             else t.type = TK_IMPULSE;
         } else if (c == '|' && L.pos + 1 < L.len && L.data[L.pos + 1] == '|') {
             adv(&L); adv(&L); t.type = TK_CHOIR;
-        } else if (c == '!' && !(L.pos + 1 < L.len && L.data[L.pos + 1] == '=')) {
-            adv(&L); t.type = TK_PERFECT;
-        } else if (c == '~') { adv(&L); t.type = TK_STREAM; }
-        else if (c == '=' && L.pos + 1 < L.len && L.data[L.pos + 1] == '=') {
+        } else if (c == '=' && L.pos + 1 < L.len && L.data[L.pos + 1] == '=') {
             adv(&L); adv(&L); t.type = TK_EQEQ;
         } else if (c == '!' && L.pos + 1 < L.len && L.data[L.pos + 1] == '=') {
             adv(&L); adv(&L); t.type = TK_NE;
+        } else if (c == '!' ) {
+            adv(&L); t.type = TK_PERFECT;
         } else if (c == '<' && L.pos + 1 < L.len && L.data[L.pos + 1] == '=') {
             adv(&L); adv(&L); t.type = TK_LE;
         } else if (c == '>' && L.pos + 1 < L.len && L.data[L.pos + 1] == '=') {
@@ -167,12 +156,15 @@ Token *lex(const char *src, size_t *out_n) {
             adv(&L); adv(&L); t.type = TK_ARROW;
         } else if (c == '.' && L.pos + 1 < L.len && L.data[L.pos + 1] == '.') {
             adv(&L); adv(&L); t.type = TK_RANGE;
-        } else if (c == '=') { adv(&L); t.type = TK_EQ; }
+        } else if (c == '~') { adv(&L); t.type = TK_STREAM; }
+        else if (c == '=') { adv(&L); t.type = TK_EQ; }
         else if (c == ':') { adv(&L); t.type = TK_COLON; }
         else if (c == '(') { adv(&L); t.type = TK_LPAREN; }
         else if (c == ')') { adv(&L); t.type = TK_RPAREN; }
         else if (c == '{') { adv(&L); t.type = TK_LBRACE; }
         else if (c == '}') { adv(&L); t.type = TK_RBRACE; }
+        else if (c == '[') { adv(&L); t.type = TK_LBRACK; }
+        else if (c == ']') { adv(&L); t.type = TK_RBRACK; }
         else if (c == ',') { adv(&L); t.type = TK_COMMA; }
         else if (c == '+') { adv(&L); t.type = TK_PLUS; }
         else if (c == '-') { adv(&L); t.type = TK_MINUS; }
@@ -185,13 +177,12 @@ Token *lex(const char *src, size_t *out_n) {
         else if (c == '#') { adv(&L); t.type = TK_HASH; }
         else if (c == '"') t = tok_str(&L);
         else if (isdigit(c)) t = tok_num(&L);
-        else if (is_cyr_start(L.data + L.pos, L.len - L.pos)
+        else if (is_cyr(L.data + L.pos, L.len - L.pos)
                  || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_') {
             t = tok_word(&L);
         } else {
-            fprintf(stderr, "лексер: неизвестный байт 0x%02X строка %d столбец %d\n",
-                    c, L.line, L.col);
-            free(toks);
+            fprintf(stderr, "лексер: неизвестный 0x%02X @%d:%d\n", c, L.line, L.col);
+            tokens_free(toks, n);
             return NULL;
         }
 
@@ -201,9 +192,15 @@ Token *lex(const char *src, size_t *out_n) {
         }
         toks[n++] = t;
     }
-    if (n >= cap) toks = (Token *)zip_realloc(toks, (cap + 1) * sizeof(Token));
+    if (n >= cap) toks = (Token *)zip_realloc(toks, (n + 1) * sizeof(Token));
     toks[n].type = TK_EOF;
     n++;
     *out_n = n;
     return toks;
+}
+
+void tokens_free(Token *t, size_t n) {
+    if (!t) return;
+    for (size_t i = 0; i < n; i++) free(t[i].str);
+    free(t);
 }
