@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Урок 3: Функции — ZIP за 30 минут</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="wrap">
+  <div class="top-tools">
+    <div class="progress-container"><div class="progress-bar">0 / 8</div></div>
+    <button type="button" class="theme-toggle" onclick="переключить_тему()" aria-label="Тема">🌙</button>
+  </div>
+
+    <nav class="bar">
+      <a href="урок-02.html">← Назад</a>
+      <span>Урок 3 из 8</span>
+      <a href="урок-04.html">Вперёд →</a>
+    </nav>
+    <h1>Урок 3: Функции</h1>
+    
+    <p>Объявление: <code>функция имя(параметры) { ... }</code>. Возврат — <code>возврат(...)</code>.</p>
+    <div class="code-block">
+      <pre><code>функция сложить(а, б) {
+    возврат(а + б)
+}
+функция главная() {
+    ПечатьЧисло(сложить(2, 3))
+}</code></pre>
+      <div class="btn-row"><button type="button" onclick="runCode(`функция сложить(а, б) {\n    возврат(а + б)\n}\nфункция главная() {\n    ПечатьЧисло(сложить(2, 3))\n}`)">Запустить</button></div>
+    </div>
+
+    
+    <div class="task-panel" data-task="3">
+      <h3>Практика: задача 3</h3>
+      <p>Отредактируйте код и нажмите «Проверить».</p>
+      <textarea class="task-code" id="код-задачи-3">функция факториал(н) {
+    если н <= 1 {
+        возврат(1)
+    }
+    возврат(н * факториал(н - 1))
+}
+
+функция главная() {
+    ПечатьЧисло(факториал(5))
+}</textarea>
+      <div class="actions">
+        <button type="button" onclick="runCode(document.getElementById('код-задачи-3').value)">Запустить</button>
+        <button type="button" onclick="запустить_и_проверить(3)">Проверить</button>
+      </div>
+      <div class="task-result" id="результат-задачи-3"></div>
+    </div>
+
+    
+    <div class="navigation">
+      <button type="button" class="mark-done" onclick="прогресс.отметить_урок(3, 'пройден')">Отметить урок пройденным</button>
+    </div>
+
+    <a class="next-button" href="урок-04.html">Следующий урок →</a>
+  </div>
+  <script src="progress.js"></script>
+  <script src="checker.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

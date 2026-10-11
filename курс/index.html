@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ZIP за 30 минут — Интерактивный курс</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="wrap">
+  <div class="top-tools">
+    <div class="progress-container"><div class="progress-bar">0 / 8</div></div>
+    <button type="button" class="theme-toggle" onclick="переключить_тему()" aria-label="Тема">🌙</button>
+  </div>
+
+    <header class="hero">
+      <h1>ZIP за 30 минут</h1>
+      <p>Интерактивный курс по языку программирования на кириллице. Восемь коротких уроков и запуск кода в браузере.</p>
+    </header>
+
+    <section>
+      <h2>Что такое ZIP?</h2>
+      <p>ZIP — императивный потоковый язык: программа как семантический поток действий (VSO), с Move-импульсами, ИИ-примитивами и путём к самокомпиляции.</p>
+      <div class="features">
+        <div class="feature">
+          <h3>Скорость</h3>
+          <p>Около 40× быстрее CPython в нашем наборе бенчмарков; рядом с Rust/Go на ряде задач.</p>
+        </div>
+        <div class="feature">
+          <h3>Защита</h3>
+          <p>Криптография в STD, в том числе постквантовые примитивы.</p>
+        </div>
+        <div class="feature">
+          <h3>ИИ</h3>
+          <p>Тензоры, нейросети, агенты в стандартной библиотеке.</p>
+        </div>
+        <div class="feature">
+          <h3>Кириллица</h3>
+          <p>Ключевые слова и идентификаторы — на русском.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="lessons">
+      <h2>Уроки</h2>
+      <ol>
+        <li class="lesson-item" data-lesson="1"><a href="урок-01.html">Введение</a> — 3 мин</li>
+        <li class="lesson-item" data-lesson="2"><a href="урок-02.html">Переменные</a> — 3 мин</li>
+        <li class="lesson-item" data-lesson="3"><a href="урок-03.html">Функции</a> — 4 мин</li>
+        <li class="lesson-item" data-lesson="4"><a href="урок-04.html">Условия и циклы</a> — 4 мин</li>
+        <li class="lesson-item" data-lesson="5"><a href="урок-05.html">Массивы</a> — 3 мин</li>
+        <li class="lesson-item" data-lesson="6"><a href="урок-06.html">Аннотации</a> — 4 мин</li>
+        <li class="lesson-item" data-lesson="7"><a href="урок-07.html">Нейросети</a> — 5 мин</li>
+        <li class="lesson-item" data-lesson="8"><a href="урок-08.html">Агенты</a> — 4 мин</li>
+      </ol>
+    </section>
+
+    <section>
+      <h2>Попробовать онлайн</h2>
+      <p>Полноценный редактор — <a href="../плейграунд.html">WASM-плейграунд</a> с задачами для практики.</p>
+    </section>
+
+    <footer>
+      <p>ZIP — <a href="https://github.com/3537mari/zip">GitHub</a> · <a href="https://3537mari.github.io/zip/">сайт</a></p>
+    </footer>
+  </div>
+  <script src="progress.js"></script>
+  <script src="checker.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

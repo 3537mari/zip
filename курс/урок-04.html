@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Урок 4: Условия и циклы — ZIP за 30 минут</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="wrap">
+  <div class="top-tools">
+    <div class="progress-container"><div class="progress-bar">0 / 8</div></div>
+    <button type="button" class="theme-toggle" onclick="переключить_тему()" aria-label="Тема">🌙</button>
+  </div>
+
+    <nav class="bar">
+      <a href="урок-03.html">← Назад</a>
+      <span>Урок 4 из 8</span>
+      <a href="урок-05.html">Вперёд →</a>
+    </nav>
+    <h1>Урок 4: Условия и циклы</h1>
+    
+    <p><code>если</code> / <code>иначе</code>, циклы <code>пока</code> и <code>для … в …</code>.</p>
+    <div class="code-block">
+      <pre><code>функция главная() {
+    для и в 0..5 {
+        ПечатьЧисло(и)
+    }
+}</code></pre>
+      <div class="btn-row"><button type="button" onclick="runCode(`функция главная() {\n    для и в 0..5 {\n        ПечатьЧисло(и)\n    }\n}`)">Запустить</button></div>
+    </div>
+
+    
+    <div class="task-panel" data-task="4">
+      <h3>Практика: задача 4</h3>
+      <p>Отредактируйте код и нажмите «Проверить».</p>
+      <textarea class="task-code" id="код-задачи-4">функция главная() {
+    н = 4
+    если н % 2 == 0 {
+        ПечатьСтроки("чёт")
+    } иначе {
+        ПечатьСтроки("нечёт")
+    }
+}</textarea>
+      <div class="actions">
+        <button type="button" onclick="runCode(document.getElementById('код-задачи-4').value)">Запустить</button>
+        <button type="button" onclick="запустить_и_проверить(4)">Проверить</button>
+      </div>
+      <div class="task-result" id="результат-задачи-4"></div>
+    </div>
+
+    
+    <div class="navigation">
+      <button type="button" class="mark-done" onclick="прогресс.отметить_урок(4, 'пройден')">Отметить урок пройденным</button>
+    </div>
+
+    <a class="next-button" href="урок-05.html">Следующий урок →</a>
+  </div>
+  <script src="progress.js"></script>
+  <script src="checker.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

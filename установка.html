@@ -43,23 +43,62 @@
   </header>
 
   <div class="post-content">
-    <h2 id="требования">Требования</h2>
+    <h1 id="установка-zip">Установка ZIP</h1>
+
+<h2 id="требования">Требования</h2>
 
 <ul>
   <li>Rust 1.75+</li>
   <li>LLVM 17+ (<code class="language-plaintext highlighter-rouge">clang</code> в PATH)</li>
-  <li>PowerShell 7+ на Windows</li>
+  <li>Git</li>
+  <li>PowerShell 7+ на Windows (рекомендуется)</li>
 </ul>
 
-<h2 id="сборка">Сборка</h2>
+<h2 id="быстрая-установка">Быстрая установка</h2>
+
+<h3 id="linux--macos">Linux / macOS</h3>
 
 <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>git clone https://github.com/3537mari/zip.git
 <span class="nb">cd </span>zip
 cargo build <span class="nt">--release</span> <span class="nt">--manifest-path</span> zipc/Cargo.toml
-cargo build <span class="nt">--release</span> <span class="nt">--manifest-path</span> зипм/Cargo.toml
+<span class="nb">export </span><span class="nv">PATH</span><span class="o">=</span><span class="s2">"</span><span class="nv">$PWD</span><span class="s2">/zipc/target/release:</span><span class="nv">$PWD</span><span class="s2">/zip-vm/target/release:</span><span class="nv">$PATH</span><span class="s2">"</span>
 </code></pre></div></div>
 
-<p>Добавьте <code class="language-plaintext highlighter-rouge">zipc/target/release</code> и <code class="language-plaintext highlighter-rouge">зипм/target/release</code> в <code class="language-plaintext highlighter-rouge">PATH</code>.</p>
+<h3 id="windows">Windows</h3>
+
+<div class="language-powershell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">git</span><span class="w"> </span><span class="nx">clone</span><span class="w"> </span><span class="nx">https://github.com/3537mari/zip.git</span><span class="w">
+</span><span class="n">cd</span><span class="w"> </span><span class="nx">zip</span><span class="w">
+</span><span class="n">cargo</span><span class="w"> </span><span class="nx">build</span><span class="w"> </span><span class="nt">--release</span><span class="w"> </span><span class="nt">--manifest-path</span><span class="w"> </span><span class="nx">zipc/Cargo.toml</span><span class="w">
+</span><span class="nv">$</span><span class="nn">env</span><span class="p">:</span><span class="nv">PATH</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="s2">";</span><span class="bp">$PWD</span><span class="s2">\zipc\target\release;</span><span class="bp">$PWD</span><span class="s2">\zip-vm\target\release"</span><span class="w">
+</span></code></pre></div></div>
+
+<p>Опционально пакетный менеджер:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>cargo build <span class="nt">--release</span> <span class="nt">--manifest-path</span> зипм/Cargo.toml
+</code></pre></div></div>
+
+<h2 id="проверка">Проверка</h2>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>zipc <span class="nt">--help</span>
+zipc запустить examples/привет.zip
+</code></pre></div></div>
+
+<h2 id="первая-программа">Первая программа</h2>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">cat</span> <span class="o">&gt;</span> привет.zip <span class="o">&lt;&lt;</span> <span class="sh">'</span><span class="no">EOF</span><span class="sh">'
+ПечатьСтроки("Привет, мир!")
+</span><span class="no">EOF
+
+</span>zipc запустить привет.zip
+</code></pre></div></div>
+
+<h2 id="что-дальше">Что дальше</h2>
+
+<ul>
+  <li><a href="курс/">Интерактивный курс</a> — ZIP за 30 минут</li>
+  <li><a href="плейграунд.html">Плейграунд</a></li>
+  <li><a href="https://github.com/3537mari/zip/tree/master/docs">Документация</a></li>
+</ul>
 
   </div>
 

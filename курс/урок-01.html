@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Урок 1: Введение — ZIP за 30 минут</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="wrap">
+  <div class="top-tools">
+    <div class="progress-container"><div class="progress-bar">0 / 8</div></div>
+    <button type="button" class="theme-toggle" onclick="переключить_тему()" aria-label="Тема">🌙</button>
+  </div>
+
+    <nav class="bar">
+      <a href="index.html">← Назад</a>
+      <span>Урок 1 из 8</span>
+      <a href="урок-02.html">Вперёд →</a>
+    </nav>
+    <h1>Урок 1: Введение</h1>
+    
+    <p>ZIP — язык программирования на <strong>кириллице</strong>. Ключевые слова и идентификаторы пишутся русскими буквами.</p>
+    <h2>Первая программа</h2>
+    <div class="code-block">
+      <pre><code>ПечатьСтроки("Привет, мир!")</code></pre>
+      <button type="button" onclick="runCode('ПечатьСтроки(\"Привет, мир!\")')">Запустить</button>
+    </div>
+    <p>Кнопка вызывает WASM-компилятор (или fallback-разбор), если модуль доступен.</p>
+    <div class="quiz">
+      <p><strong>Вопрос:</strong> На каком алфавите пишется код ZIP?</p>
+      <button type="button" onclick="checkQuiz(this,true)">Кириллица</button>
+      <button type="button" onclick="checkQuiz(this,false)">Только латиница</button>
+    </div>
+
+    
+    <div class="task-panel" data-task="1">
+      <h3>Практика: задача 1</h3>
+      <p>Отредактируйте код и нажмите «Проверить».</p>
+      <textarea class="task-code" id="код-задачи-1">ПечатьСтроки("Привет, мир!")</textarea>
+      <div class="actions">
+        <button type="button" onclick="runCode(document.getElementById('код-задачи-1').value)">Запустить</button>
+        <button type="button" onclick="запустить_и_проверить(1)">Проверить</button>
+      </div>
+      <div class="task-result" id="результат-задачи-1"></div>
+    </div>
+
+    
+    <div class="navigation">
+      <button type="button" class="mark-done" onclick="прогресс.отметить_урок(1, 'пройден')">Отметить урок пройденным</button>
+    </div>
+
+    <a class="next-button" href="урок-02.html">Следующий урок →</a>
+  </div>
+  <script src="progress.js"></script>
+  <script src="checker.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

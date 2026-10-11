@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Урок 6: Аннотации — ZIP за 30 минут</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="wrap">
+  <div class="top-tools">
+    <div class="progress-container"><div class="progress-bar">0 / 8</div></div>
+    <button type="button" class="theme-toggle" onclick="переключить_тему()" aria-label="Тема">🌙</button>
+  </div>
+
+    <nav class="bar">
+      <a href="урок-05.html">← Назад</a>
+      <span>Урок 6 из 8</span>
+      <a href="урок-07.html">Вперёд →</a>
+    </nav>
+    <h1>Урок 6: Аннотации</h1>
+    
+    <p>Аннотации начинаются с <code>@</code> и задают подсказки компилятору / runtime.</p>
+    <div class="code-block">
+      <pre><code>@ускорить(уровень = 2)
+функция обработать(х) {
+    возврат(х)
+}</code></pre>
+      <div class="btn-row"><button type="button" onclick="runCode(`@ускорить(уровень = 2)\nфункция обработать(х) {\n    возврат(х)\n}\nфункция главная() {\n    ПечатьЧисло(обработать(1))\n}`)">Запустить</button></div>
+    </div>
+    <p>Примеры: <code>@кэшировать</code>, <code>@шифровать</code>, <code>@тест</code>.</p>
+
+    
+    <div class="task-panel" data-task="6">
+      <h3>Практика: задача 6</h3>
+      <p>Отредактируйте код и нажмите «Проверить».</p>
+      <textarea class="task-code" id="код-задачи-6">функция главная() {
+    числа = [1, 2, 3, 4]
+    ПечатьЧисло(числа[0] + числа[1] + числа[2] + числа[3])
+}</textarea>
+      <div class="actions">
+        <button type="button" onclick="runCode(document.getElementById('код-задачи-6').value)">Запустить</button>
+        <button type="button" onclick="запустить_и_проверить(6)">Проверить</button>
+      </div>
+      <div class="task-result" id="результат-задачи-6"></div>
+    </div>
+
+    
+    <div class="navigation">
+      <button type="button" class="mark-done" onclick="прогресс.отметить_урок(6, 'пройден')">Отметить урок пройденным</button>
+    </div>
+
+    <a class="next-button" href="урок-07.html">Следующий урок →</a>
+  </div>
+  <script src="progress.js"></script>
+  <script src="checker.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
