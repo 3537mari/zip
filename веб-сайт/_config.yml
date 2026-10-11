@@ -16,6 +16,5 @@ plugins:
 header_pages:
   - установка.md
   - туториал.md
-  - документация.md
   - курс/index.html
   - плейграунд.html
