@@ -7,7 +7,10 @@ use tokio::sync::RwLock;
 use tower_lsp::jsonrpc::Result as LspResult;
 use tower_lsp::lsp_types::*;
 use tower_lsp::{Client, LanguageServer, LspService, Server};
-use zipc::{разобрать_исходник, Лексер, Токен, ТокенСПозицией, Узел};
+use zipc::{
+    проанализировать_функции, разобрать_исходник, ГенераторПП, Лексер, Токен, ТокенСПозицией,
+    Узел,
+};
 
 #[derive(Debug)]
 struct Диагностика {
@@ -296,6 +299,35 @@ fn разобрать_документ(текст: String, версия: i32) ->
             None
         }
     };
+
+    // R1: анализ владения импульсами (Polonius-style)
+    if let Some(д) = &дерево {
+        let mut ген = ГенераторПП::новый();
+        if let Ok(функции) = ген.сгенерировать(д) {
+            for о in проанализировать_функции(&функции) {
+                let подсказка = о
+                    .подсказка
+                    .as_ref()
+                    .map(|п| format!("\n💡 {}", п))
+                    .unwrap_or_default();
+                ошибки.push(Диагностика {
+                    сообщение: format!("Владение: {}{}", о.сообщение, подсказка),
+                    // Точный source-map пока нет — якорим к началу документа / IR-точке
+                    диапазон: Range {
+                        start: Position {
+                            line: о.точка.0.min(10_000),
+                            character: 0,
+                        },
+                        end: Position {
+                            line: о.точка.0.min(10_000),
+                            character: 1,
+                        },
+                    },
+                    серьёзность: DiagnosticSeverity::ERROR,
+                });
+            }
+        }
+    }
 
     Документ {
         текст,

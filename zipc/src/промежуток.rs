@@ -4,7 +4,7 @@
 use crate::дерево::Узел;
 use std::collections::HashMap;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Регистр(pub u32);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
