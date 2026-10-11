@@ -967,6 +967,12 @@ fn скомпилировать_runtime(имя: &str, выход: &PathBuf) -> R
             false,
             true,
         ),
+        "json_parser" | "json" => (
+            vec![корень.join("zip-std/runtime/json_parser.c")],
+            "ZIP_JSON_MAIN",
+            false,
+            false,
+        ),
         другой => bail!("неизвестный #runtime(\"{}\")", другой),
     };
 

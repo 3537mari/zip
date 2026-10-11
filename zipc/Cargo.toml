@@ -158,6 +158,10 @@ path = "../tests/тест_simd.rs"
 name = "тест_пула"
 path = "../tests/тест_пула.rs"
 
+[[test]]
+name = "тест_json"
+path = "../tests/тест_json.rs"
+
 [profile.release]
 opt-level = 3
 lto = true

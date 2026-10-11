@@ -174,6 +174,19 @@ HTTP/HTTPS через `#runtime("http_client")` / `#runtime("https_client")`.
 
 ---
 
+### JSON (`json.zip` + `#runtime("json_parser")`)
+
+Разбор / запись JSON, доступ по пути.
+
+```zip
+#runtime("json_parser")
+// C API: zip_json_разобрать / zip_json_получить / zip_json_записать
+```
+
+Документация: [МОДУЛЬ-JSON.md](МОДУЛЬ-JSON.md).
+
+---
+
 ### РЕЕСТР / HTTP-СЕРВЕР
 
 ```zip
