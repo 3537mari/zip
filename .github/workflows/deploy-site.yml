@@ -1,0 +1,35 @@
+name: Deploy website
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "веб-сайт/**"
+      - ".github/workflows/deploy-site.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.2"
+          bundler-cache: true
+          working-directory: веб-сайт
+
+      - name: Build site
+        working-directory: веб-сайт
+        run: |
+          bundle install
+          bundle exec jekyll build
+
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./веб-сайт/_site

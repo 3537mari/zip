@@ -56,6 +56,10 @@ pub mod ии_советник;
 #[path = "кэш_скриптов.rs"]
 pub mod кэш_скриптов;
 
+#[cfg(feature = "wasm")]
+#[path = "wasm.rs"]
+pub mod wasm;
+
 #[cfg(feature = "inkwell-llvm")]
 #[path = "llvm_backend.rs"]
 pub mod llvm_backend;

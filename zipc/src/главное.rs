@@ -926,6 +926,12 @@ fn скомпилировать_runtime(имя: &str, выход: &PathBuf) -> R
             false,
             true,
         ),
+        "http_server" | "реестр" | "registry" => (
+            vec![корень.join("zip-std/runtime/http_server.c")],
+            "ZIP_HTTP_SERVER_MAIN",
+            false,
+            true,
+        ),
         другой => bail!("неизвестный #runtime(\"{}\")", другой),
     };
 

@@ -30,6 +30,14 @@ zipc/build-release.log
 # Local helper scripts (not part of the product)
 tools/_*.py
 
+# Jekyll / WASM build outputs
+веб-сайт/_site/
+веб-сайт/.jekyll-cache/
+веб-сайт/wasm/pkg/
+веб-сайт/wasm/*.wasm
+веб-сайт/wasm/*.js
+!веб-сайт/wasm/README.md
+
 # Profiler / flamegraph outputs (keep icons under vscode-zip/icons/)
 *.profile.json
 profile.json

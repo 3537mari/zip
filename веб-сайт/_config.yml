@@ -1,0 +1,16 @@
+title: ZIP
+description: Язык программирования на кириллице
+theme: minima
+baseurl: ""
+url: "https://zip-lang.org"
+github_username: 3537mari
+markdown: kramdown
+kramdown:
+  input: GFM
+plugins:
+  - jekyll-feed
+header_pages:
+  - установка.md
+  - туториал.md
+  - сообщество.md
+  - плейграунд.html
