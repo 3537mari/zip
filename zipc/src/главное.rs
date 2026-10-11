@@ -22,6 +22,10 @@ mod компилятор_времени;
 mod комплементарность;
 #[path = "аннотации.rs"]
 mod аннотации;
+#[path = "ассоциации.rs"]
+mod ассоциации;
+#[path = "корни.rs"]
+mod корни;
 
 use anyhow::{bail, Context, Result};
 use clap::Parser;

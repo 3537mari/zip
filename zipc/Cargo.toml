@@ -85,6 +85,10 @@ path = "../tests/тест_ffi_overload.rs"
 name = "тест_ассоциаций"
 path = "../tests/тест_ассоциаций.rs"
 
+[[test]]
+name = "тест_корней"
+path = "../tests/тест_корней.rs"
+
 [features]
 default = []
 # LLVM IR + clang -O3 (встроенный эмиттер llvm_ir.rs).
