@@ -69,6 +69,18 @@ path = "../tests/тест_эпигенетики.rs"
 name = "тест_опциональных"
 path = "../tests/тест_опциональных.rs"
 
+[[test]]
+name = "тест_диапазон_copy"
+path = "../tests/тест_диапазон_copy.rs"
+
+[[test]]
+name = "тест_assert_matches"
+path = "../tests/тест_assert_matches.rs"
+
+[[test]]
+name = "тест_ffi_overload"
+path = "../tests/тест_ffi_overload.rs"
+
 [features]
 default = []
 # LLVM IR + clang -O3 (встроенный эмиттер llvm_ir.rs).
