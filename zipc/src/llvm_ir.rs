@@ -5,9 +5,9 @@
 //! без полного SDK для llvm-sys/inkwell.
 
 use crate::промежуток::{
-    ИдентификаторФункции, Инструкция, РежимПечати, Регистр, ФункцияПП,
+    ИдентификаторФункции, Инструкция, РежимПечати, Регистр, ФункцияПП, Тип,
 };
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -37,10 +37,18 @@ pub fn сгенерировать_llvm_ir(функции: &[ФункцияПП],
     out.push_str("loop-unroll-full, vectorize-width=512\n\n");
 
     out.push_str("declare i32 @puts(ptr)\n");
-    out.push_str("declare i32 @printf(ptr, ...)\n\n");
+    out.push_str("declare i32 @printf(ptr, ...)\n");
+    out.push_str("declare ptr @malloc(i64)\n");
+    out.push_str("declare i64 @strlen(ptr)\n");
+    out.push_str("declare ptr @memcpy(ptr, ptr, i64)\n");
+    out.push_str("declare void @exit(i32)\n\n");
     out.push_str("@.fmt_str = private unnamed_addr constant [3 x i8] c\"%s\\00\"\n");
     // "%lld\n\0" = 6 байт
-    out.push_str("@.fmt_i64n = private unnamed_addr constant [6 x i8] c\"%lld\\0A\\00\"\n\n");
+    out.push_str("@.fmt_i64n = private unnamed_addr constant [6 x i8] c\"%lld\\0A\\00\"\n");
+    // "%.1f\n\0" — вещественные с одним знаком после запятой (демо: 10.0)
+    out.push_str("@.fmt_f64n = private unnamed_addr constant [6 x i8] c\"%.1f\\0A\\00\"\n");
+    // "type error: no matching specialization\n\0" = 40 байт
+    out.push_str("@.fmt_type_err = private unnamed_addr constant [40 x i8] c\"type error: no matching specialization\\0A\\00\"\n\n");
 
     let mut строки: Vec<String> = Vec::new();
     for ф in функции {
@@ -65,8 +73,10 @@ pub fn сгенерировать_llvm_ir(функции: &[ФункцияПП],
     }
 
     let mut имена: HashMap<ИдентификаторФункции, String> = HashMap::new();
+    let mut типы_возврата: HashMap<ИдентификаторФункции, Тип> = HashMap::new();
     for ф in функции {
         имена.insert(ф.идентификатор, mangled(&ф.имя));
+        типы_возврата.insert(ф.идентификатор, ф.тип_возврата.clone());
     }
 
     let есть_горячие = функции
@@ -75,7 +85,7 @@ pub fn сгенерировать_llvm_ir(функции: &[ФункцияПП],
     let есть_шифр = функции.iter().any(|ф| ф.шифровать);
 
     for ф in функции {
-        out.push_str(&эмит_функцию(ф, &имена, &строки)?);
+        out.push_str(&эмит_функцию(ф, &имена, &типы_возврата, &строки)?);
         out.push('\n');
     }
 
@@ -96,6 +106,7 @@ pub fn сгенерировать_llvm_ir(функции: &[ФункцияПП],
 fn эмит_функцию(
     ф: &ФункцияПП,
     имена: &HashMap<ИдентификаторФункции, String>,
+    типы_возврата: &HashMap<ИдентификаторФункции, Тип>,
     строки: &[String],
 ) -> Result<String, String> {
     let имя = имена
@@ -107,6 +118,14 @@ fn эмит_функцию(
     } else {
         имя
     };
+
+    // R3: runtime-хелперы со специальной реализацией
+    if ф.имя == "соединить_строки" || ф.имя == "zip_соединить_строки" {
+        return Ok(эмит_соединить_строки(&fname));
+    }
+    if ф.имя == "zip_ошибка_типа" {
+        return Ok(эмит_ошибка_типа(&fname));
+    }
 
     let mut out = String::new();
     // Сигнатура с параметрами (i64…)
@@ -177,6 +196,14 @@ fn эмит_функцию(
         ));
     }
 
+    let mut float_regs: HashSet<u32> = HashSet::new();
+    if matches!(ф.тип_возврата, Тип::Вещественное64) {
+        // параметры вещественного варианта специализации
+        for р in &ф.параметры {
+            float_regs.insert(р.0);
+        }
+    }
+
     let mut str_map: HashMap<String, usize> = HashMap::new();
     for (i, s) in строки.iter().enumerate() {
         str_map.insert(s.clone(), i);
@@ -225,6 +252,9 @@ fn эмит_функцию(
                 назначение,
                 источник,
             } => {
+                if float_regs.contains(&источник.0) {
+                    float_regs.insert(назначение.0);
+                }
                 let t = next_tmp();
                 out.push_str(&format!(
                     "  %t{} = load i64, ptr %r{}, align 8\n  store i64 %t{}, ptr %r{}, align 8\n",
@@ -235,20 +265,39 @@ fn эмит_функцию(
             | Инструкция::Вычесть { назначение, а, б }
             | Инструкция::Умножить { назначение, а, б }
             | Инструкция::Разделить { назначение, а, б } => {
-                let op = match и {
-                    Инструкция::Сложить { .. } => "add",
-                    Инструкция::Вычесть { .. } => "sub",
-                    Инструкция::Умножить { .. } => "mul",
-                    Инструкция::Разделить { .. } => "sdiv",
-                    _ => unreachable!(),
-                };
+                let as_float =
+                    float_regs.contains(&а.0) || float_regs.contains(&б.0);
                 let t1 = next_tmp();
                 let t2 = next_tmp();
                 let t3 = next_tmp();
-                out.push_str(&format!(
-                    "  %t{} = load i64, ptr %r{}, align 8\n  %t{} = load i64, ptr %r{}, align 8\n  %t{} = {} i64 %t{}, %t{}\n  store i64 %t{}, ptr %r{}, align 8\n",
-                    t1, а.0, t2, б.0, t3, op, t1, t2, t3, назначение.0
-                ));
+                if as_float {
+                    float_regs.insert(назначение.0);
+                    let fop = match и {
+                        Инструкция::Сложить { .. } => "fadd",
+                        Инструкция::Вычесть { .. } => "fsub",
+                        Инструкция::Умножить { .. } => "fmul",
+                        Инструкция::Разделить { .. } => "fdiv",
+                        _ => unreachable!(),
+                    };
+                    let fa = next_tmp();
+                    let fb = next_tmp();
+                    out.push_str(&format!(
+                        "  %t{} = load i64, ptr %r{}, align 8\n  %t{} = load i64, ptr %r{}, align 8\n  %t{} = bitcast i64 %t{} to double\n  %t{} = bitcast i64 %t{} to double\n  %t{} = {} double %t{}, %t{}\n  %t{}_b = bitcast double %t{} to i64\n  store i64 %t{}_b, ptr %r{}, align 8\n",
+                        t1, а.0, t2, б.0, fa, t1, fb, t2, t3, fop, fa, fb, t3, t3, t3, назначение.0
+                    ));
+                } else {
+                    let op = match и {
+                        Инструкция::Сложить { .. } => "add",
+                        Инструкция::Вычесть { .. } => "sub",
+                        Инструкция::Умножить { .. } => "mul",
+                        Инструкция::Разделить { .. } => "sdiv",
+                        _ => unreachable!(),
+                    };
+                    out.push_str(&format!(
+                        "  %t{} = load i64, ptr %r{}, align 8\n  %t{} = load i64, ptr %r{}, align 8\n  %t{} = {} i64 %t{}, %t{}\n  store i64 %t{}, ptr %r{}, align 8\n",
+                        t1, а.0, t2, б.0, t3, op, t1, t2, t3, назначение.0
+                    ));
+                }
             }
             Инструкция::Сравнить {
                 оператор,
@@ -296,10 +345,18 @@ fn эмит_функцию(
                         ));
                     }
                     РежимПечати::Число => {
-                        out.push_str(&format!(
-                            "  call i32 (ptr, ...) @printf(ptr @.fmt_i64n, i64 %t{})\n",
-                            t
-                        ));
+                        if float_regs.contains(&значение.0) {
+                            let tf = next_tmp();
+                            out.push_str(&format!(
+                                "  %t{} = bitcast i64 %t{} to double\n  call i32 (ptr, ...) @printf(ptr @.fmt_f64n, double %t{})\n",
+                                tf, t, tf
+                            ));
+                        } else {
+                            out.push_str(&format!(
+                                "  call i32 (ptr, ...) @printf(ptr @.fmt_i64n, i64 %t{})\n",
+                                t
+                            ));
+                        }
                     }
                 }
             }
@@ -363,6 +420,12 @@ fn эмит_функцию(
                         "  store i64 %t{}, ptr %r{}, align 8\n",
                         t, р.0
                     ));
+                    if matches!(
+                        типы_возврата.get(функция),
+                        Some(Тип::Вещественное64)
+                    ) {
+                        float_regs.insert(р.0);
+                    }
                 }
             }
             Инструкция::Выделить { назначение, .. } => {
@@ -372,6 +435,7 @@ fn эмит_функцию(
                 ));
             }
             Инструкция::КонстантаВещественное { назначение, значение } => {
+                float_regs.insert(назначение.0);
                 out.push_str(&format!(
                     "  store i64 {}, ptr %r{}, align 8\n",
                     значение.to_bits() as i64,
@@ -442,6 +506,43 @@ fn mangled(имя: &str) -> String {
                 .collect::<String>()
         )
     }
+}
+
+/// R3: конкатенация двух C-строк (указатели как i64).
+fn эмит_соединить_строки(fname: &str) -> String {
+    format!(
+        r#"define i64 @{fname}(i64 %arg0, i64 %arg1) {{
+entry:
+  %pa = inttoptr i64 %arg0 to ptr
+  %pb = inttoptr i64 %arg1 to ptr
+  %la = call i64 @strlen(ptr %pa)
+  %lb = call i64 @strlen(ptr %pb)
+  %sum = add i64 %la, %lb
+  %n = add i64 %sum, 1
+  %buf = call ptr @malloc(i64 %n)
+  %_ = call ptr @memcpy(ptr %buf, ptr %pa, i64 %la)
+  %dst = getelementptr i8, ptr %buf, i64 %la
+  %__ = call ptr @memcpy(ptr %dst, ptr %pb, i64 %lb)
+  %end = getelementptr i8, ptr %buf, i64 %sum
+  store i8 0, ptr %end, align 1
+  %ret = ptrtoint ptr %buf to i64
+  ret i64 %ret
+}}
+"#
+    )
+}
+
+/// R3: runtime-ошибка специализации.
+fn эмит_ошибка_типа(fname: &str) -> String {
+    format!(
+        r#"define i64 @{fname}(i64 %arg0) {{
+entry:
+  call i32 (ptr, ...) @printf(ptr @.fmt_type_err)
+  call void @exit(i32 1)
+  unreachable
+}}
+"#
+    )
 }
 
 fn ascii_name(s: &str) -> String {

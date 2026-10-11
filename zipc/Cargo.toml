@@ -97,6 +97,10 @@ path = "../tests/тест_ttl.rs"
 name = "тест_единиц"
 path = "../tests/тест_единиц.rs"
 
+[[test]]
+name = "тест_специализации"
+path = "../tests/тест_специализации.rs"
+
 [features]
 default = []
 # LLVM IR + clang -O3 (встроенный эмиттер llvm_ir.rs).

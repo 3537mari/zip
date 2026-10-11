@@ -93,6 +93,30 @@ void zip_освободить_объединение(ZipОбъединение* 
     free(об);
 }
 
+/* R3: ошибка несоответствия типов при специализации. */
+void zip_ошибка_типа(const char* имя_глагола) {
+    fprintf(stderr, "Ошибка: нет подходящего варианта глагола '%s'\n",
+            имя_глагола ? имя_глагола : "?");
+    exit(1);
+}
+
+/* R3: конкатенация строк для специализации САПАР(Строка, Строка). */
+char* соединить_строки(const char* а, const char* б) {
+    if (!а) а = "";
+    if (!б) б = "";
+    size_t na = strlen(а);
+    size_t nb = strlen(б);
+    char* out = (char*)malloc(na + nb + 1);
+    if (!out) return NULL;
+    memcpy(out, а, na);
+    memcpy(out + na, б, nb + 1);
+    return out;
+}
+
+char* zip_соединить_строки(const char* а, const char* б) {
+    return соединить_строки(а, б);
+}
+
 #ifdef ZIP_UNION_MAIN
 int main(void) {
     ZipОбъединение* a = zip_создать_нечто(42);
