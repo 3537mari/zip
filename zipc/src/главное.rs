@@ -18,6 +18,8 @@ mod байткод_эмиттер;
 mod владение;
 #[path = "компилятор_времени.rs"]
 mod компилятор_времени;
+#[path = "комплементарность.rs"]
+mod комплементарность;
 
 use anyhow::{bail, Context, Result};
 use clap::Parser;
@@ -400,6 +402,12 @@ fn скомпилировать_runtime(имя: &str, выход: &PathBuf) -> R
         "iter" => (
             vec![корень.join("zip-std/runtime/iter.c")],
             "ZIP_ITER_MAIN",
+            false,
+            false,
+        ),
+        "undo" => (
+            vec![корень.join("zip-std/runtime/undo.c")],
+            "ZIP_UNDO_MAIN",
             false,
             false,
         ),
