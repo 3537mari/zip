@@ -1,0 +1,30 @@
+name: Вопрос
+description: Задать вопрос о ZIP
+title: "[Вопрос] "
+labels: [вопрос]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Вопрос о ZIP
+        Опишите ваш вопрос подробно.
+  - type: textarea
+    id: вопрос
+    attributes:
+      label: Ваш вопрос
+    validations:
+      required: true
+  - type: textarea
+    id: контекст
+    attributes:
+      label: Контекст
+      description: Что вы пытаетесь сделать?
+    validations:
+      required: true
+  - type: textarea
+    id: код
+    attributes:
+      label: Код (если есть)
+      render: zip
+    validations:
+      required: false

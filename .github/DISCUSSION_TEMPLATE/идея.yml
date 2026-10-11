@@ -1,0 +1,28 @@
+name: Идея
+description: Предложить улучшение ZIP
+title: "[Идея] "
+labels: [идея]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Идея для ZIP
+        Опишите вашу идею. Будьте конкретны.
+  - type: textarea
+    id: проблема
+    attributes:
+      label: Какую проблему решает?
+    validations:
+      required: true
+  - type: textarea
+    id: решение
+    attributes:
+      label: Предлагаемое решение
+    validations:
+      required: true
+  - type: textarea
+    id: альтернативы
+    attributes:
+      label: Альтернативы
+    validations:
+      required: false

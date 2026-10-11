@@ -1,0 +1,24 @@
+name: Объявление
+description: Важные новости о ZIP
+title: "[Объявление] "
+labels: [объявление]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Объявление
+        Опишите важное изменение, релиз или событие.
+  - type: textarea
+    id: содержимое
+    attributes:
+      label: Содержимое
+      description: Что произошло?
+    validations:
+      required: true
+  - type: textarea
+    id: подробности
+    attributes:
+      label: Подробности
+      description: Дополнительная информация
+    validations:
+      required: false

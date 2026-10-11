@@ -1,6 +1,6 @@
 # ZIP — язык программирования на кириллице
 
-[![Версия](https://img.shields.io/badge/версия-2.1.0-blue)](CHANGELOG.md)
+[![Версия](https://img.shields.io/badge/версия-2.2.0-blue)](CHANGELOG.md)
 [![Тесты](https://img.shields.io/badge/тесты-230%2B%20✅-green)](tests/)
 [![Лицензия](https://img.shields.io/badge/лицензия-MIT-green)](LICENSE)
 [![Самокомпиляция](https://img.shields.io/badge/самокомпиляция-✅-green)](docs/САМОКОМПИЛЯЦИЯ.md)
@@ -116,8 +116,24 @@ EOF
 
 ## Сообщество
 
-- GitHub: [3537mari/zip](https://github.com/3537mari/zip)
-- Issues: [github.com/3537mari/zip/issues](https://github.com/3537mari/zip/issues)
+- [Discord](https://discord.gg/zip-lang)
+- [Telegram-канал](https://t.me/zip_lang_news)
+- [Telegram-чат](https://t.me/zip_lang_chat)
+- [GitHub Discussions](https://github.com/3537mari/zip/discussions)
+- [GitHub Issues](https://github.com/3537mari/zip/issues)
+- Инфраструктура: [community/](community/) · [docs/СООБЩЕСТВО.md](docs/СООБЩЕСТВО.md)
+
+## Вклад
+
+См. [CONTRIBUTING.md](CONTRIBUTING.md). Мы рады любому вкладу!
+
+## Кодекс поведения
+
+См. [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
+
+## Управление
+
+См. [GOVERNANCE.md](GOVERNANCE.md) · [FAQ.md](FAQ.md).
 
 ## Лицензия
 

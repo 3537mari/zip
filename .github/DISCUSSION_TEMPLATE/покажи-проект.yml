@@ -1,0 +1,36 @@
+name: Покажи проект
+description: Показать проект на ZIP
+title: "[Проект] "
+labels: [проект]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Мой проект на ZIP
+        Расскажите о вашем проекте!
+  - type: input
+    id: название
+    attributes:
+      label: Название проекта
+    validations:
+      required: true
+  - type: textarea
+    id: описание
+    attributes:
+      label: Описание
+      description: Что делает проект?
+    validations:
+      required: true
+  - type: input
+    id: ссылка
+    attributes:
+      label: Ссылка на репозиторий
+    validations:
+      required: false
+  - type: textarea
+    id: код
+    attributes:
+      label: Пример кода
+      render: zip
+    validations:
+      required: false

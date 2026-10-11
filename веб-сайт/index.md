@@ -32,4 +32,11 @@ cargo build --release --manifest-path zipc/Cargo.toml
 - [Учебник](https://github.com/3537mari/zip/blob/master/docs/УЧЕБНИК.md)
 - [Cookbook — рецепты](https://github.com/3537mari/zip/blob/master/docs/COOKBOOK.md)
 
+## Сообщество
+
+- [Discord](https://discord.gg/zip-lang) — общение в реальном времени
+- [Telegram](https://t.me/zip_lang_news) — анонсы
+- [GitHub Discussions](https://github.com/3537mari/zip/discussions) — обсуждения
+- [Как внести вклад](https://github.com/3537mari/zip/blob/master/CONTRIBUTING.md)
+
 [Попробовать онлайн](плейграунд.html) · [Установка](установка.md) · [Туториал](туториал.md) · [Пакеты](пакеты/) · [Справочник](справочник/синтаксис.md)
