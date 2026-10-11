@@ -1054,6 +1054,18 @@ fn скомпилировать_runtime(имя: &str, выход: &PathBuf) -> R
             false,
             true,
         ),
+        "todo_api" | "todo_сервис" => (
+            vec![корень.join("zip-std/runtime/todo_api.c")],
+            "ZIP_TODO_MAIN",
+            false,
+            true,
+        ),
+        "todo_api_test" => (
+            vec![корень.join("zip-std/runtime/todo_api.c")],
+            "ZIP_TODO_TEST",
+            false,
+            false,
+        ),
         "json_parser" | "json" => (
             vec![корень.join("zip-std/runtime/json_parser.c")],
             "ZIP_JSON_MAIN",

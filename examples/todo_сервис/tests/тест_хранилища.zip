@@ -1,0 +1,3 @@
+#!/usr/bin/env zipc
+// Автотест JSON-хранилища и токенов (без сети)
+#runtime("todo_api_test")

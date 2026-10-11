@@ -1,6 +1,6 @@
 # ZIP — язык программирования на кириллице
 
-[![Версия](https://img.shields.io/badge/версия-1.1.0-blue)](CHANGELOG.md)
+[![Версия](https://img.shields.io/badge/версия-2.1.0-blue)](CHANGELOG.md)
 [![Тесты](https://img.shields.io/badge/тесты-230%2B%20✅-green)](tests/)
 [![Лицензия](https://img.shields.io/badge/лицензия-MIT-green)](LICENSE)
 [![Самокомпиляция](https://img.shields.io/badge/самокомпиляция-✅-green)](docs/САМОКОМПИЛЯЦИЯ.md)
