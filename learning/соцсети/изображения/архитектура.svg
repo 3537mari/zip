@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="520" viewBox="0 0 900 520" role="img" aria-label="ZIP architecture">
+  <rect width="900" height="520" fill="#0f1419"/>
+  <text x="450" y="42" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="26" font-weight="650" fill="#e7ecf3">ZIP architecture</text>
+
+  <rect x="60" y="80" width="160" height="64" rx="8" fill="#1a2332" stroke="#3d9cf0"/>
+  <text x="140" y="118" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="16" fill="#e7ecf3">.zip source</text>
+
+  <path d="M220 112 H280" stroke="#8b9bb4" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <rect x="280" y="80" width="160" height="64" rx="8" fill="#1a2332" stroke="#3d9cf0"/>
+  <text x="360" y="110" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="16" fill="#e7ecf3">zipc</text>
+  <text x="360" y="130" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="12" fill="#8b9bb4">lex ’ parse ’ IR</text>
+
+  <path d="M440 100 H500" stroke="#8b9bb4" stroke-width="2"/>
+  <path d="M440 124 H500" stroke="#8b9bb4" stroke-width="2"/>
+
+  <rect x="500" y="50" width="160" height="56" rx="8" fill="#1a2332" stroke="#3ecf8e"/>
+  <text x="580" y="84" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="15" fill="#e7ecf3">LLVM / native</text>
+
+  <rect x="500" y="130" width="160" height="56" rx="8" fill="#1a2332" stroke="#f0a03d"/>
+  <text x="580" y="164" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="15" fill="#e7ecf3">ZIPB ’ zip-vm</text>
+
+  <rect x="60" y="240" width="780" height="100" rx="8" fill="#1a2332" stroke="#2a3a52"/>
+  <text x="90" y="280" font-family="Segoe UI, sans-serif" font-size="16" fill="#e7ecf3">STD + #runtime (C): tensors, NN, crypto, HTTP helpers</text>
+  <text x="90" y="310" font-family="Segoe UI, sans-serif" font-size="14" fill="#8b9bb4">examples/todo_A5@28A · zip-std · WASM playground</text>
+
+  <rect x="60" y="380" width="240" height="80" rx="8" fill="#1a2332" stroke="#3d9cf0"/>
+  <text x="180" y="415" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="15" fill="#e7ecf3">Editors + LSP</text>
+  <text x="180" y="438" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="12" fill="#8b9bb4">VS Code · nvim · Emacs</text>
+
+  <rect x="330" y="380" width="240" height="80" rx="8" fill="#1a2332" stroke="#3d9cf0"/>
+  <text x="450" y="415" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="15" fill="#e7ecf3">Docs + learning</text>
+  <text x="450" y="438" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="12" fill="#8b9bb4">docs/ · learning/</text>
+
+  <rect x="600" y="380" width="240" height="80" rx="8" fill="#1a2332" stroke="#3d9cf0"/>
+  <text x="720" y="415" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="15" fill="#e7ecf3">Site + WASM</text>
+  <text x="720" y="438" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="12" fill="#8b9bb4">GitHub Pages</text>
+
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L6,3 L0,6 Z" fill="#8b9bb4"/>
+    </marker>
+  </defs>
+</svg>

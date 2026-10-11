@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Урок 7: Нейросети — ZIP за 30 минут</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="wrap">
+    <nav class="bar">
+      <a href="урок-06.html">← Назад</a>
+      <span>Урок 7 из 8</span>
+      <a href="урок-08.html">Вперёд →</a>
+    </nav>
+    <h1>Урок 7: Нейросети</h1>
+    
+    <p>STD ZIP содержит примитивы для слоёв и обучения (см. <code>zip-std/примеры/xor_обучение.zip</code>).</p>
+    <div class="code-block">
+      <pre><code>// Локально:
+// zipc запустить zip-std/примеры/xor_обучение.zip
+функция главная() {
+    ПечатьСтроки("См. пример XOR в репозитории")
+}</code></pre>
+      <button type="button" onclick="runCode(`функция главная() {\n    ПечатьСтроки(\"См. пример XOR в репозитории\")\n}`)">Запустить</button>
+    </div>
+    <p>В бенчмарках XOR 10k эпох на ZIP — порядка единиц миллисекунд (runtime STD).</p>
+
+    <a class="next-button" href="урок-08.html">Следующий урок →</a>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Урок 8: Агенты — ZIP за 30 минут</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="wrap">
+    <nav class="bar">
+      <a href="урок-07.html">← Назад</a>
+      <span>Урок 8 из 8</span>
+      <a href="index.html">Вперёд →</a>
+    </nav>
+    <h1>Урок 8: Агенты</h1>
+    
+    <p>Агенты хранят <code>состояние</code> и методы — удобно для сервисов и долгоживущих процессов.</p>
+    <div class="code-block">
+      <pre><code>агент Счётчик {
+    состояние {
+        н: Целое = 0
+    }
+    функция шаг() {
+        н = н + 1
+        возврат(н)
+    }
+}</code></pre>
+      <button type="button" onclick="runCode(`агент Счётчик {\n    состояние {\n        н: Целое = 0\n    }\n    функция шаг() {\n        н = н + 1\n        возврат(н)\n    }\n}\nфункция главная() {\n    ПечатьСтроки(\"агент объявлен\")\n}`)">Запустить</button>
+    </div>
+    <p>Практический пример: <a href="../../examples/todo_сервис/README.md">TODO-сервис</a>.</p>
+
+    <a class="next-button" href="index.html">К оглавлению →</a>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>

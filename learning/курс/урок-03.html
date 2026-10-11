@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Урок 3: Функции — ZIP за 30 минут</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="wrap">
+    <nav class="bar">
+      <a href="урок-02.html">← Назад</a>
+      <span>Урок 3 из 8</span>
+      <a href="урок-04.html">Вперёд →</a>
+    </nav>
+    <h1>Урок 3: Функции</h1>
+    
+    <p>Объявление: <code>функция имя(параметры) { ... }</code>. Возврат — <code>возврат(...)</code>.</p>
+    <div class="code-block">
+      <pre><code>функция сложить(а, б) {
+    возврат(а + б)
+}
+функция главная() {
+    ПечатьЧисло(сложить(2, 3))
+}</code></pre>
+      <button type="button" onclick="runCode(`функция сложить(а, б) {\n    возврат(а + б)\n}\nфункция главная() {\n    ПечатьЧисло(сложить(2, 3))\n}`)">Запустить</button>
+    </div>
+
+    <a class="next-button" href="урок-04.html">Следующий урок →</a>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>

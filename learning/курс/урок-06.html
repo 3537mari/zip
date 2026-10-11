@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Урок 6: Аннотации — ZIP за 30 минут</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="wrap">
+    <nav class="bar">
+      <a href="урок-05.html">← Назад</a>
+      <span>Урок 6 из 8</span>
+      <a href="урок-07.html">Вперёд →</a>
+    </nav>
+    <h1>Урок 6: Аннотации</h1>
+    
+    <p>Аннотации начинаются с <code>@</code> и задают подсказки компилятору / runtime.</p>
+    <div class="code-block">
+      <pre><code>@ускорить(уровень = 2)
+функция обработать(х) {
+    возврат(х)
+}</code></pre>
+      <button type="button" onclick="runCode(`@ускорить(уровень = 2)\nфункция обработать(х) {\n    возврат(х)\n}\nфункция главная() {\n    ПечатьЧисло(обработать(1))\n}`)">Запустить</button>
+    </div>
+    <p>Примеры: <code>@кэшировать</code>, <code>@шифровать</code>, <code>@тест</code>.</p>
+
+    <a class="next-button" href="урок-07.html">Следующий урок →</a>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>

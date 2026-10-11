@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="480" viewBox="0 0 800 480" role="img" aria-label="ZIP benchmarks">
+  <rect width="800" height="480" fill="#0f1419"/>
+  <text x="40" y="48" font-family="Segoe UI, sans-serif" font-size="28" font-weight="650" fill="#e7ecf3">JSON parse  10k objects (ms, lower better)</text>
+  <text x="40" y="78" font-family="Segoe UI, sans-serif" font-size="14" fill="#8b9bb4">See docs/' .md for methodology</text>
+
+  <!-- bars: max 77ms -> scale width 600 -->
+  <text x="40" y="140" font-family="Consolas, monospace" font-size="18" fill="#e7ecf3">ZIP</text>
+  <rect x="140" y="118" width="39" height="28" rx="4" fill="#3ecf8e"/>
+  <text x="190" y="140" font-family="Consolas, monospace" font-size="16" fill="#8b9bb4">5</text>
+
+  <text x="40" y="200" font-family="Consolas, monospace" font-size="18" fill="#e7ecf3">Rust</text>
+  <rect x="140" y="178" width="51" height="28" rx="4" fill="#3d9cf0"/>
+  <text x="202" y="200" font-family="Consolas, monospace" font-size="16" fill="#8b9bb4">6.5</text>
+
+  <text x="40" y="260" font-family="Consolas, monospace" font-size="18" fill="#e7ecf3">Go</text>
+  <rect x="140" y="238" width="179" height="28" rx="4" fill="#f0a03d"/>
+  <text x="330" y="260" font-family="Consolas, monospace" font-size="16" fill="#8b9bb4">23</text>
+
+  <text x="40" y="320" font-family="Consolas, monospace" font-size="18" fill="#e7ecf3">Python</text>
+  <rect x="140" y="298" width="600" height="28" rx="4" fill="#f07178"/>
+  <text x="750" y="320" font-family="Consolas, monospace" font-size="16" fill="#8b9bb4">77</text>
+
+  <text x="40" y="400" font-family="Segoe UI, sans-serif" font-size="16" fill="#8b9bb4">github.com/3537mari/zip</text>
+</svg>

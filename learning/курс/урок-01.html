@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Урок 1: Введение — ZIP за 30 минут</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="wrap">
+    <nav class="bar">
+      <a href="index.html">← Назад</a>
+      <span>Урок 1 из 8</span>
+      <a href="урок-02.html">Вперёд →</a>
+    </nav>
+    <h1>Урок 1: Введение</h1>
+    
+    <p>ZIP — язык программирования на <strong>кириллице</strong>. Ключевые слова и идентификаторы пишутся русскими буквами.</p>
+    <h2>Первая программа</h2>
+    <div class="code-block">
+      <pre><code>ПечатьСтроки("Привет, мир!")</code></pre>
+      <button type="button" onclick="runCode('ПечатьСтроки(\"Привет, мир!\")')">Запустить</button>
+    </div>
+    <p>Кнопка вызывает WASM-компилятор (или fallback-разбор), если модуль доступен.</p>
+    <div class="quiz">
+      <p><strong>Вопрос:</strong> На каком алфавите пишется код ZIP?</p>
+      <button type="button" onclick="checkQuiz(this,true)">Кириллица</button>
+      <button type="button" onclick="checkQuiz(this,false)">Только латиница</button>
+    </div>
+
+    <a class="next-button" href="урок-02.html">Следующий урок →</a>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>

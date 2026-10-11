@@ -42,11 +42,30 @@
     button:disabled { opacity: 0.5; cursor: wait; }
     .status { margin-top: 8px; font-size: 13px; color: var(--muted); }
     a { color: var(--accent); }
+    .tasks {
+      margin-top: 32px; padding: 20px;
+      background: var(--panel); border: 1px solid #2a3a52; border-radius: 8px;
+    }
+    .tasks h3 { margin: 0 0 16px; }
+    .task {
+      margin-bottom: 14px; padding: 12px 14px;
+      border-left: 3px solid var(--accent); background: rgba(0,0,0,0.2);
+      border-radius: 0 6px 6px 0;
+    }
+    .task h4 { margin: 0 0 6px; font-size: 15px; }
+    .task p { margin: 0 0 8px; font-size: 14px; }
+    .task details { font-size: 13px; color: var(--muted); }
+    .task summary { cursor: pointer; color: var(--accent); }
+    .task button.load {
+      margin-top: 8px; padding: 6px 12px; font-size: 13px;
+      background: transparent; color: var(--accent);
+      border: 1px solid var(--accent);
+    }
   </style>
 </head>
 <body>
   <h1>ZIP Playground</h1>
-  <p>Онлайн-разбор ZIP (WASM). <a href="./">← на сайт</a></p>
+  <p>Онлайн-разбор ZIP (WASM). <a href="./">← на сайт</a> · <a href="../learning/курс/index.html">курс</a></p>
   <div class="row">
     <div class="col">
       <h3>Исходник</h3>
@@ -60,6 +79,84 @@
     <div class="col">
       <h3>Вывод</h3>
       <div id="out"></div>
+    </div>
+  </div>
+
+  <div class="tasks">
+    <h3>Задачи для практики</h3>
+
+    <div class="task" data-task="1">
+      <h4>Задача 1: Hello, World</h4>
+      <p>Напишите программу, которая печатает «Привет, мир!».</p>
+      <details><summary>Подсказка</summary><p>Используйте <code>ПечатьСтроки("...")</code></p></details>
+      <button class="load" type="button" data-snippet='ПечатьСтроки("Привет, мир!")'>Вставить шаблон</button>
+    </div>
+
+    <div class="task" data-task="2">
+      <h4>Задача 2: Сложение</h4>
+      <p>Создайте функцию <code>сложить(а, б)</code>, возвращающую сумму.</p>
+      <details><summary>Подсказка</summary><p>Ключевые слова <code>функция</code> и <code>возврат</code>.</p></details>
+      <button class="load" type="button" data-snippet='функция сложить(а, б) {
+    возврат(а + б)
+}
+
+функция главная() {
+    ПечатьЧисло(сложить(2, 3))
+}'>Вставить шаблон</button>
+    </div>
+
+    <div class="task" data-task="3">
+      <h4>Задача 3: Факториал</h4>
+      <p>Напишите рекурсивную функцию <code>факториал(н)</code>.</p>
+      <details><summary>Подсказка</summary><p>База: <code>н &lt;= 1</code> → <code>возврат(1)</code>.</p></details>
+      <button class="load" type="button" data-snippet='функция факториал(н) {
+    если н <= 1 {
+        возврат(1)
+    }
+    возврат(н * факториал(н - 1))
+}
+
+функция главная() {
+    ПечатьЧисло(факториал(5))
+}'>Вставить шаблон</button>
+    </div>
+
+    <div class="task" data-task="4">
+      <h4>Задача 4: Условие</h4>
+      <p>Если число чётное — напечатать «чёт», иначе «нечёт».</p>
+      <details><summary>Подсказка</summary><p><code>если</code> / <code>иначе</code> и оператор <code>%</code>.</p></details>
+    </div>
+
+    <div class="task" data-task="5">
+      <h4>Задача 5: Цикл</h4>
+      <p>Напечатайте числа от 1 до 10.</p>
+      <details><summary>Подсказка</summary><p>Используйте <code>пока</code> или цикл по счётчику из документации.</p></details>
+    </div>
+
+    <div class="task" data-task="6">
+      <h4>Задача 6: Массив / список</h4>
+      <p>Создайте список чисел и напечатайте сумму элементов.</p>
+    </div>
+
+    <div class="task" data-task="7">
+      <h4>Задача 7: Аннотация</h4>
+      <p>Добавьте к функции аннотацию производительности или типа (см. docs).</p>
+    </div>
+
+    <div class="task" data-task="8">
+      <h4>Задача 8: Поток</h4>
+      <p>Свяжите два действия оператором потока <code>&gt;&gt;</code>.</p>
+    </div>
+
+    <div class="task" data-task="9">
+      <h4>Задача 9: XOR-слой (концепт)</h4>
+      <p>Опишите два слоя <code>создать_слой</code> для XOR (как в видео 04).</p>
+      <details><summary>Подсказка</summary><p>См. <code>zip-std/примеры/xor_обучение.zip</code> и урок 7 курса.</p></details>
+    </div>
+
+    <div class="task" data-task="10">
+      <h4>Задача 10: Мини-API контракт</h4>
+      <p>Набросайте функцию-обработчик «создать задачу» с полями id и текст (как в TODO-сервисе).</p>
     </div>
   </div>
   <script type="module">
@@ -103,6 +200,13 @@
         out.textContent = "Ошибка: " + e;
       }
     };
+
+    document.querySelectorAll(".task button.load").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const snip = btn.getAttribute("data-snippet");
+        if (snip) document.getElementById("code").value = snip;
+      });
+    });
 
     await load();
   </script>

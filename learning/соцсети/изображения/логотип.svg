@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360" role="img" aria-label="ZIP">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f1419"/>
+      <stop offset="100%" stop-color="#1e3a5f"/>
+    </linearGradient>
+  </defs>
+  <rect width="640" height="360" fill="url(#bg)"/>
+  <rect x="40" y="40" width="560" height="280" rx="8" fill="none" stroke="#3d9cf0" stroke-width="2" opacity="0.35"/>
+  <text x="320" y="175" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="120" font-weight="700" fill="#e7ecf3" letter-spacing="8">ZIP</text>
+  <text x="320" y="230" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="22" fill="#8b9bb4">O7K: =0 :8@8;;8F5</text>
+  <text x="320" y="270" text-anchor="middle" font-family="Consolas, monospace" font-size="16" fill="#3ecf8e">v2.1.0</text>
+</svg>
