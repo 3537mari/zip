@@ -1,6 +1,6 @@
 # ZIP — язык программирования на кириллице
 
-[![Версия](https://img.shields.io/badge/версия-2.2.0-blue)](CHANGELOG.md)
+[![Версия](https://img.shields.io/badge/версия-3.0.0-blue)](CHANGELOG.md)
 [![Тесты](https://img.shields.io/badge/тесты-230%2B%20✅-green)](tests/)
 [![Лицензия](https://img.shields.io/badge/лицензия-MIT-green)](LICENSE)
 [![Самокомпиляция](https://img.shields.io/badge/самокомпиляция-✅-green)](docs/САМОКОМПИЛЯЦИЯ.md)
@@ -23,11 +23,31 @@
 
 ### Установка
 
+#### Bootstrap на C (минимальный)
+
+**Требования:** gcc или clang.
+
 ```bash
 git clone https://github.com/3537mari/zip.git
-cd zip
-cargo build --release --manifest-path zipc/Cargo.toml
+cd zip/bootstrap
+make          # Linux/macOS
+# Windows: pwsh ./build.ps1
+./zipc --version
+# ZIP bootstrap compiler v3.0.0
 ```
+
+#### Полная сборка (разработка)
+
+```bash
+cargo build --release --manifest-path zipc/Cargo.toml
+cargo build --release --manifest-path zip-vm/Cargo.toml
+```
+
+**Требования:** Rust 1.75+. LLVM опционален (`--llvm`).
+
+#### Готовые пакеты
+
+Скрипты: [`installers/`](installers/) · релизы: [GitHub Releases](https://github.com/3537mari/zip/releases)
 
 ### Первая программа
 
@@ -36,8 +56,12 @@ cat > привет.zip << 'EOF'
 ПечатьСтроки("Привет, мир!")
 EOF
 
+# По умолчанию (v3.0): байт-код ZIPB → zip-vm
+./zipc/target/release/zipc собрать привет.zip -o привет
+./zip-vm/target/release/zip-vm привет.zipb
+
+# Опционально: LLVM
 ./zipc/target/release/zipc запустить привет.zip --llvm
-# → Привет, мир!
 ```
 
 ### Нейросеть XOR

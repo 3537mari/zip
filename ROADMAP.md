@@ -40,14 +40,16 @@
 
 **Дата релиза:** 2026-10-11
 
-## v3.0.0 (Q2–Q3 2027) — план
+## v3.0.0 (2026-10-11) — Bootstrap на C — ✅ ЗАВЕРШЁН
 
-- [ ] Bootstrap на C
-- [ ] Убрать обязательный LLVM (путь `.zipb` + VM по умолчанию)
-- [ ] JIT v3
-- [ ] Installers (.msi / .deb / .dmg)
-- [ ] Offline installer
-- [ ] Homebrew / Chocolatey
+- [x] Bootstrap на C — [`bootstrap/`](bootstrap/)
+- [x] Убрать обязательный LLVM (по умолчанию ZIPB + VM) ✅
+- [x] Installers (.msi / .deb / .dmg / offline) — [`installers/`](installers/)
+- [x] CI сборки installers — [`.github/workflows/build-installers.yml`](.github/workflows/build-installers.yml)
+- [ ] JIT v3 (бэклог)
+- [ ] Homebrew / Chocolatey (бэклог)
+
+**Дата релиза:** 2026-10-11
 
 ## v4.0.0 (Q4 2027) — план
 

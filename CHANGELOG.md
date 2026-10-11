@@ -7,6 +7,24 @@
 
 ## [Unreleased]
 
+## [3.0.0] — 2026-10-11
+
+### Bootstrap на C
+
+- Минимальный компилятор на C: лексер → парсер → AST → ZIPB v3 (`bootstrap/`)
+- Сборка: `make` / `pwsh bootstrap/build.ps1` (clang/gcc)
+- Без Rust и LLVM для bootstrap-пути
+
+### LLVM опционален
+
+- По умолчанию `zipc` пишет `.zipb` (VM v3)
+- Нативный LLVM-путь: `--llvm` / `--simd`
+
+### Installers
+
+- Windows WiX (`.msi`), Debian (`.deb`), RPM, macOS (`.dmg`), offline (`.sh` / `.ps1`)
+- CI: `build-installers.yml`
+
 ## [2.2.0] — 2026-10-11
 
 ### Сообщество и обучение

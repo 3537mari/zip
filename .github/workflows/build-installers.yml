@@ -1,0 +1,48 @@
+name: Build Installers
+
+on:
+  release:
+    types: [created]
+  workflow_dispatch:
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Build binaries + bootstrap
+        run: |
+          cargo build --release --manifest-path zipc/Cargo.toml
+          cargo build --release --manifest-path zip-vm/Cargo.toml
+          cd bootstrap && make
+      - name: Build .deb
+        run: |
+          cd installers/linux
+          chmod +x build-deb.sh
+          ./build-deb.sh || true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-packages
+          path: |
+            installers/linux/*.deb
+            bootstrap/zipc
+          if-no-files-found: warn
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Build
+        run: |
+          cargo build --release --manifest-path zipc/Cargo.toml
+          cargo build --release --manifest-path zip-vm/Cargo.toml
+          pwsh ./bootstrap/build.ps1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-binaries
+          path: |
+            zipc/target/release/zipc.exe
+            zip-vm/target/release/zip-vm.exe
+            bootstrap/zipc.exe
