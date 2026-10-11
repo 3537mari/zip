@@ -31,6 +31,10 @@ pub fn сгенерировать_llvm_ir(функции: &[ФункцияПП],
         "target datalayout = \"e-m:w-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128\"\n",
     );
     out.push_str("target triple = \"x86_64-pc-windows-msvc\"\n\n");
+    out.push_str("; Проходы: mem2reg, instcombine, simplifycfg, ");
+    out.push_str("loop-unroll, loop-vectorize, slp-vectorizer\n");
+    out.push_str("; Для горячих функций: aggressive-inline, ");
+    out.push_str("loop-unroll-full, vectorize-width=512\n\n");
 
     out.push_str("declare i32 @puts(ptr)\n");
     out.push_str("declare i32 @printf(ptr, ...)\n\n");
@@ -65,9 +69,20 @@ pub fn сгенерировать_llvm_ir(функции: &[ФункцияПП],
         имена.insert(ф.идентификатор, mangled(&ф.имя));
     }
 
+    let есть_горячие = функции
+        .iter()
+        .any(|ф| ф.агрессивная_оптимизация || ф.уже_горячая);
+
     for ф in функции {
         out.push_str(&эмит_функцию(ф, &имена, &строки)?);
         out.push('\n');
+    }
+
+    if есть_горячие {
+        out.push_str(
+            "; Пластичность: hot + noinline (агрессивные проходы: loop-unroll-full, vectorize)\n",
+        );
+        out.push_str("attributes #0 = { hot noinline }\n");
     }
 
     Ok(out)
@@ -96,10 +111,23 @@ fn эмит_функцию(
         .enumerate()
         .map(|(i, _)| format!("i64 %arg{i}"))
         .collect();
+    // Идея 4: горячие функции — атрибут hot (+ комментарий для проходов)
+    let attrs = if ф.агрессивная_оптимизация || ф.уже_горячая {
+        " #0"
+    } else {
+        ""
+    };
+    if ф.агрессивная_оптимизация || ф.уже_горячая {
+        out.push_str(&format!(
+            "; hot function «{}» (порог={}, агрессивная оптимизация)\n",
+            ф.имя, ф.порог_горячности
+        ));
+    }
     out.push_str(&format!(
-        "define i64 @{}({}) {{\n",
+        "define i64 @{}({}){} {{\n",
         fname,
-        params_sig.join(", ")
+        params_sig.join(", "),
+        attrs
     ));
     out.push_str("entry:\n");
 
@@ -277,6 +305,7 @@ fn эмит_функцию(
                 функция,
                 аргументы,
                 результат,
+                ..
             } => {
                 let имя = имена
                     .get(функция)

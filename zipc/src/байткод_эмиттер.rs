@@ -8,7 +8,8 @@ use std::fs;
 use std::path::Path;
 
 const МАГИЯ: &[u8; 4] = b"ZIPC";
-const ВЕРСИЯ: u16 = 1;
+/// v2: порог_горячности после размер_стека (Идея 4).
+const ВЕРСИЯ: u16 = 2;
 
 mod оп {
     pub const PUSH_I64: u8 = 0x01;
@@ -97,7 +98,8 @@ pub fn сгенерировать(функции: &[ФункцияПП]) -> Resu
             .unwrap_or(0) as u32
     };
 
-    let mut тела: Vec<(u32, u8, u16, Vec<u8>)> = Vec::new();
+    // (имя_idx, параметры, локальные, порог_горячности, код)
+    let mut тела: Vec<(u32, u8, u16, u64, Vec<u8>)> = Vec::new();
     for ф in функции {
         let mut ops = Vec::new();
         for и in &ф.тело {
@@ -115,8 +117,12 @@ pub fn сгенерировать(функции: &[ФункцияПП]) -> Resu
                 Ир::Переместить {
                     назначение,
                     источник,
+                } => {
+                    // Копия без очистки источника (в отличие от Импульс/Pulse).
+                    ops.push(VmOp::Load(источник.0 as u16));
+                    ops.push(VmOp::Store(назначение.0 as u16));
                 }
-                | Ир::Импульс {
+                Ир::Импульс {
                     назначение,
                     источник,
                 } => ops.push(VmOp::Pulse(источник.0 as u16, назначение.0 as u16)),
@@ -189,6 +195,7 @@ pub fn сгенерировать(функции: &[ФункцияПП]) -> Resu
                     функция,
                     аргументы,
                     результат,
+                    ..
                 } => {
                     for арг in аргументы {
                         ops.push(VmOp::Load(арг.0 as u16));
@@ -310,7 +317,13 @@ pub fn сгенерировать(функции: &[ФункцияПП]) -> Resu
 
         let имя_idx = add_str(&ф.имя, &mut строки);
         let локальные = 64u16;
-        тела.push((имя_idx, ф.параметры.len() as u8, локальные, код));
+        тела.push((
+            имя_idx,
+            ф.параметры.len() as u8,
+            локальные,
+            ф.порог_горячности,
+            код,
+        ));
     }
 
     let mut out = Vec::new();
@@ -324,11 +337,12 @@ pub fn сгенерировать(функции: &[ФункцияПП]) -> Resu
         out.extend_from_slice(&(b.len() as u32).to_le_bytes());
         out.extend_from_slice(b);
     }
-    for (имя_idx, параметры, локальные, код) in тела {
+    for (имя_idx, параметры, локальные, порог, код) in тела {
         out.extend_from_slice(&имя_idx.to_le_bytes());
         out.push(параметры);
         out.extend_from_slice(&локальные.to_le_bytes());
         out.extend_from_slice(&64u32.to_le_bytes());
+        out.extend_from_slice(&порог.to_le_bytes());
         out.extend_from_slice(&(код.len() as u32).to_le_bytes());
         out.extend_from_slice(&код);
     }

@@ -17,6 +17,10 @@ path = "src/главное.rs"
 name = "тест_vm"
 path = "tests/тест_vm.rs"
 
+[[test]]
+name = "тест_пластичности_vm"
+path = "tests/тест_пластичности_vm.rs"
+
 [dependencies]
 clap = { version = "4.5", features = ["derive"] }
 anyhow = "1.0"
