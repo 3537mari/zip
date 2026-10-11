@@ -26,21 +26,28 @@ mod аннотации;
 mod ассоциации;
 #[path = "корни.rs"]
 mod корни;
+#[path = "генератор_тестов.rs"]
+mod генератор_тестов;
 
 use anyhow::{bail, Context, Result};
-use clap::Parser;
+use clap::{Parser, Subcommand};
 use дерево::Узел;
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
+use std::process::Command;
 
 #[derive(Parser, Debug)]
 #[command(name = "zipc")]
 #[command(version = "0.1.0")]
 #[command(about = "Компилятор языка ZIP (Zero-Immunity-Pulse)")]
+#[command(subcommand_negates_reqs = true)]
 struct Аргументы {
-    /// Входной файл .zip
+    #[command(subcommand)]
+    команда: Option<Команда>,
+
+    /// Входной файл .zip (старый режим без подкоманды)
     #[arg(value_name = "ФАЙЛ")]
-    входной_файл: PathBuf,
+    входной_файл: Option<PathBuf>,
 
     /// Выходной файл (без расширения)
     #[arg(short = 'o', long = "выход", default_value = "выход")]
@@ -78,6 +85,10 @@ struct Аргументы {
     #[arg(long = "без-владения", alias = "no-ownership")]
     без_владения: bool,
 
+    /// Идея 20: сгенерировать и запустить автотесты `@тест`
+    #[arg(long = "запустить-тесты", alias = "run-tests")]
+    запустить_тесты: bool,
+
     /// Уровень оптимизации 0–3
     #[arg(short = 'O', default_value = "3")]
     уровень_оптимизации: u8,
@@ -87,23 +98,240 @@ struct Аргументы {
     целевой_процессор: String,
 }
 
+#[derive(Subcommand, Debug)]
+enum Команда {
+    /// Скомпилировать файл (R7)
+    #[command(name = "собрать", alias = "build", alias = "b")]
+    Собрать {
+        входной_файл: PathBuf,
+        #[arg(short = 'o', long = "выход")]
+        выходной_файл: Option<PathBuf>,
+        #[arg(long)]
+        llvm: bool,
+    },
+
+    /// Скомпилировать и запустить (R7 — cargo-script)
+    #[command(name = "запустить", alias = "run", alias = "r")]
+    Запустить {
+        входной_файл: PathBuf,
+        #[arg(long)]
+        llvm: bool,
+        /// Аргументы для программы
+        #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
+        аргументы: Vec<String>,
+    },
+
+    /// Запустить автогенерированные тесты (Идея 20)
+    #[command(name = "тест", alias = "test", alias = "t")]
+    Тест {
+        входной_файл: PathBuf,
+        #[arg(long)]
+        llvm: bool,
+    },
+
+    /// Показать версию
+    #[command(name = "версия", alias = "version")]
+    Версия,
+}
+
 fn main() -> Result<()> {
     let аргументы = Аргументы::parse();
+
+    match аргументы.команда {
+        Some(Команда::Версия) => {
+            println!("zipc {}", env!("CARGO_PKG_VERSION"));
+            return Ok(());
+        }
+        Some(Команда::Запустить {
+            входной_файл,
+            llvm,
+            аргументы: арг,
+        }) => {
+            return команда_запустить(&входной_файл, llvm, &арг);
+        }
+        Some(Команда::Тест {
+            входной_файл,
+            llvm,
+        }) => {
+            return команда_тест(&входной_файл, llvm);
+        }
+        Some(Команда::Собрать {
+            входной_файл,
+            выходной_файл,
+            llvm,
+        }) => {
+            let mut а = Аргументы {
+                команда: None,
+                входной_файл: Some(входной_файл),
+                выходной_файл: выходной_файл.unwrap_or(аргументы.выходной_файл),
+                llvm: llvm || аргументы.llvm,
+                только_лексика: аргументы.только_лексика,
+                только_парсинг: аргументы.только_парсинг,
+                вывод_пп: аргументы.вывод_пп,
+                вывод_ассемблера: аргументы.вывод_ассемблера,
+                вывод_llvm: аргументы.вывод_llvm,
+                байткод: аргументы.байткод,
+                без_владения: аргументы.без_владения,
+                запустить_тесты: аргументы.запустить_тесты,
+                уровень_оптимизации: аргументы.уровень_оптимизации,
+                целевой_процессор: аргументы.целевой_процессор,
+            };
+            return выполнить_сборку(а);
+        }
+        None => {}
+    }
+
+    if аргументы.входной_файл.is_none() {
+        bail!("Укажите входной файл или подкоманду (собрать / запустить / тест)");
+    }
+
+    выполнить_сборку(аргументы)
+}
+
+/// R7: compile + run во временный каталог.
+fn команда_запустить(входной_файл: &Path, llvm: bool, аргументы: &[String]) -> Result<()> {
+    let временный = std::env::temp_dir().join(format!("zip_run_{}", std::process::id()));
+    println!("Компиляция {}...", входной_файл.display());
+
+    let zipc = std::env::current_exe().context("current_exe")?;
+    let mut cmd = Command::new(&zipc);
+    cmd.arg(входной_файл).arg("-o").arg(&временный);
+    if llvm {
+        cmd.arg("--llvm");
+    }
+    let статус = cmd
+        .status()
+        .with_context(|| format!("запуск {}", zipc.display()))?;
+    if !статус.success() {
+        bail!("Ошибка компиляции");
+    }
+
+    let путь_exe = if cfg!(windows) {
+        with_extension(&временный, "exe")
+    } else {
+        временный.clone()
+    };
+    if !путь_exe.exists() {
+        bail!("Исполняемый файл не создан: {}", путь_exe.display());
+    }
+
+    println!("Запуск {}\n", путь_exe.display());
+    let статус = Command::new(&путь_exe)
+        .args(аргументы)
+        .status()
+        .with_context(|| format!("запуск {}", путь_exe.display()))?;
+
+    let _ = fs::remove_file(&путь_exe);
+    let _ = fs::remove_file(with_extension(&временный, "ll"));
+    let _ = fs::remove_file(with_extension(&временный, "o"));
+    let _ = fs::remove_file(with_extension(&временный, "s"));
+
+    if !статус.success() {
+        std::process::exit(статус.code().unwrap_or(1));
+    }
+    Ok(())
+}
+
+/// Идея 20: сгенерировать тесты из `@тест`, скомпилировать и запустить.
+fn команда_тест(входной_файл: &Path, llvm: bool) -> Result<()> {
+    let исходник = fs::read_to_string(входной_файл).with_context(|| {
+        format!("Не удалось прочитать «{}»", входной_файл.display())
+    })?;
+
+    let mut парсер =
+        парсер::Парсер::новый(&исходник).map_err(|е| anyhow::anyhow!("{}", е))?;
+    let дерево = парсер.разобрать().map_err(|е| anyhow::anyhow!("{}", е))?;
+    let mut генератор_пп = промежуток::ГенераторПП::новый();
+    let функции_пп = генератор_пп
+        .сгенерировать(&дерево)
+        .map_err(|е| anyhow::anyhow!("{}", е))?;
+
+    let функции_с_тестами: Vec<_> = функции_пп
+        .iter()
+        .filter(|ф| ф.тест_случай.is_some() && ф.имя != "главная")
+        .collect();
+    if функции_с_тестами.is_empty() {
+        println!("Нет функций с аннотацией @тест");
+        return Ok(());
+    }
+
+    println!("=== ЗАПУСК АВТОГЕНЕРИРОВАННЫХ ТЕСТОВ ===");
+    println!("Функций: {}", функции_с_тестами.len());
+
+    let mut генератор = генератор_тестов::ГенераторТестов::новый();
+    let тесты = генератор.сгенерировать_все(&функции_пп);
+    println!("Сгенерировано тестов: {}", тесты.len());
+
+    let stem = входной_файл
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .unwrap_or("тесты");
+    let путь_тестов = входной_файл
+        .parent()
+        .unwrap_or_else(|| Path::new("."))
+        .join(format!("{}_автотесты.zip", stem));
+    let файл_тестов = генератор_тестов::собрать_исходник_тестов(&исходник, &тесты);
+    fs::write(&путь_тестов, файл_тестов)
+        .with_context(|| format!("запись {}", путь_тестов.display()))?;
+    println!("Файл тестов: {}", путь_тестов.display());
+
+    let выход = входной_файл
+        .parent()
+        .unwrap_or_else(|| Path::new("."))
+        .join(format!("{}_автотесты", stem));
+
+    let zipc = std::env::current_exe().context("current_exe")?;
+    let mut cmd = Command::new(&zipc);
+    cmd.arg(&путь_тестов).arg("-o").arg(&выход);
+    if llvm {
+        cmd.arg("--llvm");
+    }
+    let статус = cmd.status().context("компиляция автотестов")?;
+    if !статус.success() {
+        bail!("Ошибка компиляции автотестов");
+    }
+
+    let exe = if cfg!(windows) {
+        with_extension(&выход, "exe")
+    } else {
+        выход.clone()
+    };
+    let статус_запуска = Command::new(&exe)
+        .status()
+        .with_context(|| format!("запуск {}", exe.display()))?;
+    if статус_запуска.success() {
+        println!("\n✓ Все тесты прошли");
+    } else {
+        println!("\n✗ Некоторые тесты упали");
+        std::process::exit(статус_запуска.code().unwrap_or(1));
+    }
+    Ok(())
+}
+
+fn выполнить_сборку(аргументы: Аргументы) -> Result<()> {
+    let входной_файл = аргументы
+        .входной_файл
+        .clone()
+        .ok_or_else(|| anyhow::anyhow!("Не указан входной файл"))?;
 
     if аргументы.уровень_оптимизации > 3 {
         bail!("Уровень оптимизации должен быть в диапазоне 0–3");
     }
 
+    if аргументы.запустить_тесты {
+        return команда_тест(&входной_файл, аргументы.llvm);
+    }
+
     // 1. Читаем исходник
-    let исходник = fs::read_to_string(&аргументы.входной_файл).with_context(|| {
+    let исходник = fs::read_to_string(&входной_файл).with_context(|| {
         format!(
             "Не удалось прочитать файл «{}»",
-            аргументы.входной_файл.display()
+            входной_файл.display()
         )
     })?;
 
     println!("=== КОМПИЛЯТОР ZIP v0.1.0 ===");
-    println!("Файл: {}", аргументы.входной_файл.display());
+    println!("Файл: {}", входной_файл.display());
     println!("Размер: {} байт", исходник.len());
     println!(
         "Оптимизация: -O{}, целевой процессор: {}",
@@ -164,26 +392,16 @@ fn main() -> Result<()> {
         }
         let с_тестами: Vec<_> = функции_пп
             .iter()
-            .filter(|ф| ф.тест_случай.is_some())
+            .filter(|ф| ф.тест_случай.is_some() && ф.имя != "главная")
             .collect();
         if !с_тестами.is_empty() {
-            let mut файл_тестов = String::from("// Автоматически сгенерированные тесты (Идея 2)\n\n");
-            for функция in &с_тестами {
-                let случай = функция.тест_случай.unwrap_or(0);
-                файл_тестов.push_str(&format!("// Тесты для {}\n", функция.имя));
-                for i in 0..случай {
-                    let вход = ((i as i64) * 17 + 3) % 100;
-                    файл_тестов.push_str(&format!(
-                        "@тест_функция({}, {})\n",
-                        функция.имя, вход
-                    ));
-                }
-                файл_тестов.push('\n');
-            }
+            let mut генератор = генератор_тестов::ГенераторТестов::новый();
+            let тесты = генератор.сгенерировать_все(&функции_пп);
+            let файл_тестов = генератор_тестов::собрать_исходник_тестов(&исходник, &тесты);
             let путь_тестов = format!("{}_тесты.zip", аргументы.выходной_файл.display());
-            fs::write(&путь_тестов, файл_тестов)
+            fs::write(&путь_тестов, &файл_тестов)
                 .with_context(|| format!("запись {}", путь_тестов))?;
-            println!("  Тесты: {}", путь_тестов);
+            println!("  Тесты: {} ({} кейсов)", путь_тестов, тесты.len());
         }
     }
 
@@ -241,8 +459,7 @@ fn main() -> Result<()> {
         println!("Владение: пропущено (--без-владения)");
     }
 
-    let имя_модуля = аргументы
-        .входной_файл
+    let имя_модуля = входной_файл
         .file_stem()
         .and_then(|s| s.to_str())
         .unwrap_or("zip_модуль")
