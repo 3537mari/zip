@@ -333,9 +333,27 @@ impl Лексер {
     }
 
     fn пропустить_пробелы(&mut self) {
+        // UTF-8 BOM (часто добавляет Windows/редакторы)
+        if self.текущий() == Some('\u{FEFF}') {
+            self.продвинуть();
+        }
+
+        // R7: shebang `#!/usr/bin/env zipc` в начале файла — пропустить строку
+        if self.строка == 1
+            && self.столбец == 1
+            && self.текущий() == Some('#')
+            && self.заглянуть(1) == Some('!')
+        {
+            while let Some(с) = self.текущий() {
+                if с == '\n' {
+                    break;
+                }
+                self.продвинуть();
+            }
+        }
+
         loop {
             match self.текущий() {
-                // UTF-8 BOM (часто добавляет Windows/редакторы)
                 Some('\u{FEFF}') => self.продвинуть(),
                 Some(с) if с.is_whitespace() => self.продвинуть(),
                 Some('/') if self.заглянуть(1) == Some('/') => {
@@ -562,7 +580,8 @@ impl Лексер {
 
         let mut имя = String::new();
         while let Some(с) = self.текущий() {
-            if с.is_ascii_alphabetic() || с == '_' {
+            // ASCII (link/runtime) и кириллица (зависимость)
+            if с.is_ascii_alphabetic() || с == '_' || Self::это_русская(с) {
                 имя.push(с);
                 self.продвинуть();
             } else {
@@ -579,10 +598,12 @@ impl Лексер {
         }
 
         match имя.as_str() {
-            "include" | "define" | "link" | "runtime" => Ok(Токен::Директива(имя)),
+            "include" | "define" | "link" | "runtime" | "зависимость" => {
+                Ok(Токен::Директива(имя))
+            }
             _ => Err(ОшибкаЛексики {
                 сообщение: format!(
-                    "Неизвестная директива '#{}' (допустимы: #include, #define, #link, #runtime)",
+                    "Неизвестная директива '#{}' (допустимы: #include, #define, #link, #runtime, #зависимость)",
                     имя
                 ),
                 строка: начало_строка,
