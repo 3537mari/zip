@@ -5,6 +5,13 @@
 Формат: [Keep a Changelog](https://keepachangelog.com/ru/1.0.0/),
 версионирование: [Semantic Versioning](https://semver.org/lang/ru/).
 
+## [Unreleased]
+
+### Производительность
+
+- Оптимизация zipc: look-ahead без clone, без двойной лексики, HashMap в ZIPB-эмиттере
+- Пайплайн компиляции ~1.9–3.0× быстрее ([ОПТИМИЗАЦИЯ-КОМПИЛЯТОРА](docs/ОПТИМИЗАЦИЯ-КОМПИЛЯТОРА.md))
+
 ## [2.0.0] — 2026-10-11
 
 ### Полная независимость

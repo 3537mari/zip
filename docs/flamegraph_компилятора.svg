@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="220" font-family="Segoe UI, sans-serif">
+  <title>ZIP compiler hot paths (after optimization)</title>
+  <rect width="900" height="220" fill="#1a1a1a"/>
+  <text x="16" y="28" fill="#eee" font-size="16">ZIP compiler  relative time (pipeline/1000, after opt)</text>
+  <!-- stacked relative widths from optimized 1000-line pipeline -->
+  <rect x="16" y="60" width="99" height="40" fill="#4e79a7"/>
+  <text x="20" y="85" fill="#fff" font-size="12">;5:A8:0 11%</text>
+  <rect x="115" y="60" width="295" height="40" fill="#f28e2b"/>
+  <text x="125" y="85" fill="#111" font-size="12">?0@A5@ 33%</text>
+  <rect x="410" y="60" width="452" height="40" fill="#e15759"/>
+  <text x="420" y="85" fill="#fff" font-size="12">IR 50%</text>
+  <rect x="862" y="60" width="54" height="40" fill="#76b7b2"/>
+  <text x="866" y="85" fill="#111" font-size="11">zipb</text>
+  <text x="16" y="130" fill="#ccc" font-size="13">Hot fixes: no token clone in Parser::MB> · no double lex in zipc · HashMap string/fn index in ZIPB emitter · mem::take IR · no Vec&lt;char&gt; in classify</text>
+  <text x="16" y="160" fill="#9f9" font-size="14">Pipeline/1000: 15.81 ms ’ 8.28 ms (1.91×) · Pipeline/5000: 165.97 ms ’ 55.88 ms (2.97×)</text>
+  <text x="16" y="190" fill="#888" font-size="12">Source: cargo bench --bench :><?8;OF8O (criterion estimates)</text>
+</svg>

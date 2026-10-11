@@ -8,12 +8,14 @@ use std::fs;
 use std::path::Path;
 use zip_vm::байткод_v3::{сериализовать_v3, ИнстрV3, МодульV3, ФункцияV3};
 
-fn add_str(s: &str, строки: &mut Vec<String>) -> u32 {
-    if let Some(i) = строки.iter().position(|x| x == s) {
-        return i as u32;
+fn add_str(s: &str, строки: &mut Vec<String>, индекс: &mut HashMap<String, u32>) -> u32 {
+    if let Some(&i) = индекс.get(s) {
+        return i;
     }
+    let i = строки.len() as u32;
     строки.push(s.to_string());
-    (строки.len() - 1) as u32
+    индекс.insert(s.to_string(), i);
+    i
 }
 
 /// Записать `.zipb` на диск.
@@ -23,21 +25,23 @@ pub fn записать_zipb(функции: &[ФункцияПП], путь: &P
 
 /// Сгенерировать байты ZIPB v3.
 pub fn сгенерировать_v3(функции: &[ФункцияПП]) -> Result<Vec<u8>, String> {
-    let mut строки: Vec<String> = Vec::new();
+    let mut строки: Vec<String> = Vec::with_capacity(функции.len() * 2);
+    let mut индекс_строк: HashMap<String, u32> = HashMap::with_capacity(функции.len() * 2);
     for ф in функции {
-        add_str(&ф.имя, &mut строки);
+        add_str(&ф.имя, &mut строки, &mut индекс_строк);
     }
 
+    let mut индекс_функций: HashMap<u32, u32> = HashMap::with_capacity(функции.len());
+    for (i, ф) in функции.iter().enumerate() {
+        индекс_функций.insert(ф.идентификатор.0, i as u32);
+    }
     let fn_index = |id: ИдентификаторФункции| -> u32 {
-        функции
-            .iter()
-            .position(|f| f.идентификатор == id)
-            .unwrap_or(0) as u32
+        *индекс_функций.get(&id.0).unwrap_or(&0)
     };
 
-    let mut функции_v3 = Vec::new();
+    let mut функции_v3 = Vec::with_capacity(функции.len());
     for ф in функции {
-        let mut ops: Vec<Op> = Vec::new();
+        let mut ops: Vec<Op> = Vec::with_capacity(ф.тело.len().saturating_mul(2).max(8));
         for и in &ф.тело {
             match и {
                 Ир::Метка { идентификатор } => ops.push(Op::Label(идентификатор.0)),
@@ -56,7 +60,7 @@ pub fn сгенерировать_v3(функции: &[ФункцияПП]) -> R
                     назначение,
                     значение,
                 } => {
-                    let idx = add_str(значение, &mut строки);
+                    let idx = add_str(значение, &mut строки, &mut индекс_строк);
                     ops.push(Op::I(ИнстрV3::PushStr(idx)));
                     ops.push(Op::I(ИнстрV3::Store(назначение.0 as u32)));
                 }
@@ -176,8 +180,8 @@ pub fn сгенерировать_v3(функции: &[ФункцияПП]) -> R
                     функция,
                     ..
                 } => {
-                    let li = add_str(библиотека, &mut строки);
-                    let fi = add_str(функция, &mut строки);
+                    let li = add_str(библиотека, &mut строки, &mut индекс_строк);
+                    let fi = add_str(функция, &mut строки, &mut индекс_строк);
                     ops.push(Op::I(ИнстрV3::CallNative { lib: li, fun: fi }));
                 }
                 _ => ops.push(Op::I(ИнстрV3::Nop)),
@@ -199,7 +203,7 @@ pub fn сгенерировать_v3(функции: &[ФункцияПП]) -> R
             }
         }
 
-        let mut код = Vec::new();
+        let mut код = Vec::with_capacity(ops.len().saturating_mul(6).max(16));
         for o in ops {
             match o {
                 Op::Label(_) => {}
@@ -220,7 +224,7 @@ pub fn сгенерировать_v3(функции: &[ФункцияПП]) -> R
             | ((ф.совершенная as u32) << 1)
             | ((ф.comptime as u32) << 2);
         функции_v3.push(ФункцияV3 {
-            имя_индекс: add_str(&ф.имя, &mut строки),
+            имя_индекс: add_str(&ф.имя, &mut строки, &mut индекс_строк),
             арность: ф.параметры.len() as u16,
             локалы,
             флаги,

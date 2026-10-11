@@ -151,6 +151,10 @@ criterion = "0.5"
 name = "производительность"
 harness = false
 
+[[bench]]
+name = "компиляция"
+harness = false
+
 [[test]]
 name = "тест_simd"
 path = "../tests/тест_simd.rs"
