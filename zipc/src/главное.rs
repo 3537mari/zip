@@ -1105,6 +1105,52 @@ fn скомпилировать_runtime(имя: &str, выход: &PathBuf) -> R
             false,
             false,
         ),
+        "syscall" | "syscalls" => (
+            vec![корень.join("zip-std/runtime/syscall.c")],
+            "ZIP_SYSCALL_MAIN",
+            false,
+            false,
+        ),
+        "allocator" | "аллокатор" => (
+            vec![
+                корень.join("zip-std/runtime/syscall.c"),
+                корень.join("zip-std/runtime/allocator.c"),
+            ],
+            "ZIP_ALLOC_MAIN",
+            false,
+            false,
+        ),
+        "io" | "вывод" => (
+            vec![
+                корень.join("zip-std/runtime/syscall.c"),
+                корень.join("zip-std/runtime/io.c"),
+            ],
+            "ZIP_IO_MAIN",
+            false,
+            false,
+        ),
+        "файлы" | "files" => (
+            vec![
+                корень.join("zip-std/runtime/syscall.c"),
+                корень.join("zip-std/runtime/allocator.c"),
+                корень.join("zip-std/runtime/files.c"),
+            ],
+            "ZIP_FILES_MAIN",
+            false,
+            false,
+        ),
+        "чистый_zip" | "clean_zip" => (
+            vec![
+                корень.join("zip-std/runtime/syscall.c"),
+                корень.join("zip-std/runtime/allocator.c"),
+                корень.join("zip-std/runtime/io.c"),
+                корень.join("zip-std/runtime/files.c"),
+                корень.join("zip-std/runtime/чистый_zip_rt.c"),
+            ],
+            "ZIP_CLEAN_MAIN",
+            false,
+            false,
+        ),
         другой => bail!("неизвестный #runtime(\"{}\")", другой),
     };
 
@@ -1135,6 +1181,26 @@ fn скомпилировать_runtime(имя: &str, выход: &PathBuf) -> R
     // Avoid duplicate main when http_client.c is linked with https_client.c
     if имя == "https_client" {
         cmd.arg("-DZIP_HTTP_MAIN_DISABLED");
+    }
+    // Combined runtimes: suppress sibling MAIN macros
+    match имя {
+        "allocator" | "аллокатор" => {
+            cmd.arg("-DZIP_SYSCALL_MAIN_DISABLED");
+        }
+        "io" | "вывод" => {
+            cmd.arg("-DZIP_SYSCALL_MAIN_DISABLED");
+        }
+        "файлы" | "files" => {
+            cmd.arg("-DZIP_SYSCALL_MAIN_DISABLED");
+            cmd.arg("-DZIP_ALLOC_MAIN_DISABLED");
+        }
+        "чистый_zip" | "clean_zip" => {
+            cmd.arg("-DZIP_SYSCALL_MAIN_DISABLED");
+            cmd.arg("-DZIP_ALLOC_MAIN_DISABLED");
+            cmd.arg("-DZIP_IO_MAIN_DISABLED");
+            cmd.arg("-DZIP_FILES_MAIN_DISABLED");
+        }
+        _ => {}
     }
 
     if openssl {

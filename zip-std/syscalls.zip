@@ -1,0 +1,77 @@
+// ============================================
+// ZIP STD: SYSCALLS
+// ============================================
+// 1AB@0:F8O A8AB5<=KE 2K7>2>2 !.
+//  01>B05B G5@57 #runtime("syscall")  548=CN B>G:C 2E>40.
+// ============================================
+
+#runtime("syscall")
+
+// === ><5@0 syscalls (Linux x86-64) ===
+SYS_READ        = 0
+SYS_WRITE       = 1
+SYS_OPEN        = 2
+SYS_CLOSE       = 3
+SYS_MMAP        = 9
+SYS_MUNMAP      = 11
+SYS_BRK         = 12
+SYS_EXIT        = 60
+SYS_EXIT_GROUP  = 231
+SYS_FSTAT       = 5
+SYS_LSEEK       = 8
+
+// === $;038 open ===
+O_RDONLY = 0
+O_WRONLY = 1
+O_RDWR   = 2
+O_CREAT  = 64
+O_TRUNC  = 512
+O_APPEND = 1024
+
+// === $;038 mmap ===
+PROT_READ  = 1
+PROT_WRITE = 2
+PROT_EXEC  = 4
+
+MAP_PRIVATE   = 2
+MAP_ANONYMOUS = 32
+
+// === 07>2K9 syscall ===
+DC=:F8O syscall(=><5@, 01, 02, 03, 04, 05, 06) {
+    //  50;87C5BAO G5@57 runtime C / VM builtin zip_syscall
+    //  v4.x 1C45B ?@O<0O inline-asm
+    2>72@0B(zip_syscall(=><5@, 01, 02, 03, 04, 05, 06))
+}
+
+// === KA>:>C@>2=52K5 >1Q@B:8 ===
+DC=:F8O sys_read(fd, 1CD5@, @07<5@) {
+    2>72@0B(syscall(SYS_READ, fd, 1CD5@, @07<5@, 0, 0, 0))
+}
+
+DC=:F8O sys_write(fd, 1CD5@, @07<5@) {
+    2>72@0B(syscall(SYS_WRITE, fd, 1CD5@, @07<5@, 0, 0, 0))
+}
+
+DC=:F8O sys_open(?CBL, D;038, @568<) {
+    2>72@0B(syscall(SYS_OPEN, ?CBL, D;038, @568<, 0, 0, 0))
+}
+
+DC=:F8O sys_close(fd) {
+    2>72@0B(syscall(SYS_CLOSE, fd, 0, 0, 0, 0, 0))
+}
+
+DC=:F8O sys_mmap(@07<5@) {
+    2>72@0B(syscall(
+        SYS_MMAP,
+        0,
+        @07<5@,
+        PROT_READ | PROT_WRITE,
+        MAP_PRIVATE | MAP_ANONYMOUS,
+        -1,
+        0
+    ))
+}
+
+DC=:F8O sys_exit(:>4) {
+    syscall(SYS_EXIT, :>4, 0, 0, 0, 0, 0)
+}

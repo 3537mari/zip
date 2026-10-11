@@ -1,0 +1,26 @@
+// ============================================
+// ZIP STD: $+ -+
+// ============================================
+
+#runtime("syscall")
+#runtime("allocator")
+
+DC=:F8O D09;_>B:@KBL(?CBL, @568<) {
+    2>72@0B(zip_file_open(?CBL, @568<))
+}
+
+DC=:F8O D09;_70:@KBL(fd) {
+    2>72@0B(sys_close(fd))
+}
+
+DC=:F8O D09;_?@>G8B0BL(?CBL) {
+    2>72@0B(zip_file_read(?CBL))
+}
+
+DC=:F8O D09;_70?8A0BL(?CBL, 40==K5) {
+    2>72@0B(zip_file_write(?CBL, 40==K5))
+}
+
+DC=:F8O D09;_4>?8A0BL(?CBL, 40==K5) {
+    2>72@0B(zip_file_append(?CBL, 40==K5))
+}

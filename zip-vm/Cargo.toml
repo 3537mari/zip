@@ -37,6 +37,10 @@ path = "tests/тест_исполнителя_v3.rs"
 name = "тест_vm_v3_полный"
 path = "tests/тест_vm_v3_полный.rs"
 
+[[test]]
+name = "тест_runtime_builtins"
+path = "tests/тест_runtime_builtins.rs"
+
 [dependencies]
 clap = { version = "4.5", features = ["derive"] }
 anyhow = "1.0"

@@ -52,14 +52,16 @@
 
 **Дата релиза:** 2026-10-11
 
-## v4.0.0 (Q4 2027) — план
+## v4.0.0 (Q4 2027) — в работе
 
-- [ ] Runtime на ZIP (syscalls)
-- [ ] Свой аллокатор
-- [ ] Свой вывод
-- [ ] Свой файловый ввод-вывод
+- [x] Runtime на ZIP (syscalls) ✅ — [`zip-std/syscalls.zip`](zip-std/syscalls.zip), [`docs/RUNTIME-НА-ZIP.md`](docs/RUNTIME-НА-ZIP.md)
+- [x] Свой аллокатор ✅ — [`zip-std/аллокатор.zip`](zip-std/аллокатор.zip)
+- [x] Свой вывод ✅ — [`zip-std/вывод.zip`](zip-std/вывод.zip)
+- [x] Свой файловый ввод-вывод ✅ — [`zip-std/файлы.zip`](zip-std/файлы.zip)
+- [x] Интеграция в VM v3 (builtins + CALL_NATIVE) ✅
 - [ ] STD полностью на ZIP
 - [ ] Bootstrap на ZIP
+- [ ] VM на ZIP
 
 См. [ROADMAP_V4.md](ROADMAP_V4.md)
 

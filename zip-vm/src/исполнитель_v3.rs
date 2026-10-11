@@ -394,18 +394,23 @@ impl ИсполнительV3 {
                         .get(fun as usize)
                         .cloned()
                         .unwrap_or_default();
-                    let _имя_lib = self.строки.get(lib as usize).cloned().unwrap_or_default();
+                    let имя_lib = self.строки.get(lib as usize).cloned().unwrap_or_default();
                     // Аргументы: всё выше базы текущего кадра
                     let база = self.кадры.last().map(|к| к.база_стека).unwrap_or(0);
                     let арги: Vec<_> = self.стек[база..].to_vec();
                     self.стек.truncate(база);
+                    // Runtime: zip_syscall / sys_* / выделить / файл_* — через встроенные
                     let результат = if self.встроенные.существует(&имя_fun) {
                         self.встроенные
                             .вызвать(&имя_fun, &арги)
                             .map_err(ОшибкаV3::ОшибкаВыполнения)?
+                    } else if имя_fun == "zip_syscall" || имя_fun == "syscall" {
+                        self.встроенные
+                            .вызвать("zip_syscall", &арги)
+                            .map_err(ОшибкаV3::ОшибкаВыполнения)?
                     } else {
                         return Err(ОшибкаV3::ОшибкаВыполнения(format!(
-                            "нативная '{имя_fun}' не найдена"
+                            "Функция {имя_lib}::{имя_fun} не найдена"
                         )));
                     };
                     self.стек.push(результат);

@@ -12,7 +12,8 @@ typedef struct {
 
 typedef struct {
     char *names[ZIP_MAX_FUNCS];
-    Node *fns[ZIP_MAX_FUNCS];
+    Node *fns[ZIP_MAX_FUNCS]; /* NULL = внешняя/builtin */
+    int arity_hint[ZIP_MAX_FUNCS];
     int n;
 } FnTab;
 
@@ -275,6 +276,18 @@ static void emit_stmt(Node *n, Code *C, Locals *loc) {
     }
 }
 
+static void collect_externals(Node *n) {
+    if (!n) return;
+    if (n->type == NODE_CALL && n->name && fn_find(n->name) < 0 && g_fn.n < ZIP_MAX_FUNCS) {
+        g_fn.names[g_fn.n] = zip_strdup(n->name);
+        g_fn.fns[g_fn.n] = NULL;
+        g_fn.arity_hint[g_fn.n] = n->n;
+        g_fn.n++;
+        str_add(n->name);
+    }
+    for (int i = 0; i < n->n; i++) collect_externals(n->kids[i]);
+}
+
 static void collect_fns(Node *ast) {
     fn_init();
     if (!ast) return;
@@ -283,16 +296,26 @@ static void collect_fns(Node *ast) {
         if (k->type == NODE_FUNCTION && k->name && g_fn.n < ZIP_MAX_FUNCS) {
             g_fn.names[g_fn.n] = zip_strdup(k->name);
             g_fn.fns[g_fn.n] = k;
+            g_fn.arity_hint[g_fn.n] = k->arity;
             g_fn.n++;
             str_add(k->name);
         }
     }
+    collect_externals(ast);
 }
 
-static void emit_function(Node *fn, Code *C, uint16_t *out_locals, uint16_t *out_arity) {
+static void emit_function(Node *fn, Code *C, uint16_t *out_locals, uint16_t *out_arity, int arity_hint) {
     Locals loc = {0};
     int arity = 0;
     Node *body = NULL;
+    if (!fn) {
+        /* Внешняя/builtin: тело не исполняется — VM перехватит по имени */
+        *out_arity = (uint16_t)(arity_hint < 0 ? 0 : arity_hint);
+        *out_locals = 16;
+        op_i64(C, OP_PUSH_I64, 0);
+        op0(C, OP_RET);
+        return;
+    }
     for (int i = 0; i < fn->n; i++) {
         if (fn->kids[i]->type == NODE_PARAM) {
             local_get(&loc, fn->kids[i]->name ? fn->kids[i]->name : "_");
@@ -335,7 +358,7 @@ Buf *codegen(Node *ast) {
         for (int i = 0; i < nfn; i++) {
             codes[i] = buf_new();
             Code C = { codes[i], 0 };
-            emit_function(g_fn.fns[i], &C, &locals[i], &arity[i]);
+            emit_function(g_fn.fns[i], &C, &locals[i], &arity[i], g_fn.arity_hint[i]);
         }
     }
 

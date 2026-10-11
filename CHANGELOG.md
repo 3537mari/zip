@@ -7,6 +7,13 @@
 
 ## [Unreleased]
 
+### Runtime на ZIP (v4.0.0 — старт)
+
+- `zip-std/syscalls.zip` + `runtime/syscall.c` (`zip_syscall`)
+- Аллокатор / вывод / файлы: ZIP STD + C helpers + VM builtins
+- Демо: `examples/чистый_zip.zip`
+- Docs: [RUNTIME-НА-ZIP.md](docs/RUNTIME-НА-ZIP.md)
+
 ## [3.1.0] — 2026-10-11
 
 ### Расширенный C-bootstrap

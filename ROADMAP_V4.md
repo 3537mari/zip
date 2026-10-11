@@ -4,9 +4,12 @@
 
 **Срок:** Q4 2027
 
+**Статус 2026-10-11:** слой syscalls / аллокатор / вывод / файлы — MVP готов
+([`docs/RUNTIME-НА-ZIP.md`](docs/RUNTIME-НА-ZIP.md)). Остались inline-asm, STD/VM/bootstrap на ZIP.
+
 ## Что нужно сделать
 
-### 1. Runtime на ZIP (syscalls)
+### 1. Runtime на ZIP (syscalls) ✅ MVP
 
 Заменить C-runtime (~100 строк) на ZIP-код:
 
