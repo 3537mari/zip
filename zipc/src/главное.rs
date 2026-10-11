@@ -973,6 +973,18 @@ fn скомпилировать_runtime(имя: &str, выход: &PathBuf) -> R
             false,
             false,
         ),
+        "csv_parser" | "csv" => (
+            vec![корень.join("zip-std/runtime/csv_parser.c")],
+            "ZIP_CSV_MAIN",
+            false,
+            false,
+        ),
+        "regex" | "regexp" => (
+            vec![корень.join("zip-std/runtime/regex.c")],
+            "ZIP_REGEX_MAIN",
+            false,
+            false,
+        ),
         другой => bail!("неизвестный #runtime(\"{}\")", другой),
     };
 

@@ -162,6 +162,14 @@ path = "../tests/тест_пула.rs"
 name = "тест_json"
 path = "../tests/тест_json.rs"
 
+[[test]]
+name = "тест_csv"
+path = "../tests/тест_csv.rs"
+
+[[test]]
+name = "тест_regex"
+path = "../tests/тест_regex.rs"
+
 [profile.release]
 opt-level = 3
 lto = true

@@ -187,6 +187,28 @@ HTTP/HTTPS через `#runtime("http_client")` / `#runtime("https_client")`.
 
 ---
 
+### CSV (`csv.zip` + `#runtime("csv_parser")`)
+
+```zip
+#runtime("csv_parser")
+// zip_csv_разобрать / zip_csv_получить / zip_csv_записать
+```
+
+Документация: [МОДУЛЬ-CSV.md](МОДУЛЬ-CSV.md).
+
+---
+
+### RegEx (`regex.zip` + `#runtime("regex")`)
+
+```zip
+#runtime("regex")
+// zip_regex_проверить / zip_regex_найти
+```
+
+Документация: [МОДУЛЬ-REGEX.md](МОДУЛЬ-REGEX.md).
+
+---
+
 ### РЕЕСТР / HTTP-СЕРВЕР
 
 ```zip
