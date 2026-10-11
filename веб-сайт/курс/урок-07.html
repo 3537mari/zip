@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Урок 7: Нейросети — ZIP за 30 минут</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="wrap">
+  <div class="top-tools">
+    <div class="progress-container"><div class="progress-bar">0 / 8</div></div>
+    <button type="button" class="theme-toggle" onclick="переключить_тему()" aria-label="Тема">🌙</button>
+  </div>
+
+    <nav class="bar">
+      <a href="урок-06.html">← Назад</a>
+      <span>Урок 7 из 8</span>
+      <a href="урок-08.html">Вперёд →</a>
+    </nav>
+    <h1>Урок 7: Нейросети</h1>
+    
+    <p>STD ZIP содержит примитивы для слоёв и обучения (см. <code>zip-std/примеры/xor_обучение.zip</code>).</p>
+    <div class="code-block">
+      <pre><code>// Локально:
+// zipc запустить zip-std/примеры/xor_обучение.zip
+функция главная() {
+    ПечатьСтроки("См. пример XOR в репозитории")
+}</code></pre>
+      <button type="button" onclick="runCode(`функция главная() {\n    ПечатьСтроки(\"См. пример XOR в репозитории\")\n}`)">Запустить</button>
+    </div>
+    <p>В бенчмарках XOR 10k эпох на ZIP — порядка единиц миллисекунд (runtime STD).</p>
+
+    
+    <div class="task-panel" data-task="7">
+      <h3>Практика: задача 7</h3>
+      <p>Отредактируйте код и нажмите «Проверить».</p>
+      <textarea class="task-code" id="код-задачи-7">@быстрая
+функция главная() {
+    ПечатьСтроки("аннотация")
+}</textarea>
+      <div class="actions">
+        <button type="button" onclick="runCode(document.getElementById('код-задачи-7').value)">Запустить</button>
+        <button type="button" onclick="запустить_и_проверить(7)">Проверить</button>
+      </div>
+      <div class="task-result" id="результат-задачи-7"></div>
+    </div>
+
+    
+    <div class="navigation">
+      <button type="button" class="mark-done" onclick="прогресс.отметить_урок(7, 'пройден')">Отметить урок пройденным</button>
+    </div>
+
+    <a class="next-button" href="урок-08.html">Следующий урок →</a>
+  </div>
+  <script src="progress.js"></script>
+  <script src="checker.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

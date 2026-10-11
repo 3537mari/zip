@@ -56,16 +56,20 @@
     .task p { margin: 0 0 8px; font-size: 14px; }
     .task details { font-size: 13px; color: var(--muted); }
     .task summary { cursor: pointer; color: var(--accent); }
-    .task button.load {
-      margin-top: 8px; padding: 6px 12px; font-size: 13px;
+    .task button.load, .task button.check {
+      margin-top: 8px; margin-right: 8px; padding: 6px 12px; font-size: 13px;
       background: transparent; color: var(--accent);
       border: 1px solid var(--accent);
     }
+    .task button.check { color: var(--ok); border-color: var(--ok); }
+    .task .check-msg { margin-top: 8px; font-size: 13px; font-weight: 650; }
+    .task .check-msg.ok { color: var(--ok); }
+    .task .check-msg.bad { color: var(--err); }
   </style>
 </head>
 <body>
   <h1>ZIP Playground</h1>
-  <p>Онлайн-разбор ZIP (WASM). <a href="./">← на сайт</a> · <a href="../learning/курс/index.html">курс</a></p>
+  <p>Онлайн-разбор ZIP (WASM). <a href="./">← на сайт</a> · <a href="курс/">курс</a></p>
   <div class="row">
     <div class="col">
       <h3>Исходник</h3>
@@ -90,6 +94,8 @@
       <p>Напишите программу, которая печатает «Привет, мир!».</p>
       <details><summary>Подсказка</summary><p>Используйте <code>ПечатьСтроки("...")</code></p></details>
       <button class="load" type="button" data-snippet='ПечатьСтроки("Привет, мир!")'>Вставить шаблон</button>
+      <button class="check" type="button" data-check="1">Проверить</button>
+      <div class="check-msg" hidden></div>
     </div>
 
     <div class="task" data-task="2">
@@ -103,6 +109,8 @@
 функция главная() {
     ПечатьЧисло(сложить(2, 3))
 }'>Вставить шаблон</button>
+      <button class="check" type="button" data-check="2">Проверить</button>
+      <div class="check-msg" hidden></div>
     </div>
 
     <div class="task" data-task="3">
@@ -119,6 +127,8 @@
 функция главная() {
     ПечатьЧисло(факториал(5))
 }'>Вставить шаблон</button>
+      <button class="check" type="button" data-check="3">Проверить</button>
+      <div class="check-msg" hidden></div>
     </div>
 
     <div class="task" data-task="4">
@@ -206,6 +216,82 @@
         const snip = btn.getAttribute("data-snippet");
         if (snip) document.getElementById("code").value = snip;
       });
+    });
+
+    const checks = {
+      1: (c, o) => /ПечатьСтроки\s*\(\s*["']Привет,\s*мир!["']/.test(c) || String(o).includes("Привет"),
+      2: (c) => c.includes("функция") && /сложить/.test(c) && c.includes("возврат"),
+      3: (c, o) => /факториал/.test(c) && (c.includes("возврат") || /120|3628800/.test(String(o))),
+      4: (c) => /если/.test(c),
+      5: (c) => /пока|для/.test(c),
+      6: (c) => /\[|список|массив/.test(c),
+      7: (c) => /@|#аннотация|аннотация/.test(c),
+      8: (c) => />>/.test(c),
+      9: (c) => /создать_слой|слой/.test(c),
+      10: (c) => /задач|создать|функция/.test(c.toLowerCase()),
+    };
+
+    document.querySelectorAll(".task button.check").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const id = Number(btn.getAttribute("data-check"));
+        const code = document.getElementById("code").value;
+        let outText = "";
+        try {
+          outText = compileFn ? String(compileFn(code)) : fallback(code);
+          out.textContent = outText;
+        } catch (e) {
+          outText = String(e);
+          out.textContent = "Ошибка: " + e;
+        }
+        const fn = checks[id];
+        const ok = fn ? !!fn(code, outText) : false;
+        const msg = btn.parentElement.querySelector(".check-msg");
+        if (msg) {
+          msg.hidden = false;
+          msg.className = "check-msg " + (ok ? "ok" : "bad");
+          msg.textContent = ok ? "✓ Задача решена!" : "✗ Решение не подходит. Попробуйте ещё раз.";
+        }
+        if (ok) {
+          try {
+            const key = "zip-course-progress";
+            const data = JSON.parse(localStorage.getItem(key) || "{}");
+            data["задача_" + id] = { статус: "решена", время: new Date().toISOString() };
+            localStorage.setItem(key, JSON.stringify(data));
+          } catch (_) {}
+        }
+      });
+    });
+
+    // Add check buttons for tasks 4–10 if missing
+    document.querySelectorAll(".task[data-task]").forEach((task) => {
+      const id = task.getAttribute("data-task");
+      if (!task.querySelector("button.check")) {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "check";
+        b.setAttribute("data-check", id);
+        b.textContent = "Проверить";
+        task.appendChild(b);
+        const m = document.createElement("div");
+        m.className = "check-msg";
+        m.hidden = true;
+        task.appendChild(m);
+        b.addEventListener("click", () => {
+          const code = document.getElementById("code").value;
+          let outText = "";
+          try {
+            outText = compileFn ? String(compileFn(code)) : fallback(code);
+            out.textContent = outText;
+          } catch (e) {
+            outText = String(e);
+          }
+          const fn = checks[Number(id)];
+          const ok = fn ? !!fn(code, outText) : false;
+          m.hidden = false;
+          m.className = "check-msg " + (ok ? "ok" : "bad");
+          m.textContent = ok ? "✓ Задача решена!" : "✗ Решение не подходит. Попробуйте ещё раз.";
+        });
+      }
     });
 
     await load();

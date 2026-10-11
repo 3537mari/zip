@@ -24,4 +24,12 @@ cargo build --release --manifest-path zipc/Cargo.toml
 - Самокомпиляция (fixed point)
 - Кириллический синтаксис VSO
 
+## Обучение
+
+- **[Интерактивный курс ZIP за 30 минут](курс/)** — 8 уроков, WASM, прогресс
+- [Плейграунд с задачами](плейграунд.html)
+- [Видео-сценарии](https://github.com/3537mari/zip/tree/master/learning/видео) (запись по [плану](https://github.com/3537mari/zip/blob/master/learning/видео/ПЛАН-ЗАПИСИ.md))
+- [Учебник](https://github.com/3537mari/zip/blob/master/docs/УЧЕБНИК.md)
+- [Cookbook — рецепты](https://github.com/3537mari/zip/blob/master/docs/COOKBOOK.md)
+
 [Попробовать онлайн](плейграунд.html) · [Установка](установка.md) · [Туториал](туториал.md) · [Пакеты](пакеты/) · [Справочник](справочник/синтаксис.md)

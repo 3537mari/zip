@@ -1,18 +1,26 @@
-// ZIP interactive course — WASM compile + fallback analyzer
+// ZIP interactive course — WASM + theme
 let zipModule = null;
 let compileFn = null;
 
 async function initializeZip() {
-  try {
-    const module = await import("../../веб-сайт/wasm/zipc.js");
-    await module.default();
-    zipModule = module;
-    compileFn = module.compileZip || module.скомпилировать || module.compile;
-    console.log("ZIP WASM ready");
-  } catch (error) {
-    console.warn("WASM unavailable, using fallback", error);
-    compileFn = null;
+  const candidates = [
+    "../wasm/zipc.js",
+    "./wasm/zipc.js",
+    "../../веб-сайт/wasm/zipc.js",
+  ];
+  for (const path of candidates) {
+    try {
+      const module = await import(path);
+      await module.default();
+      zipModule = module;
+      compileFn = module.compileZip || module.скомпилировать || module.compile;
+      console.log("ZIP WASM ready via", path);
+      return;
+    } catch (e) {
+      console.warn("WASM try failed:", path, e);
+    }
   }
+  compileFn = null;
 }
 
 function fallback(src) {
@@ -25,17 +33,22 @@ function fallback(src) {
     "главная: " + (hasMain ? "да" : "нет"),
     "печать: " + (hasPrint ? "да" : "нет"),
     "",
-    "Полный WASM доступен на сайте после деплоя Actions.",
+    "Полный WASM доступен после деплоя GitHub Pages.",
   ].join("\n");
 }
 
-async function runCode(code) {
+function compileOnly(code) {
   try {
-    const result = compileFn ? compileFn(code) : fallback(code);
-    showResult(result);
+    return compileFn ? String(compileFn(code)) : fallback(code);
   } catch (error) {
-    showResult("Ошибка: " + (error && error.message ? error.message : error));
+    return "Ошибка: " + (error && error.message ? error.message : error);
   }
+}
+
+async function runCode(code) {
+  const result = compileOnly(code);
+  showResult(result);
+  return result;
 }
 
 function showResult(text) {
@@ -63,6 +76,41 @@ function checkQuiz(btn, correct) {
   btn.classList.add(correct ? "ok" : "bad");
 }
 
-document.addEventListener("DOMContentLoaded", initializeZip);
+function переключить_тему() {
+  document.body.classList.toggle("тёмная");
+  const isDark = document.body.classList.contains("тёмная");
+  localStorage.setItem("zip-theme", isDark ? "dark" : "light");
+  const btn = document.querySelector(".theme-toggle");
+  if (btn) btn.textContent = isDark ? "☀️" : "🌙";
+}
+
+function применить_тему() {
+  const theme = localStorage.getItem("zip-theme");
+  if (theme === "dark") {
+    document.body.classList.add("тёмная");
+  }
+  const btn = document.querySelector(".theme-toggle");
+  if (btn) {
+    btn.textContent = document.body.classList.contains("тёмная") ? "☀️" : "🌙";
+  }
+}
+
+function номер_урока() {
+  const m = location.pathname.match(/урок-0?(\d+)/);
+  return m ? parseInt(m[1], 10) : null;
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  применить_тему();
+  initializeZip();
+  const n = номер_урока();
+  if (n && typeof прогресс !== "undefined") {
+    прогресс.отметить_урок(n, "начат");
+  }
+});
+
 window.runCode = runCode;
+window.compileOnly = compileOnly;
 window.checkQuiz = checkQuiz;
+window.переключить_тему = переключить_тему;
+window.showResult = showResult;

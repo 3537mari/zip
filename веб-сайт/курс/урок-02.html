@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Урок 2: Переменные — ZIP за 30 минут</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="wrap">
+  <div class="top-tools">
+    <div class="progress-container"><div class="progress-bar">0 / 8</div></div>
+    <button type="button" class="theme-toggle" onclick="переключить_тему()" aria-label="Тема">🌙</button>
+  </div>
+
+    <nav class="bar">
+      <a href="урок-01.html">← Назад</a>
+      <span>Урок 2 из 8</span>
+      <a href="урок-03.html">Вперёд →</a>
+    </nav>
+    <h1>Урок 2: Переменные</h1>
+    
+    <p>Присваивание через <code>=</code>. Типы выводятся из литералов.</p>
+    <div class="code-block">
+      <pre><code>функция главная() {
+    а = 42
+    имя = "ZIP"
+    ПечатьЧисло(а)
+    ПечатьСтроки(имя)
+}</code></pre>
+      <button type="button" onclick="runCode(`функция главная() {\n    а = 42\n    имя = \"ZIP\"\n    ПечатьЧисло(а)\n    ПечатьСтроки(имя)\n}`)">Запустить</button>
+    </div>
+    <p>Частые типы: целое, вещественное, строка, флаг (<code>истина</code>/<code>ложь</code>).</p>
+
+    
+    <div class="task-panel" data-task="2">
+      <h3>Практика: задача 2</h3>
+      <p>Отредактируйте код и нажмите «Проверить».</p>
+      <textarea class="task-code" id="код-задачи-2">функция сложить(а, б) {
+    возврат(а + б)
+}
+
+функция главная() {
+    ПечатьЧисло(сложить(2, 3))
+}</textarea>
+      <div class="actions">
+        <button type="button" onclick="runCode(document.getElementById('код-задачи-2').value)">Запустить</button>
+        <button type="button" onclick="запустить_и_проверить(2)">Проверить</button>
+      </div>
+      <div class="task-result" id="результат-задачи-2"></div>
+    </div>
+
+    
+    <div class="navigation">
+      <button type="button" class="mark-done" onclick="прогресс.отметить_урок(2, 'пройден')">Отметить урок пройденным</button>
+    </div>
+
+    <a class="next-button" href="урок-03.html">Следующий урок →</a>
+  </div>
+  <script src="progress.js"></script>
+  <script src="checker.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
