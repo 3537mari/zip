@@ -25,6 +25,10 @@ path = "tests/тест_пластичности_vm.rs"
 name = "тест_миелинизации"
 path = "tests/тест_миелинизации.rs"
 
+[[test]]
+name = "тест_байткода_v3"
+path = "tests/тест_байткода_v3.rs"
+
 [dependencies]
 clap = { version = "4.5", features = ["derive"] }
 anyhow = "1.0"

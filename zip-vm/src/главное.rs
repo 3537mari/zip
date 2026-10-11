@@ -8,9 +8,9 @@ use zip_vm::{загрузить, Исполнитель};
 #[derive(Parser, Debug)]
 #[command(name = "zip-vm")]
 #[command(version = "0.1.0")]
-#[command(about = "Виртуальная машина байт-кода ZIP (.zipc)")]
+#[command(about = "Виртуальная машина байт-кода ZIP (.zipc / .zipb)")]
 struct Аргументы {
-    /// Файл байт-кода .zipc
+    /// Файл байт-кода `.zipc` (v2) или `.zipb` (v3)
     #[arg(value_name = "ФАЙЛ")]
     файл: PathBuf,
 
