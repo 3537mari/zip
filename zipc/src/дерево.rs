@@ -2,7 +2,7 @@
 
 use std::collections::HashMap;
 
-/// Аннотация `@имя(...)` (эпигенетика / пластичность и др.).
+/// Аннотация `@имя(...)` (`@пластичность`, `@comptime`, …).
 #[derive(Debug, Clone, PartialEq)]
 pub struct Аннотация {
     pub имя: String,
