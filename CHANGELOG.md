@@ -5,6 +5,13 @@
 Формат: [Keep a Changelog](https://keepachangelog.com/ru/1.0.0/),
 версионирование: [Semantic Versioning](https://semver.org/lang/ru/).
 
+## [Unreleased]
+
+### Добавлено
+
+- Компилятор ZIP → ZIPB на zip-self (`компилятор.zip` / `байткод_эмиттер_rt.c`) без LLVM
+- Документация: [КОМПИЛЯТОР-НА-ZIP.md](docs/КОМПИЛЯТОР-НА-ZIP.md)
+
 ## [1.1.0] — 2026-10-11
 
 ### Документация и производительность

@@ -183,6 +183,10 @@ path = "../tests/тест_архива.rs"
 name = "тест_плагинов"
 path = "../tests/тест_плагинов.rs"
 
+[[test]]
+name = "тест_самокомпиляции"
+path = "../tests/тест_самокомпиляции.rs"
+
 [profile.release]
 opt-level = 3
 lto = true

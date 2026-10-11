@@ -530,6 +530,16 @@ static int map_runtime(const char *name, const char **c_file, const char **macro
         *macro = "ZIP_IR_MAIN";
         return 1;
     }
+    if (strcmp(name, "байткод_эмиттер_rt") == 0 || strcmp(name, "bytecode_emitter_rt") == 0) {
+        *c_file = "bytecode_emitter_rt.c";
+        *macro = "ZIP_BAJTKOD_MAIN";
+        return 1;
+    }
+    if (strcmp(name, "компилятор_rt") == 0 || strcmp(name, "compiler_rt") == 0) {
+        *c_file = "compiler_rt.c";
+        *macro = "ZIP_COMPILER_MAIN";
+        return 1;
+    }
     /* ASCII aliases */
     if (strcmp(name, "native_rt") == 0) {
         *c_file = "native_rt.c";

@@ -936,6 +936,18 @@ fn скомпилировать_runtime(имя: &str, выход: &PathBuf) -> R
             false,
             false,
         ),
+        "байткод_эмиттер_rt" | "bytecode_emitter_rt" | "bajtkod_emitter_rt" => (
+            vec![корень.join("zip-self/bytecode_emitter_rt.c")],
+            "ZIP_BAJTKOD_MAIN",
+            false,
+            false,
+        ),
+        "компилятор_rt" | "compiler_rt" | "zip_compiler_rt" => (
+            vec![корень.join("zip-self/compiler_rt.c")],
+            "ZIP_COMPILER_MAIN",
+            false,
+            false,
+        ),
         "http_client" => (
             vec![корень.join("zip-std/runtime/http_client.c")],
             "ZIP_HTTP_MAIN",

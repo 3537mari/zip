@@ -566,29 +566,62 @@ static int gen_node(Gen *G, Node *n, IrFunc *cur, int has_in, int in_reg, int *o
         }
         case N_FN: {
             int id = new_fn_id(G);
+            bind_fn(G, n->name ? n->name : "fn", id);
+
+            /* Сохранить область видимости; аргументы VM → регистры 0..n-1 */
+            VarSlot saved_vars[MAX_VARS];
+            int saved_nvars = G->nvars;
+            int saved_reg = G->next_reg;
+            memcpy(saved_vars, G->vars, (size_t)saved_nvars * sizeof(VarSlot));
+            G->nvars = 0;
+            G->next_reg = 0;
+
             IrFunc *F = &G->funcs[G->nfuncs++];
             memset(F, 0, sizeof(*F));
             F->id = id;
             strncpy(F->name, n->name ? n->name : "fn", 127);
             F->cap = 64;
             F->body = (Insn *)calloc((size_t)F->cap, sizeof(Insn));
-            int вход = new_reg(G, TY_IMPERFECT);
-            F->nparams = 1;
-            F->params[0] = вход;
-            F->ret_ty = TY_IMPERFECT;
+            F->ret_ty = TY_I64;
+
+            if (n->nparams > 0) {
+                F->nparams = n->nparams > 16 ? 16 : n->nparams;
+                for (int i = 0; i < F->nparams; i++) {
+                    int r = new_reg(G, TY_I64);
+                    F->params[i] = r;
+                    if (n->pnames && n->pnames[i])
+                        bind_var(G, n->pnames[i], r);
+                }
+            } else {
+                /* VSO: один входной импульс */
+                int вход = new_reg(G, TY_IMPERFECT);
+                F->nparams = 1;
+                F->params[0] = вход;
+            }
+
             int h = 0;
-            (void)gen_node(G, n->kids[0], F, 1, вход, &h);
+            int вход0 = F->nparams > 0 ? F->params[0] : 0;
+            (void)gen_node(G, n->kids[0], F, F->nparams > 0, вход0, &h);
             int has_ret = 0;
             for (int i = 0; i < F->ninsns; i++)
                 if (F->body[i].kind == IR_RET) has_ret = 1;
             if (!has_ret) {
+                int zero = new_reg(G, TY_I64);
+                Insn c0 = {0};
+                c0.kind = IR_CONST_I;
+                c0.dst = zero;
+                c0.ival = 0;
+                push(F, c0);
                 Insn ret = {0};
                 ret.kind = IR_RET;
                 ret.has_result = 1;
-                ret.result = вход;
+                ret.result = zero;
                 push(F, ret);
             }
-            bind_fn(G, F->name, id);
+
+            memcpy(G->vars, saved_vars, (size_t)saved_nvars * sizeof(VarSlot));
+            G->nvars = saved_nvars;
+            G->next_reg = saved_reg;
             return 0;
         }
         case N_ASYNC: {
@@ -784,7 +817,19 @@ static void generate(Gen *G, Node *tree) {
     ret.result = exit_code;
     push(&mainf, ret);
 
-    G->funcs[G->nfuncs++] = mainf;
+    /* Если пользователь объявил `функция главная()`, не дублируем обёртку */
+    int has_user_main = 0;
+    for (int i = 0; i < G->nfuncs; i++) {
+        if (strcmp(G->funcs[i].name, "главная") == 0) {
+            has_user_main = 1;
+            break;
+        }
+    }
+    if (!has_user_main)
+        G->funcs[G->nfuncs++] = mainf;
+    else {
+        free(mainf.body);
+    }
     qsort(G->funcs, (size_t)G->nfuncs, sizeof(IrFunc), cmp_fn);
 }
 
