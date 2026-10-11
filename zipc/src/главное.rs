@@ -985,6 +985,18 @@ fn скомпилировать_runtime(имя: &str, выход: &PathBuf) -> R
             false,
             false,
         ),
+        "datetime" | "дата_время" => (
+            vec![корень.join("zip-std/runtime/datetime.c")],
+            "ZIP_DATETIME_MAIN",
+            false,
+            false,
+        ),
+        "zip_archive" | "архив" => (
+            vec![корень.join("zip-std/runtime/zip_archive.c")],
+            "ZIP_ARCHIVE_MAIN",
+            false,
+            false,
+        ),
         другой => bail!("неизвестный #runtime(\"{}\")", другой),
     };
 

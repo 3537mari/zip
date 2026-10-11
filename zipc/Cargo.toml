@@ -170,6 +170,14 @@ path = "../tests/тест_csv.rs"
 name = "тест_regex"
 path = "../tests/тест_regex.rs"
 
+[[test]]
+name = "тест_datetime"
+path = "../tests/тест_datetime.rs"
+
+[[test]]
+name = "тест_архива"
+path = "../tests/тест_архива.rs"
+
 [profile.release]
 opt-level = 3
 lto = true

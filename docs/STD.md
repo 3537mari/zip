@@ -209,6 +209,28 @@ HTTP/HTTPS через `#runtime("http_client")` / `#runtime("https_client")`.
 
 ---
 
+### Дата/Время (`datetime.zip` + `#runtime("datetime")`)
+
+```zip
+#runtime("datetime")
+// zip_время_сейчас / zip_datetime_формат / zip_datetime_собрать
+```
+
+Документация: [МОДУЛЬ-ДАТА-ВРЕМЯ.md](МОДУЛЬ-ДАТА-ВРЕМЯ.md).
+
+---
+
+### ZIP-архивы (`архив.zip` + `#runtime("zip_archive")`)
+
+```zip
+#runtime("zip_archive")
+// zip_архив_открыть / zip_архив_извлечь / zip_архив_создать_простой
+```
+
+Документация: [МОДУЛЬ-АРХИВ.md](МОДУЛЬ-АРХИВ.md).
+
+---
+
 ### РЕЕСТР / HTTP-СЕРВЕР
 
 ```zip
