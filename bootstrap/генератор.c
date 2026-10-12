@@ -273,6 +273,13 @@ static void emit_expr(Node *n, Code *C, Locals *loc) {
         op0(C, OP_PRINT_I64);
         break;
     case NODE_CALL: {
+        /* Builtin: длина_массива(arr) */
+        if (n->name && (zip_streq(n->name, "длина_массива") || zip_streq(n->name, "длинаМассива"))) {
+            if (n->n > 0) emit_expr(n->kids[0], C, loc);
+            else op_i64(C, OP_PUSH_I64, 0);
+            op0(C, OP_ARRAY_LEN);
+            break;
+        }
         for (int i = 0; i < n->n; i++) emit_expr(n->kids[i], C, loc);
         int fi = n->name ? fn_find(n->name) : -1;
         if (fi >= 0) {
@@ -281,6 +288,36 @@ static void emit_expr(Node *n, Code *C, Locals *loc) {
             for (int i = 0; i < n->n; i++) op0(C, OP_POP);
             op_i64(C, OP_PUSH_I64, 0);
         }
+        break;
+    }
+    case NODE_ARRAY_LIT: {
+        int64_t repeat = n->i64;
+        if (repeat > 0 && n->n > 0) {
+            /* [знач; N] */
+            op_u32(C, OP_NEW_ARRAY, (uint32_t)repeat);
+            for (int64_t i = 0; i < repeat; i++) {
+                op0(C, OP_DUP);
+                emit_expr(n->kids[0], C, loc);
+                op_i64(C, OP_PUSH_I64, i);
+                op0(C, OP_STORE_INDEX);
+            }
+        } else {
+            op_u32(C, OP_NEW_ARRAY, (uint32_t)(n->n > 0 ? n->n : 0));
+            for (int i = 0; i < n->n; i++) {
+                op0(C, OP_DUP);
+                emit_expr(n->kids[i], C, loc);
+                op_i64(C, OP_PUSH_I64, i);
+                op0(C, OP_STORE_INDEX);
+            }
+        }
+        break;
+    }
+    case NODE_INDEX_ACCESS: {
+        if (n->n > 0) emit_expr(n->kids[0], C, loc);
+        else op_i64(C, OP_PUSH_I64, 0);
+        if (n->n > 1) emit_expr(n->kids[1], C, loc);
+        else op_i64(C, OP_PUSH_I64, 0);
+        op0(C, OP_LOAD_INDEX);
         break;
     }
     case NODE_STRUCT_LIT: {
@@ -362,6 +399,17 @@ static void emit_stmt(Node *n, Code *C, Locals *loc) {
         }
         break;
     }
+    case NODE_INDEX_STORE: {
+        /* стек: массив, значение, индекс */
+        if (n->n > 0) emit_expr(n->kids[0], C, loc);
+        else op_i64(C, OP_PUSH_I64, 0);
+        if (n->n > 2) emit_expr(n->kids[2], C, loc);
+        else op_i64(C, OP_PUSH_I64, 0);
+        if (n->n > 1) emit_expr(n->kids[1], C, loc);
+        else op_i64(C, OP_PUSH_I64, 0);
+        op0(C, OP_STORE_INDEX);
+        break;
+    }
     case NODE_IF: {
         if (n->n > 0) emit_expr(n->kids[0], C, loc);
         size_t jelse = emit_jump(C, OP_JUMP_IF_NOT);
@@ -418,6 +466,8 @@ static void emit_stmt(Node *n, Code *C, Locals *loc) {
     case NODE_CHOIR:
     case NODE_STRUCT_LIT:
     case NODE_FIELD_ACCESS:
+    case NODE_ARRAY_LIT:
+    case NODE_INDEX_ACCESS:
         emit_expr(n, C, loc);
         break;
     default:

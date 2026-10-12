@@ -66,6 +66,11 @@ pub enum Опкод {
     LoadField = 0x94,
     StoreField = 0x95,
     GetFieldPtr = 0x96,
+
+    NewArray = 0x97,
+    LoadIndex = 0x98,
+    StoreIndex = 0x99,
+    ArrayLen = 0x9A,
 }
 
 impl Опкод {
@@ -119,6 +124,10 @@ impl Опкод {
             0x94 => Self::LoadField,
             0x95 => Self::StoreField,
             0x96 => Self::GetFieldPtr,
+            0x97 => Self::NewArray,
+            0x98 => Self::LoadIndex,
+            0x99 => Self::StoreIndex,
+            0x9A => Self::ArrayLen,
             _ => return None,
         })
     }
@@ -226,6 +235,10 @@ pub enum ИнстрV3 {
     LoadField(u32),
     StoreField(u32),
     GetFieldPtr(u32),
+    NewArray(u32),
+    LoadIndex,
+    StoreIndex,
+    ArrayLen,
 }
 
 impl ИнстрV3 {
@@ -336,6 +349,13 @@ impl ИнстрV3 {
                 out.push(Опкод::GetFieldPtr as u8);
                 out.extend_from_slice(&о.to_le_bytes());
             }
+            NewArray(n) => {
+                out.push(Опкод::NewArray as u8);
+                out.extend_from_slice(&n.to_le_bytes());
+            }
+            LoadIndex => out.push(Опкод::LoadIndex as u8),
+            StoreIndex => out.push(Опкод::StoreIndex as u8),
+            ArrayLen => out.push(Опкод::ArrayLen as u8),
         }
     }
 }

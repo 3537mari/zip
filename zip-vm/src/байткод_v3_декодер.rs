@@ -170,6 +170,10 @@ impl<'a> Декодировщик<'a> {
             Опкод::LoadField => ИнстрV3::LoadField(self.прочитать_u32()?),
             Опкод::StoreField => ИнстрV3::StoreField(self.прочитать_u32()?),
             Опкод::GetFieldPtr => ИнстрV3::GetFieldPtr(self.прочитать_u32()?),
+            Опкод::NewArray => ИнстрV3::NewArray(self.прочитать_u32()?),
+            Опкод::LoadIndex => ИнстрV3::LoadIndex,
+            Опкод::StoreIndex => ИнстрV3::StoreIndex,
+            Опкод::ArrayLen => ИнстрV3::ArrayLen,
         })
     }
 
@@ -302,7 +306,11 @@ fn декодировать_в_vm_инструкции(код: &[u8]) -> Result<
             | ИнстрV3::NewStruct(_)
             | ИнстрV3::LoadField(_)
             | ИнстрV3::StoreField(_)
-            | ИнстрV3::GetFieldPtr(_) => Инструкция::Nop,
+            | ИнстрV3::GetFieldPtr(_)
+            | ИнстрV3::NewArray(_)
+            | ИнстрV3::LoadIndex
+            | ИнстрV3::StoreIndex
+            | ИнстрV3::ArrayLen => Инструкция::Nop,
         });
     }
     Ok(out)

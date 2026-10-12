@@ -89,6 +89,10 @@ void print_ast(Node *n, int indent) {
     case NODE_STRUCT_LIT: tn = "STRUCT_LIT"; break;
     case NODE_FIELD_ACCESS: tn = "FIELD_ACCESS"; break;
     case NODE_FIELD_STORE: tn = "FIELD_STORE"; break;
+    case NODE_ARRAY_TYPE: tn = "ARRAY_TYPE"; break;
+    case NODE_ARRAY_LIT: tn = "ARRAY_LIT"; break;
+    case NODE_INDEX_ACCESS: tn = "INDEX_ACCESS"; break;
+    case NODE_INDEX_STORE: tn = "INDEX_STORE"; break;
     default: break;
     }
     printf("%s", tn);

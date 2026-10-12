@@ -27,6 +27,66 @@ static Node *parse_stmt(Parser *P);
 static Node *parse_block(Parser *P);
 static Node *parse_function(Parser *P);
 static Node *parse_struct(Parser *P);
+static Node *parse_array_lit(Parser *P);
+static Node *parse_postfix(Parser *P, Node *base);
+
+/* Постфикс: .поле и [индекс] */
+static Node *parse_postfix(Parser *P, Node *base) {
+    while (base) {
+        if (match(P, TK_DOT)) {
+            if (!(check(P, TK_IDENT) || check(P, TK_ROOT) || check(P, TK_TEMPLATE)))
+                break;
+            Node *доступ = node_new(NODE_FIELD_ACCESS);
+            доступ->name = zip_strdup(peek(P)->str ? peek(P)->str : "_");
+            advance(P);
+            node_add(доступ, base);
+            base = доступ;
+        } else if (match(P, TK_LBRACK)) {
+            Node *idx = parse_expr(P);
+            match(P, TK_RBRACK);
+            Node *доступ = node_new(NODE_INDEX_ACCESS);
+            node_add(доступ, base);
+            if (idx) node_add(доступ, idx);
+            base = доступ;
+        } else {
+            break;
+        }
+    }
+    return base;
+}
+
+/* Литерал массива: [1, 2, 3] или [0; 10] */
+static Node *parse_array_lit(Parser *P) {
+    match(P, TK_LBRACK);
+    Node *lit = node_new(NODE_ARRAY_LIT);
+    lit->i64 = 0; /* 0 = обычный; >0 при повторе = размер */
+
+    if (check(P, TK_RBRACK)) {
+        advance(P);
+        return lit;
+    }
+
+    Node *first = parse_expr(P);
+    if (match(P, TK_SEMI)) {
+        /* Повтор: [знач; N] */
+        if (check(P, TK_INT)) {
+            lit->i64 = peek(P)->i64;
+            advance(P);
+        }
+        if (first) node_add(lit, first);
+        match(P, TK_RBRACK);
+        return lit;
+    }
+
+    if (first) node_add(lit, first);
+    while (match(P, TK_COMMA)) {
+        if (check(P, TK_RBRACK)) break;
+        Node *el = parse_expr(P);
+        if (el) node_add(lit, el);
+    }
+    match(P, TK_RBRACK);
+    return lit;
+}
 
 /* структура Имя { поле: Тип, ... } */
 static Node *parse_struct(Parser *P) {
@@ -134,7 +194,7 @@ static Node *parse_primary(Parser *P) {
                 }
             }
             match(P, TK_RBRACE);
-            return lit;
+            return parse_postfix(P, lit);
         }
 
         if (match(P, TK_LPAREN)) {
@@ -152,28 +212,21 @@ static Node *parse_primary(Parser *P) {
                 call->type = NODE_PRINT_STR;
             else if (zip_streq(name, "ПечатьЧисло") || zip_streq(name, "печать_число"))
                 call->type = NODE_PRINT_I64;
-            return call;
+            return parse_postfix(P, call);
         }
 
         Node *узел = node_new(NODE_IDENT);
         узел->name = name;
-
-        /* Доступ к полю: имя.поле.вложенное */
-        while (match(P, TK_DOT)) {
-            if (!(check(P, TK_IDENT) || check(P, TK_ROOT) || check(P, TK_TEMPLATE)))
-                break;
-            Node *доступ = node_new(NODE_FIELD_ACCESS);
-            доступ->name = zip_strdup(peek(P)->str ? peek(P)->str : "_");
-            advance(P);
-            node_add(доступ, узел);
-            узел = доступ;
-        }
-        return узел;
+        return parse_postfix(P, узел);
+    }
+    /* Литерал массива */
+    if (check(P, TK_LBRACK)) {
+        return parse_postfix(P, parse_array_lit(P));
     }
     if (match(P, TK_LPAREN)) {
         Node *e = parse_expr(P);
         match(P, TK_RPAREN);
-        return e;
+        return parse_postfix(P, e);
     }
     return NULL;
 }
@@ -408,6 +461,15 @@ static Node *parse_stmt(Parser *P) {
                 st->name = lhs->name;
                 lhs->name = NULL;
                 node_add(st, lhs->kids[0]);
+                lhs->n = 0;
+                if (rhs) node_add(st, rhs);
+                node_free(lhs);
+                return st;
+            }
+            if (lhs && lhs->type == NODE_INDEX_ACCESS && lhs->n >= 2) {
+                Node *st = node_new(NODE_INDEX_STORE);
+                node_add(st, lhs->kids[0]); /* массив */
+                node_add(st, lhs->kids[1]); /* индекс */
                 lhs->n = 0;
                 if (rhs) node_add(st, rhs);
                 node_free(lhs);

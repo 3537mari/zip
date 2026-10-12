@@ -167,6 +167,7 @@ Token *lex(const char *src, size_t *out_n) {
         else if (c == '}') { adv(&L); t.type = TK_RBRACE; }
         else if (c == '[') { adv(&L); t.type = TK_LBRACK; }
         else if (c == ']') { adv(&L); t.type = TK_RBRACK; }
+        else if (c == ';') { adv(&L); t.type = TK_SEMI; }
         else if (c == ',') { adv(&L); t.type = TK_COMMA; }
         else if (c == '+') { adv(&L); t.type = TK_PLUS; }
         else if (c == '-') { adv(&L); t.type = TK_MINUS; }
