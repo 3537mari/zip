@@ -35,6 +35,8 @@ impl Куча {
 }
 
 static КУЧА: Mutex<Option<Куча>> = Mutex::new(None);
+static БАЙТБУФЕРЫ: Mutex<Option<HashMap<i64, Vec<u8>>>> = Mutex::new(None);
+static СЛЕД_БУФЕР: Mutex<i64> = Mutex::new(1);
 static ФАЙЛЫ: Mutex<Option<HashMap<i64, String>>> = Mutex::new(None);
 static СЛЕД_FD: Mutex<i64> = Mutex::new(100);
 
@@ -181,6 +183,151 @@ impl Встроенные {
                 _ => 0,
             };
             Ok(ЗначениеV3::Целое(s))
+        });
+
+        /* Байтовые операции над строками (для ZIP-лексера) */
+        ф.регистрация("длина_байтов", |арг| {
+            let n = match арг.first() {
+                Some(ЗначениеV3::Строка(s)) => s.len() as i64,
+                _ => 0,
+            };
+            Ok(ЗначениеV3::Целое(n))
+        });
+        ф.регистрация("байт_строки", |арг| {
+            let s = match арг.first() {
+                Some(ЗначениеV3::Строка(s)) => s.as_bytes(),
+                _ => &[],
+            };
+            let i = арг.get(1).map(|з| з.как_целое()).unwrap_or(0);
+            if i < 0 || i as usize >= s.len() {
+                return Ok(ЗначениеV3::Целое(0));
+            }
+            Ok(ЗначениеV3::Целое(s[i as usize] as i64))
+        });
+        ф.регистрация("код_символа", |арг| {
+            /* алиас: байт по индексу */
+            let s = match арг.first() {
+                Some(ЗначениеV3::Строка(s)) => s.as_bytes(),
+                _ => &[],
+            };
+            let i = арг.get(1).map(|з| з.как_целое()).unwrap_or(0);
+            if i < 0 || i as usize >= s.len() {
+                return Ok(ЗначениеV3::Целое(0));
+            }
+            Ok(ЗначениеV3::Целое(s[i as usize] as i64))
+        });
+        ф.регистрация("подстрока", |арг| {
+            let s = match арг.first() {
+                Some(ЗначениеV3::Строка(s)) => s.as_bytes(),
+                _ => &[],
+            };
+            let start = арг.get(1).map(|з| з.как_целое()).unwrap_or(0).max(0) as usize;
+            let len = арг.get(2).map(|з| з.как_целое()).unwrap_or(0).max(0) as usize;
+            if start >= s.len() {
+                return Ok(ЗначениеV3::Строка(String::new()));
+            }
+            let end = (start + len).min(s.len());
+            Ok(ЗначениеV3::Строка(
+                String::from_utf8_lossy(&s[start..end]).into_owned(),
+            ))
+        });
+        ф.регистрация("сравнить_строки", |арг| {
+            let a = арг.first().map(как_строка).unwrap_or_default();
+            let b = арг.get(1).map(как_строка).unwrap_or_default();
+            Ok(ЗначениеV3::Целое(match a.cmp(&b) {
+                std::cmp::Ordering::Less => -1,
+                std::cmp::Ordering::Equal => 0,
+                std::cmp::Ordering::Greater => 1,
+            }))
+        });
+
+        /* Байт-буфер для эмиссии ZIPB из чистого ZIP */
+        ф.регистрация("байтбуфер_создать", |_арг| {
+            let mut map = БАЙТБУФЕРЫ.lock().unwrap();
+            if map.is_none() {
+                *map = Some(HashMap::new());
+            }
+            let mut id_g = СЛЕД_БУФЕР.lock().unwrap();
+            let id = *id_g;
+            *id_g += 1;
+            map.as_mut().unwrap().insert(id, Vec::with_capacity(4096));
+            Ok(ЗначениеV3::Целое(id))
+        });
+        ф.регистрация("байтбуфер_дописать", |арг| {
+            let id = арг.first().map(|з| з.как_целое()).unwrap_or(0);
+            let b = арг.get(1).map(|з| з.как_целое()).unwrap_or(0) as u8;
+            let mut map = БАЙТБУФЕРЫ.lock().unwrap();
+            if let Some(buf) = map.as_mut().and_then(|m| m.get_mut(&id)) {
+                buf.push(b);
+                Ok(ЗначениеV3::Целое(buf.len() as i64))
+            } else {
+                Err(format!("байтбуфер {id} не найден"))
+            }
+        });
+        ф.регистрация("байтбуфер_длина", |арг| {
+            let id = арг.first().map(|з| з.как_целое()).unwrap_or(0);
+            let map = БАЙТБУФЕРЫ.lock().unwrap();
+            let n = map
+                .as_ref()
+                .and_then(|m| m.get(&id))
+                .map(|b| b.len() as i64)
+                .unwrap_or(0);
+            Ok(ЗначениеV3::Целое(n))
+        });
+        ф.регистрация("байтбуфер_сохранить", |арг| {
+            let id = арг.first().map(|з| з.как_целое()).unwrap_or(0);
+            let путь = арг.get(1).map(как_строка).unwrap_or_default();
+            let map = БАЙТБУФЕРЫ.lock().unwrap();
+            let buf = map
+                .as_ref()
+                .and_then(|m| m.get(&id))
+                .ok_or_else(|| format!("байтбуфер {id} не найден"))?;
+            std::fs::write(&путь, buf).map_err(|e| e.to_string())?;
+            Ok(ЗначениеV3::Целое(buf.len() as i64))
+        });
+        ф.регистрация("байтбуфер_слить", |арг| {
+            let dst = арг.first().map(|з| з.как_целое()).unwrap_or(0);
+            let src = арг.get(1).map(|з| з.как_целое()).unwrap_or(0);
+            let mut map = БАЙТБУФЕРЫ.lock().unwrap();
+            let m = map.as_mut().ok_or_else(|| "байтбуферы не инициализированы".to_string())?;
+            let data = m.get(&src).cloned().ok_or_else(|| format!("байтбуфер {src} не найден"))?;
+            let buf = m.get_mut(&dst).ok_or_else(|| format!("байтбуфер {dst} не найден"))?;
+            buf.extend_from_slice(&data);
+            Ok(ЗначениеV3::Целое(buf.len() as i64))
+        });
+        ф.регистрация("байтбуфер_байт", |арг| {
+            let id = арг.first().map(|з| з.как_целое()).unwrap_or(0);
+            let at = арг.get(1).map(|з| з.как_целое()).unwrap_or(0).max(0) as usize;
+            let map = БАЙТБУФЕРЫ.lock().unwrap();
+            let b = map
+                .as_ref()
+                .and_then(|m| m.get(&id))
+                .and_then(|buf| buf.get(at).copied())
+                .unwrap_or(0);
+            Ok(ЗначениеV3::Целое(b as i64))
+        });
+        ф.регистрация("байтбуфер_патч_u32", |арг| {
+            let id = арг.first().map(|з| з.как_целое()).unwrap_or(0);
+            let at = арг.get(1).map(|з| з.как_целое()).unwrap_or(0).max(0) as usize;
+            let v = арг.get(2).map(|з| з.как_целое()).unwrap_or(0) as u32;
+            let mut map = БАЙТБУФЕРЫ.lock().unwrap();
+            let buf = map
+                .as_mut()
+                .and_then(|m| m.get_mut(&id))
+                .ok_or_else(|| format!("байтбуфер {id} не найден"))?;
+            if at + 4 > buf.len() {
+                return Err("байтбуфер_патч_u32: за границами".into());
+            }
+            buf[at..at + 4].copy_from_slice(&v.to_le_bytes());
+            Ok(ЗначениеV3::Ничто)
+        });
+
+        ф.регистрация("длина_файла", |арг| {
+            let путь = арг.first().map(как_строка).unwrap_or_default();
+            match std::fs::metadata(&путь) {
+                Ok(m) => Ok(ЗначениеV3::Целое(m.len() as i64)),
+                Err(_) => Ok(ЗначениеV3::Целое(0)),
+            }
         });
 
         ф.регистрация("соединить_строки", |арг| {

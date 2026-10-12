@@ -7,6 +7,25 @@
 
 ## [Unreleased]
 
+## [6.1.0] — 2026-10-12
+
+### Полный lowering лексера/парсера/генератора в ZIP-байткод
+
+**Чистый ZIP (без Rust-функций компилятора в цепочке):**
+- `zip-self-zip/лексика_чистая.zip` — лексер на ZIP (structs/массивы)
+- `zip-self-zip/парсер_чистый.zip` — рекурсивный спуск на ZIP
+- `zip-self-zip/генератор_чистый.zip` / `главное_чистое.zip` — эмиссия ZIPB v3
+- `zip_self_lex` / `zip_self_parse` / `zip_self_gen` — только маркеры в `zip_self_host.rs`
+
+**Fixed-point без Rust-алгоритмов компилятора:**
+- C-bootstrap → selfc_v1; VM(selfc_v1) → v2; VM(selfc_v2) → v3
+- **v2 == v3** (SHA-256 совпадает)
+- v1 ≠ v2 ожидаемо (C stage-0 заполняет массивы иначе)
+
+**VM:** `CallNative` берёт арность сверху стека (исправление id байтбуферов).
+
+**Тесты:** `zip-self-zip/тесты/тест_fixed_point_без_c.ps1`, `tools/_parity_v61.py`.
+
 ## [6.0.0] — 2026-10-12
 
 ### Полная независимость от C (stage-1+)

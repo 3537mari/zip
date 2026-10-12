@@ -75,117 +75,16 @@ pub fn зарегистрировать(ф: &mut Встроенные) {
         Ok(ЗначениеV3::Целое(n))
     });
 
-    ф.регистрация_внешняя("zip_self_lex", |арг| {
-        // Полный лексер на ZIP-алгоритме (VM), без C-bootstrap
-        let s = арг.first().map(как_строка).unwrap_or_default();
-        let toks = crate::zip_lex_полный::разобрать(&s);
-        let n = toks.len() as i64;
-        *LAST_TOKENS.lock().unwrap() = n;
-        Ok(ЗначениеV3::Целое(n))
-    });
-    ф.регистрация_внешняя("zip_self_lex_count", |арг| {
-        let id = арг.first().map(|z| z.как_целое()).unwrap_or(0);
-        Ok(ЗначениеV3::Целое(id.max(0)))
-    });
-    ф.регистрация_внешняя("zip_self_parse", |арг| {
-        // Полный парсер на ZIP-алгоритме (VM), без C-bootstrap.
-        // Аргумент: исходный текст (строка). Успех → 1, ошибка → 0.
-        let исходник = арг.first().map(как_строка).unwrap_or_default();
-        match crate::zip_parse_полный::разобрать_из_исходника(&исходник) {
-            Ok(дерево) => {
-                let n = дерево.число_функций() as i64;
-                *LAST_AST.lock().unwrap() = n.max(1);
-                Ok(ЗначениеV3::Целое(1))
-            }
-            Err(ошибка) => {
-                eprintln!("zip_self_parse: {ошибка}");
-                *LAST_AST.lock().unwrap() = 0;
-                Ok(ЗначениеV3::Целое(0))
-            }
-        }
-    });
-    ф.регистрация_внешняя("zip_self_codegen", |арг| {
-        // Полный генератор ZIPB (VM), без C-bootstrap
-        let исходник = арг.first().map(как_строка).unwrap_or_default();
-        match crate::zip_gen_полный::сгенерировать_из_исходника(&исходник) {
-            Ok(байткод) => Ok(ЗначениеV3::Целое(байткод.len() as i64)),
-            Err(e) => {
-                eprintln!("zip_self_codegen: {e}");
-                Ok(ЗначениеV3::Целое(0))
-            }
-        }
-    });
+    /* v6.1: алгоритмы компилятора — в ZIP (главное_чистое.zip).
+     * Эти внешние имена — только маркеры совместимости, без работы. */
+    ф.регистрация_внешняя("zip_self_lex", |_арг| Ok(ЗначениеV3::Целое(1)));
+    ф.регистрация_внешняя("zip_self_lex_count", |_арг| Ok(ЗначениеV3::Целое(1)));
+    ф.регистрация_внешняя("zip_self_parse", |_арг| Ok(ЗначениеV3::Целое(1)));
+    ф.регистрация_внешняя("zip_self_codegen", |_арг| Ok(ЗначениеV3::Целое(1)));
+    ф.регистрация_внешняя("zip_self_gen", |_арг| Ok(ЗначениеV3::Целое(1)));
+    ф.регистрация_внешняя("zip_self_compile", |_арг| Ok(ЗначениеV3::Целое(1)));
 
-    ф.регистрация_внешняя("zip_self_compile", |арг| {
-        let вход = арг.first().map(как_строка).unwrap_or_default();
-        let выход = арг.get(1).map(как_строка).unwrap_or_default();
-        if вход.is_empty() || выход.is_empty() {
-            return Ok(ЗначениеV3::Целое(1));
-        }
-        /* v6: по умолчанию — VM-генератор (без C).
-         * ZIP_USE_C_BOOTSTRAP=1 — старый путь через bootstrap/zipc. */
-        let через_c = std::env::var("ZIP_USE_C_BOOTSTRAP")
-            .map(|v| v == "1" || v.eq_ignore_ascii_case("true"))
-            .unwrap_or(false);
-        if через_c {
-            return match скомпилировать_через_bootstrap(&вход, &выход) {
-                Ok(()) => Ok(ЗначениеV3::Целое(0)),
-                Err(e) => {
-                    eprintln!("zip_self_compile(C): {e}");
-                    Ok(ЗначениеV3::Целое(2))
-                }
-            };
-        }
-        let корень = найти_корень();
-        let путь_входа = {
-            let p = PathBuf::from(&вход);
-            if p.is_absolute() {
-                p
-            } else {
-                корень.join(&вход)
-            }
-        };
-        let путь_выхода = {
-            let p = PathBuf::from(&выход);
-            if p.is_absolute() {
-                p
-            } else {
-                корень.join(&выход)
-            }
-        };
-        let исходник = match std::fs::read_to_string(&путь_входа) {
-            Ok(s) => s,
-            Err(e) => {
-                eprintln!("zip_self_compile: чтение {}: {e}", путь_входа.display());
-                return Ok(ЗначениеV3::Целое(3));
-            }
-        };
-        match crate::zip_gen_полный::сгенерировать_из_исходника(&исходник) {
-            Ok(байткод) => {
-                if let Some(род) = путь_выхода.parent() {
-                    let _ = std::fs::create_dir_all(род);
-                }
-                match std::fs::write(&путь_выхода, &байткод) {
-                    Ok(()) => Ok(ЗначениеV3::Целое(0)),
-                    Err(e) => {
-                        eprintln!("zip_self_compile: запись {}: {e}", путь_выхода.display());
-                        Ok(ЗначениеV3::Целое(4))
-                    }
-                }
-            }
-            Err(e) => {
-                eprintln!("zip_self_compile(VM): {e}");
-                Ok(ЗначениеV3::Целое(2))
-            }
-        }
-    });
-
-    for (alias, target) in [
-        ("лексер_разобрать", "zip_self_lex"),
-        ("парсер_разобрать", "zip_self_parse"),
-        ("генератор_байткод", "zip_self_codegen"),
-        ("компилировать_файл", "zip_self_compile"),
-    ] {
-        ф.регистрация_алиас(alias, target);
-    }
+    // v6.1: aliases removed — pure ZIP self-compiler must NOT call these.
+    // лексер_разобрать, парсер_разобрать, генератор_байткод, компилировать_файл
+    // are no longer registered; ZIP code uses its own lexer/parser/gen.
 }

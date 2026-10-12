@@ -1,9 +1,10 @@
-# Финальный тест: fixed-point stage-1+ без C (VM-генератор)
+# Fixed-point v6.1: чистый ZIP (лексер/парсер/ген) без Rust-алгоритмов компилятора.
+# Ожидание: v2 == v3; v1 может отличаться (C stage-0).
 $ErrorActionPreference = "Stop"
 $Root = Resolve-Path (Join-Path $PSScriptRoot "../..")
 Set-Location $Root
 
-Write-Host "=== ФИНАЛЬНЫЙ ТЕСТ FIXED-POINT БЕЗ C ==="
+Write-Host "=== FIXED-POINT БЕЗ RUST-ФУНКЦИЙ КОМПИЛЯТОРА ==="
 
 $Tmp = $env:TEMP
 $V1 = Join-Path $Tmp "selfc_v1.zipb"

@@ -490,7 +490,13 @@ static void emit_stmt(Node *n, Code *C, Locals *loc) {
         break;
     case NODE_PRINT_STR:
     case NODE_PRINT_I64:
+        emit_expr(n, C, loc);
+        break;
     case NODE_CALL:
+        /* Вызов-как-инструкция: убрать возвращаемое значение (иначе растёт стек). */
+        emit_expr(n, C, loc);
+        op0(C, OP_POP);
+        break;
     case NODE_BINOP:
     case NODE_CONST_I64:
     case NODE_CONST_STR:
@@ -504,6 +510,7 @@ static void emit_stmt(Node *n, Code *C, Locals *loc) {
     case NODE_DEREF:
     case NODE_ALLOC:
         emit_expr(n, C, loc);
+        op0(C, OP_POP);
         break;
     default:
         for (int i = 0; i < n->n; i++) emit_stmt(n->kids[i], C, loc);

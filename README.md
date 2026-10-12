@@ -1,6 +1,6 @@
 # ZIP — язык программирования на кириллице
 
-[![Версия](https://img.shields.io/badge/версия-6.0.0-blue)](CHANGELOG.md)
+[![Версия](https://img.shields.io/badge/версия-6.1.0-blue)](CHANGELOG.md)
 [![Тесты](https://img.shields.io/badge/тесты-300%2B%20✅-green)](tests/)
 [![Лицензия](https://img.shields.io/badge/лицензия-MIT-green)](LICENSE)
 [![Самокомпиляция](https://img.shields.io/badge/самокомпиляция-✅-green)](docs/САМОКОМПИЛЯЦИЯ.md)
@@ -21,16 +21,16 @@
 
 ## Быстрый старт
 
-### Установка v6.0.0 (без C после bootstrap)
+### Установка v6.1.0 (лексер/парсер/ген на чистом ZIP)
 
 #### Вариант 1: Готовые бинарники
 
-Скачайте с [GitHub Releases](https://github.com/3537mari/zip/releases/tag/v6.0.0):
+Скачайте с [GitHub Releases](https://github.com/3537mari/zip/releases/tag/v6.1.0):
 
 - Windows / Linux / macOS — пакеты и `selfc.zipb`
 
 ```bash
-zip-vm --gen программа.zip > программа.zipb
+zip-vm selfc.zipb программа.zip программа.zipb
 zip-vm программа.zipb
 ```
 
@@ -44,17 +44,20 @@ cd ..
 # 2. VM
 cargo build --release --manifest-path zip-vm/Cargo.toml
 
-# 3. Драйвер selfc
-./bootstrap/zipc zip-self-zip/главное_чистое.zip /tmp/selfc.zipb
+# 3. C → selfc_v1 (алгоритмы уже в ZIP-исходнике)
+./bootstrap/zipc zip-self-zip/главное_чистое.zip /tmp/selfc_v1.zipb
 
-# 4. Дальше — без C (VM-генератор)
-./zip-vm/target/release/zip-vm /tmp/selfc.zipb \
-    zip-self-zip/главное_чистое.zip /tmp/selfc-final.zipb
+# 4. ZIP → ZIP (без Rust-функций компилятора)
+./zip-vm/target/release/zip-vm /tmp/selfc_v1.zipb \
+    zip-self-zip/главное_чистое.zip /tmp/selfc_v2.zipb
 
-# Fixed-point: повторите шаг 4 — хеши совпадут
+# Fixed-point: v2 компилирует себя → тот же хеш
+./zip-vm/target/release/zip-vm /tmp/selfc_v2.zipb \
+    zip-self-zip/главное_чистое.zip /tmp/selfc_v3.zipb
 ```
 
-Тест: `pwsh zip-self-zip/тесты/тест_fixed_point_без_c.ps1`
+Тест: `pwsh zip-self-zip/тесты/тест_fixed_point_без_c.ps1`  
+Паритет: `python tools/_parity_v61.py`
 
 #### Вариант 3: Полная сборка (разработка)
 
