@@ -7,6 +7,13 @@
 
 ## [Unreleased]
 
+### v5.x — полный парсер без C-bootstrap
+
+- `zip-vm/src/zip_ast.rs`, `zip_parse_полный.rs` — AST + рекурсивный спуск
+- `zip_self_parse` / `zip_parse_полный` — внешние вызовы
+- Тесты: `тест_парсера_zip`, `тест_паритет_парсер`
+- Docs: [ПАРСЕР-В-VM.md](docs/ПАРСЕР-В-VM.md)
+
 ### v5.0.0 — полный лексер без C-bootstrap
 
 - `zip-self-zip/лексика_полная.zip` — ZIP API / self-check

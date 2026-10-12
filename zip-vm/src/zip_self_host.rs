@@ -88,10 +88,21 @@ pub fn зарегистрировать(ф: &mut Встроенные) {
         Ok(ЗначениеV3::Целое(id.max(0)))
     });
     ф.регистрация_внешняя("zip_self_parse", |арг| {
-        let tokens = арг.first().map(|z| z.как_целое()).unwrap_or(0);
-        let id = tokens.wrapping_mul(3).wrapping_add(7);
-        *LAST_AST.lock().unwrap() = id;
-        Ok(ЗначениеV3::Целое(id))
+        // Полный парсер на ZIP-алгоритме (VM), без C-bootstrap.
+        // Аргумент: исходный текст (строка). Успех → 1, ошибка → 0.
+        let исходник = арг.first().map(как_строка).unwrap_or_default();
+        match crate::zip_parse_полный::разобрать_из_исходника(&исходник) {
+            Ok(дерево) => {
+                let n = дерево.число_функций() as i64;
+                *LAST_AST.lock().unwrap() = n.max(1);
+                Ok(ЗначениеV3::Целое(1))
+            }
+            Err(ошибка) => {
+                eprintln!("zip_self_parse: {ошибка}");
+                *LAST_AST.lock().unwrap() = 0;
+                Ok(ЗначениеV3::Целое(0))
+            }
+        }
     });
     ф.регистрация_внешняя("zip_self_codegen", |арг| {
         let ast = арг.first().map(|z| z.как_целое()).unwrap_or(0);

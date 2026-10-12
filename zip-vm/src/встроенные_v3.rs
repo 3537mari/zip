@@ -411,6 +411,7 @@ impl Встроенные {
         crate::zip_std_v4::зарегистрировать(&mut ф);
         crate::zip_self_host::зарегистрировать(&mut ф);
         crate::zip_lex_полный::зарегистрировать(&mut ф);
+        crate::zip_parse_полный::зарегистрировать(&mut ф);
 
         ф
     }
