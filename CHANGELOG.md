@@ -7,6 +7,13 @@
 
 ## [Unreleased]
 
+### v5.x — полный генератор ZIPB без C-bootstrap
+
+- `zip-vm/src/zip_gen_полный.rs` — лексер→парсер→ZIPB v3
+- CLI `zip-vm --gen`, `zip_self_gen` / `zip_gen_полный`
+- Тесты: `тест_генератора_zip`, `тест_паритет_генератор`, `тест_полной_цепочки_zip`
+- Docs: [ГЕНЕРАТОР-В-VM.md](docs/ГЕНЕРАТОР-В-VM.md)
+
 ### v5.x — полный парсер без C-bootstrap
 
 - `zip-vm/src/zip_ast.rs`, `zip_parse_полный.rs` — AST + рекурсивный спуск

@@ -105,8 +105,15 @@ pub fn зарегистрировать(ф: &mut Встроенные) {
         }
     });
     ф.регистрация_внешняя("zip_self_codegen", |арг| {
-        let ast = арг.first().map(|z| z.как_целое()).unwrap_or(0);
-        Ok(ЗначениеV3::Строка(format!("ZIPB:{ast}")))
+        // Полный генератор ZIPB (VM), без C-bootstrap
+        let исходник = арг.first().map(как_строка).unwrap_or_default();
+        match crate::zip_gen_полный::сгенерировать_из_исходника(&исходник) {
+            Ok(байткод) => Ok(ЗначениеV3::Целое(байткод.len() as i64)),
+            Err(e) => {
+                eprintln!("zip_self_codegen: {e}");
+                Ok(ЗначениеV3::Целое(0))
+            }
+        }
     });
 
     ф.регистрация_внешняя("zip_self_compile", |арг| {

@@ -25,6 +25,8 @@ pub mod zip_lex_полный;
 pub mod zip_ast;
 #[path = "zip_parse_полный.rs"]
 pub mod zip_parse_полный;
+#[path = "zip_gen_полный.rs"]
+pub mod zip_gen_полный;
 #[path = "загрузчик.rs"]
 pub mod загрузчик;
 #[path = "исполнитель.rs"]

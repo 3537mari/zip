@@ -239,6 +239,18 @@ path = "../tests/тест_парсера_zip.rs"
 name = "тест_паритет_парсер"
 path = "../tests/тест_паритет_парсер.rs"
 
+[[test]]
+name = "тест_генератора_zip"
+path = "../tests/тест_генератора_zip.rs"
+
+[[test]]
+name = "тест_паритет_генератор"
+path = "../tests/тест_паритет_генератор.rs"
+
+[[test]]
+name = "тест_полной_цепочки_zip"
+path = "../tests/тест_полной_цепочки_zip.rs"
+
 [profile.release]
 opt-level = 3
 lto = true
