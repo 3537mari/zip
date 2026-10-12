@@ -7,26 +7,23 @@
 
 ## [Unreleased]
 
-### v5.x — полный генератор ZIPB без C-bootstrap
+### v6 — структуры (старт)
 
-- `zip-vm/src/zip_gen_полный.rs` — лексер→парсер→ZIPB v3
-- CLI `zip-vm --gen`, `zip_self_gen` / `zip_gen_полный`
-- Тесты: `тест_генератора_zip`, `тест_паритет_генератор`, `тест_полной_цепочки_zip`
-- Docs: [ГЕНЕРАТОР-В-VM.md](docs/ГЕНЕРАТОР-В-VM.md)
+- Ключевое слово `структура`, AST `NODE_STRUCT` / `NODE_FIELD`
+- Опкоды `OP_NEW_STRUCT` / `OP_LOAD_FIELD` / `OP_STORE_FIELD` (зарезервированы)
+- Тесты: `tests/тест_структур.rs`
 
-### v5.x — полный парсер без C-bootstrap
+## [5.0.0] — 2026-10-12
 
-- `zip-vm/src/zip_ast.rs`, `zip_parse_полный.rs` — AST + рекурсивный спуск
-- `zip_self_parse` / `zip_parse_полный` — внешние вызовы
-- Тесты: `тест_парсера_zip`, `тест_паритет_парсер`
-- Docs: [ПАРСЕР-В-VM.md](docs/ПАРСЕР-В-VM.md)
+### Конвейер компилятора в VM (без вызова C для lex/parse/gen)
 
-### v5.0.0 — полный лексер без C-bootstrap
+- Лексер: `zip_lex_полный.rs` + `zip_self_lex`
+- Парсер: `zip_parse_полный.rs`, `zip_ast.rs` + `zip_self_parse`
+- Генератор: `zip_gen_полный.rs` + `zip-vm --gen` / `zip_self_gen`
+- Тесты цепочки: `тест_лексера_zip`, `тест_парсера_zip`, `тест_генератора_zip`, `тест_полной_цепочки_zip`
+- Docs: [ОТЧЁТ-v5.md](docs/ОТЧЁТ-v5.md), [ГЕНЕРАТОР-В-VM.md](docs/ГЕНЕРАТОР-В-VM.md)
 
-- `zip-self-zip/лексика_полная.zip` — ZIP API / self-check
-- `zip-vm/src/zip_lex_полный.rs` — полный алгоритм (кириллица UTF-8, корни, шаблоны, операторы), совместим с `zipb.h`
-- `zip_self_lex` больше не stub — вызывает тот же алгоритм
-- Тесты: `tests/тест_лексера_zip.rs`
+**Граница:** stage-0 установки по-прежнему через C-bootstrap; полный lowering в ZIP — v6.
 
 ## [4.0.0] — 2026-10-12
 

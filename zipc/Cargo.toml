@@ -251,6 +251,10 @@ path = "../tests/тест_паритет_генератор.rs"
 name = "тест_полной_цепочки_zip"
 path = "../tests/тест_полной_цепочки_zip.rs"
 
+[[test]]
+name = "тест_структур"
+path = "../tests/тест_структур.rs"
+
 [profile.release]
 opt-level = 3
 lto = true

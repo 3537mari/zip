@@ -12,6 +12,7 @@ static const Kw KW[] = {
     {"нечто", TK_SOMETHING}, {"Нечто", TK_SOMETHING},
     {"успех", TK_SUCCESS}, {"Успех", TK_SUCCESS},
     {"ошибка", TK_ERROR}, {"Ошибка", TK_ERROR},
+    {"структура", TK_STRUCT},
     {NULL, TK_EOF}
 };
 
@@ -53,6 +54,7 @@ const char *token_name(TokenType t) {
     case TK_FLOAT: return "float";
     case TK_STRING: return "string";
     case TK_IDENT: return "ident";
+    case TK_STRUCT: return "структура";
     default: return "?";
     }
 }

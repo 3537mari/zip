@@ -26,6 +26,47 @@ static Node *parse_expr(Parser *P);
 static Node *parse_stmt(Parser *P);
 static Node *parse_block(Parser *P);
 static Node *parse_function(Parser *P);
+static Node *parse_struct(Parser *P);
+
+/* структура Имя { поле: Тип, ... } */
+static Node *parse_struct(Parser *P) {
+    advance(P); /* структура */
+    Node *st = node_new(NODE_STRUCT);
+    if (check(P, TK_IDENT) || check(P, TK_ROOT) || check(P, TK_TEMPLATE)) {
+        st->name = zip_strdup(peek(P)->str);
+        advance(P);
+    } else {
+        st->name = zip_strdup("_");
+    }
+    match(P, TK_LBRACE);
+    while (!check(P, TK_RBRACE) && !check(P, TK_EOF)) {
+        if (check(P, TK_IDENT) || check(P, TK_ROOT) || check(P, TK_TEMPLATE)) {
+            Node *field = node_new(NODE_FIELD);
+            field->name = zip_strdup(peek(P)->str ? peek(P)->str : "_");
+            advance(P);
+            if (match(P, TK_COLON)) {
+                if (check(P, TK_IDENT) || check(P, TK_ROOT) || check(P, TK_TEMPLATE)
+                    || check(P, TK_TYPE) || check(P, TK_VERB) || check(P, TK_AGENT)
+                    || check(P, TK_FLOW)) {
+                    field->type_name = zip_strdup(peek(P)->str ? peek(P)->str : "Целое");
+                    advance(P);
+                }
+            }
+            node_add(st, field);
+        } else {
+            advance(P);
+            continue;
+        }
+        if (!match(P, TK_COMMA)) {
+            /* trailing comma optional; also allow newline-separated fields */
+            if (!check(P, TK_RBRACE) && !check(P, TK_IDENT) && !check(P, TK_ROOT)
+                && !check(P, TK_TEMPLATE))
+                break;
+        }
+    }
+    match(P, TK_RBRACE);
+    return st;
+}
 
 static Node *parse_primary(Parser *P) {
     Token *t = peek(P);
@@ -405,6 +446,11 @@ Node *parse(Token *toks, size_t n) {
                 match(&P, TK_RPAREN);
             }
             node_add(prog, d);
+            continue;
+        }
+        if (check(&P, TK_STRUCT)) {
+            Node *st = parse_struct(&P);
+            if (st) node_add(prog, st);
             continue;
         }
         if (check(&P, TK_FUNCTION)) {
