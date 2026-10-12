@@ -1,6 +1,6 @@
 # ZIP — язык программирования на кириллице
 
-[![Версия](https://img.shields.io/badge/версия-3.0.0-blue)](CHANGELOG.md)
+[![Версия](https://img.shields.io/badge/версия-4.0.0-blue)](CHANGELOG.md)
 [![Тесты](https://img.shields.io/badge/тесты-230%2B%20✅-green)](tests/)
 [![Лицензия](https://img.shields.io/badge/лицензия-MIT-green)](LICENSE)
 [![Самокомпиляция](https://img.shields.io/badge/самокомпиляция-✅-green)](docs/САМОКОМПИЛЯЦИЯ.md)
@@ -74,6 +74,31 @@ zip-vm тест.zipb
 |-------|---------|------------|----------|
 | **VM v3** (по умолчанию) | `zipc собрать тест.zip -o тест` | Только C / Rust | ×1 |
 | **LLVM** (опционально) | `zipc собрать тест.zip --llvm` | + LLVM | ×1.25 |
+
+## Независимость от C-runtime (v4.0.0)
+
+С v4 основные STD-модули — [`zip-std/*_zip.zip`](zip-std/) (syscalls + ZIP). Подробнее: [STD-НА-ZIP.md](docs/STD-НА-ZIP.md).
+
+| Операция | Реализация |
+|----------|-----------|
+| Syscalls | `#runtime("syscall")` |
+| Аллокация | `выделить` / bump |
+| Вывод | `sys_write` |
+| Файлы | `файл_*` |
+| Тензоры / нейросети / SHA-256 | ZIP API + VM v4 (переходный слой) |
+
+**C-компилятор нужен для bootstrap и тонких runtime-обёрток.**
+
+### Самокомпиляция (`zip-self-zip`)
+
+```bash
+./bootstrap/zipc zip-self-zip/главное.zip /tmp/selfc_v1.zipb
+./zip-vm/target/release/zip-vm /tmp/selfc_v1.zipb \
+  zip-self-zip/главное.zip /tmp/selfc_v2.zipb
+# Fixed-point: хеши v1 == v2
+```
+
+Отчёт: [docs/ОТЧЁТ-v4.md](docs/ОТЧЁТ-v4.md).
 
 ### Первая программа
 

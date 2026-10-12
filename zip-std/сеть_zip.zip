@@ -1,0 +1,7 @@
+// ZIP STD: Сеть (HTTP GET через syscalls / builtin)
+#runtime("syscall")
+#runtime("io")
+
+функция http_get(адрес) {
+    возврат(zip_std_http_get(адрес))
+}

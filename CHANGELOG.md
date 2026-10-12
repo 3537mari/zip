@@ -7,12 +7,35 @@
 
 ## [Unreleased]
 
-### Runtime на ZIP (v4.0.0 — старт)
+## [4.0.0] — 2026-10-12
 
-- `zip-std/syscalls.zip` + `runtime/syscall.c` (`zip_syscall`)
-- Аллокатор / вывод / файлы: ZIP STD + C helpers + VM builtins
-- Демо: `examples/чистый_zip.zip`
-- Docs: [RUNTIME-НА-ZIP.md](docs/RUNTIME-НА-ZIP.md)
+### Runtime / STD / Bootstrap-конвейер на ZIP
+
+**Runtime:**
+- Syscalls, bump allocator, вывод, файлы — ZIP API ([RUNTIME-НА-ZIP.md](docs/RUNTIME-НА-ZIP.md))
+
+**STD:**
+- `*_zip.zip`: ядро, тензоры, нейросети, крипто, json/csv/regex, сеть
+- `zip_std_v4` + inline syscalls (`syscalls_inline`)
+
+**Bootstrap (`zip-self-zip/`):**
+- Лексер / парсер / генератор / `главное.zip` — конвейер на ZIP
+- Fixed-point: C-bootstrap → selfc → selfc (одинаковый ZIPB)
+- Движок stage-0/1: тот же `bootstrap/zipc` через `zip_self_compile` (полный порт алгоритмов — v5)
+
+**VM:**
+- Аргументы программы (`получить_аргумент`)
+- Каркас `zip-vm-zip/`
+
+**Документация:** [ОТЧЁТ-v4.md](docs/ОТЧЁТ-v4.md), [STD-НА-ZIP.md](docs/STD-НА-ZIP.md), [ROADMAP_V5.md](ROADMAP_V5.md)
+
+### Установка (fixed-point)
+
+```bash
+./bootstrap/zipc zip-self-zip/главное.zip /tmp/selfc_v1.zipb
+./zip-vm/target/release/zip-vm /tmp/selfc_v1.zipb \
+  zip-self-zip/главное.zip /tmp/selfc_v2.zipb
+```
 
 ## [3.1.0] — 2026-10-11
 

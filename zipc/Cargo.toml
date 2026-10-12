@@ -215,6 +215,18 @@ path = "../tests/тест_покрытия_ядра.rs"
 name = "тест_runtime_zip"
 path = "../tests/тест_runtime_zip.rs"
 
+[[test]]
+name = "тест_std_zip"
+path = "../tests/тест_std_zip.rs"
+
+[[test]]
+name = "тест_vm_на_zip"
+path = "../tests/тест_vm_на_zip.rs"
+
+[[test]]
+name = "тест_self_zip"
+path = "../tests/тест_self_zip.rs"
+
 [profile.release]
 opt-level = 3
 lto = true

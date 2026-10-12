@@ -1,0 +1,6 @@
+// ZIP STD: JSON (чистый ZIP — парсинг через zip_std_json_parse)
+#runtime("allocator")
+
+функция json_разобрать(текст) {
+    возврат(zip_std_json_parse(текст))
+}

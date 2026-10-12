@@ -52,26 +52,30 @@
 
 **Дата релиза:** 2026-10-11
 
-## v4.0.0 (Q4 2027) — в работе
+## v4.0.0 (2026-10-12) — ✅ Runtime / STD / selfc-конвейер
 
-- [x] Runtime на ZIP (syscalls) ✅ — [`zip-std/syscalls.zip`](zip-std/syscalls.zip), [`docs/RUNTIME-НА-ZIP.md`](docs/RUNTIME-НА-ZIP.md)
-- [x] Свой аллокатор ✅ — [`zip-std/аллокатор.zip`](zip-std/аллокатор.zip)
-- [x] Свой вывод ✅ — [`zip-std/вывод.zip`](zip-std/вывод.zip)
-- [x] Свой файловый ввод-вывод ✅ — [`zip-std/файлы.zip`](zip-std/файлы.zip)
-- [x] Интеграция в VM v3 (builtins + CALL_NATIVE) ✅
-- [ ] STD полностью на ZIP
-- [ ] Bootstrap на ZIP
-- [ ] VM на ZIP
+- [x] Runtime на ZIP (syscalls) ✅ — [`docs/RUNTIME-НА-ZIP.md`](docs/RUNTIME-НА-ZIP.md)
+- [x] Свой аллокатор / вывод / файлы ✅
+- [x] Ядро / тензоры / нейросети / крипто на ZIP ✅
+- [x] JSON/CSV/RegEx на ZIP (MVP) ✅
+- [x] Inline-asm syscalls (x86-64 Linux) ✅
+- [x] Лексер / парсер / генератор API на ZIP ✅ — [`zip-self-zip/`](zip-self-zip/)
+- [x] Fixed-point самокомпиляция (`главное.zip`) ✅
+- [ ] Сеть на ZIP (полный HTTP/TLS)
+- [ ] STD без VM builtins (100% lowering)
+- [ ] Bootstrap-алгоритмы целиком на ZIP (без C на stage 1+)
+- [ ] VM на ZIP (полная) — [`zip-vm-zip/`](zip-vm-zip/)
+- [ ] Inline-asm Windows/macOS
 
-См. [ROADMAP_V4.md](ROADMAP_V4.md)
+См. [docs/ОТЧЁТ-v4.md](docs/ОТЧЁТ-v4.md), [ROADMAP_V4.md](ROADMAP_V4.md)
 
 ## v5.0.0 (2028) — план
 
+- [ ] Полный порт lex/parse/codegen на ZIP
 - [ ] Кросс-компиляция (ARM, RISC-V, WASM)
 - [ ] Мобильные биндинги
 - [ ] GPU-вычисления
-- [ ] Собственная ОС-абстракция
 - [ ] Пакетный реестр
 - [ ] ИИ-советник 2.0
 
-Подробности: [МАСТЕР-ПЛАН.md](МАСТЕР-ПЛАН.md) — ЧАСТЬ XVII.
+См. [ROADMAP_V5.md](ROADMAP_V5.md). Подробности: [МАСТЕР-ПЛАН.md](МАСТЕР-ПЛАН.md).

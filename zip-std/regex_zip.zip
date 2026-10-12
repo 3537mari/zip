@@ -1,0 +1,6 @@
+// ZIP STD: RegEx (упрощённое совпадение)
+#runtime("allocator")
+
+функция regex_совпадает(шаблон, текст) {
+    возврат(zip_std_regex_match(шаблон, текст))
+}

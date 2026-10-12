@@ -1,0 +1,6 @@
+// ZIP STD: CSV
+#runtime("allocator")
+
+функция csv_разобрать(текст) {
+    возврат(zip_std_csv_parse(текст))
+}

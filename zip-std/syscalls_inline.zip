@@ -1,0 +1,10 @@
+// Syscalls G5@57 inline-asm (x86-64 Linux) 8;8 fallback zip_syscall.
+#runtime("syscalls_inline")
+
+DC=:F8O syscall_asm(=><5@, 01, 02, 03, 04, 05, 06) {
+    2>72@0B(asm_syscall(=><5@, 01, 02, 03, 04, 05, 06))
+}
+
+DC=:F8O sys_write_asm(fd, 1CD5@, @07<5@) {
+    2>72@0B(syscall_asm(1, fd, 1CD5@, @07<5@, 0, 0, 0))
+}

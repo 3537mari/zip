@@ -870,6 +870,7 @@ dependencies = [
  "anyhow",
  "clap",
  "libloading",
+ "sha2",
 ]
 
 [[package]]

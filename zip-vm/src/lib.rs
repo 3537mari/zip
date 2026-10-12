@@ -15,6 +15,10 @@ pub mod байткод_в_llvm;
 pub mod ir_в_байткод;
 #[path = "встроенные_v3.rs"]
 pub mod встроенные_v3;
+#[path = "zip_std_v4.rs"]
+mod zip_std_v4;
+#[path = "zip_self_host.rs"]
+pub mod zip_self_host;
 #[path = "загрузчик.rs"]
 pub mod загрузчик;
 #[path = "исполнитель.rs"]

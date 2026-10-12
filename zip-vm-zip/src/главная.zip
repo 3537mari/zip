@@ -1,0 +1,8 @@
+// ZIP VM =0 ZIP  MVP (45;538@C5B GB5=85/2K2>4 runtime).
+#runtime("syscall")
+#runtime("io")
+
+DC=:F8O 3;02=0O() {
+    sys_write(1, "zip-vm-zip MVP: 8A?>;L7C9B5 zip-vm (Rust) 4;O ?>;=>3> ZIPB\n", 64)
+    sys_exit(0)
+}

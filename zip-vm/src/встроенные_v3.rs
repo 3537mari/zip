@@ -408,11 +408,24 @@ impl Встроенные {
             }
         });
 
+        crate::zip_std_v4::зарегистрировать(&mut ф);
+        crate::zip_self_host::зарегистрировать(&mut ф);
+
         ф
     }
 
     fn регистрация(&mut self, имя: &str, функция: ВстроеннаяФункция) {
         self.функции.insert(имя.to_string(), функция);
+    }
+
+    pub(crate) fn регистрация_внешняя(&mut self, имя: &str, функция: ВстроеннаяФункция) {
+        self.функции.insert(имя.to_string(), функция);
+    }
+
+    pub(crate) fn регистрация_алиас(&mut self, alias: &str, from: &str) {
+        if let Some(&f) = self.функции.get(from) {
+            self.функции.insert(alias.to_string(), f);
+        }
     }
 
     pub fn вызвать(&self, имя: &str, аргументы: &[ЗначениеV3]) -> Result<ЗначениеV3, String> {

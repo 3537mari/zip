@@ -1111,6 +1111,15 @@ fn скомпилировать_runtime(имя: &str, выход: &PathBuf) -> R
             false,
             false,
         ),
+        "syscalls_inline" => (
+            vec![
+                корень.join("zip-std/runtime/syscall.c"),
+                корень.join("zip-std/runtime/syscalls_inline.c"),
+            ],
+            "ZIP_SYSCALLS_INLINE_MAIN",
+            false,
+            false,
+        ),
         "allocator" | "аллокатор" => (
             vec![
                 корень.join("zip-std/runtime/syscall.c"),
@@ -1184,6 +1193,9 @@ fn скомпилировать_runtime(имя: &str, выход: &PathBuf) -> R
     }
     // Combined runtimes: suppress sibling MAIN macros
     match имя {
+        "syscalls_inline" => {
+            cmd.arg("-DZIP_SYSCALL_MAIN_DISABLED");
+        }
         "allocator" | "аллокатор" => {
             cmd.arg("-DZIP_SYSCALL_MAIN_DISABLED");
         }

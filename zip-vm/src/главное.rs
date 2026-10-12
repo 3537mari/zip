@@ -23,10 +23,19 @@ struct Аргументы {
     /// Принудительно использовать интерпретатор v3
     #[arg(long = "v3")]
     только_v3: bool,
+
+    /// Аргументы программы (selfc: вход.zip выход.zipb)
+    #[arg(value_name = "АРГ", trailing_var_arg = true, allow_hyphen_values = true)]
+    программа: Vec<String>,
 }
 
 fn main() -> Result<()> {
     let аргументы = Аргументы::parse();
+    // argv[0] = путь к .zipb, далее — аргументы программы (self-host)
+    let mut prog = vec![аргументы.файл.display().to_string()];
+    prog.extend(аргументы.программа.clone());
+    zip_vm::zip_self_host::установить_аргументы(prog);
+
     let данные = std::fs::read(&аргументы.файл)
         .with_context(|| format!("чтение {}", аргументы.файл.display()))?;
 
