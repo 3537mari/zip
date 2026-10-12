@@ -7,11 +7,19 @@
 
 ## [Unreleased]
 
-### v6 — структуры (старт)
+## [6.0.0] — 2026-10-12
 
-- Ключевое слово `структура`, AST `NODE_STRUCT` / `NODE_FIELD`
-- Опкоды `OP_NEW_STRUCT` / `OP_LOAD_FIELD` / `OP_STORE_FIELD` (зарезервированы)
-- Тесты: `tests/тест_структур.rs`
+### Полная независимость от C (stage-1+)
+
+**Structs / массивы / указатели** в C-bootstrap + VM (опкоды 0x93–0xA3).
+
+**Компилятор на ZIP:**
+- `zip-self-zip/лексика_чистая.zip`, `парсер_чистый.zip`, `генератор_чистый.zip`, `главное_чистое.zip`
+- `zip_self_compile` → VM `zip_gen_полный` (без вызова C; `ZIP_USE_C_BOOTSTRAP=1` — legacy)
+
+**Fixed-point:** v2 == v3 при самокомпиляции через VM.
+
+См. [ОТЧЁТ-v6.md](docs/ОТЧЁТ-v6.md), [ROADMAP_V7.md](ROADMAP_V7.md).
 
 ## [5.0.0] — 2026-10-12
 

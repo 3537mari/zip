@@ -122,10 +122,59 @@ pub fn зарегистрировать(ф: &mut Встроенные) {
         if вход.is_empty() || выход.is_empty() {
             return Ok(ЗначениеV3::Целое(1));
         }
-        match скомпилировать_через_bootstrap(&вход, &выход) {
-            Ok(()) => Ok(ЗначениеV3::Целое(0)),
+        /* v6: по умолчанию — VM-генератор (без C).
+         * ZIP_USE_C_BOOTSTRAP=1 — старый путь через bootstrap/zipc. */
+        let через_c = std::env::var("ZIP_USE_C_BOOTSTRAP")
+            .map(|v| v == "1" || v.eq_ignore_ascii_case("true"))
+            .unwrap_or(false);
+        if через_c {
+            return match скомпилировать_через_bootstrap(&вход, &выход) {
+                Ok(()) => Ok(ЗначениеV3::Целое(0)),
+                Err(e) => {
+                    eprintln!("zip_self_compile(C): {e}");
+                    Ok(ЗначениеV3::Целое(2))
+                }
+            };
+        }
+        let корень = найти_корень();
+        let путь_входа = {
+            let p = PathBuf::from(&вход);
+            if p.is_absolute() {
+                p
+            } else {
+                корень.join(&вход)
+            }
+        };
+        let путь_выхода = {
+            let p = PathBuf::from(&выход);
+            if p.is_absolute() {
+                p
+            } else {
+                корень.join(&выход)
+            }
+        };
+        let исходник = match std::fs::read_to_string(&путь_входа) {
+            Ok(s) => s,
             Err(e) => {
-                eprintln!("zip_self_compile: {e}");
+                eprintln!("zip_self_compile: чтение {}: {e}", путь_входа.display());
+                return Ok(ЗначениеV3::Целое(3));
+            }
+        };
+        match crate::zip_gen_полный::сгенерировать_из_исходника(&исходник) {
+            Ok(байткод) => {
+                if let Some(род) = путь_выхода.parent() {
+                    let _ = std::fs::create_dir_all(род);
+                }
+                match std::fs::write(&путь_выхода, &байткод) {
+                    Ok(()) => Ok(ЗначениеV3::Целое(0)),
+                    Err(e) => {
+                        eprintln!("zip_self_compile: запись {}: {e}", путь_выхода.display());
+                        Ok(ЗначениеV3::Целое(4))
+                    }
+                }
+            }
+            Err(e) => {
+                eprintln!("zip_self_compile(VM): {e}");
                 Ok(ЗначениеV3::Целое(2))
             }
         }

@@ -1,35 +1,26 @@
-# zip-self-zip — Bootstrap-компилятор на ZIP
-
-Конвейер самокомпиляции ZIP → ZIPB:
+# zip-self-zip — Bootstrap-компилятор на ZIP (v6)
 
 | Модуль | Роль |
 |--------|------|
-| `лексика.zip` | API лексера (`лексер_разобрать`) |
-| `парсер.zip` | API парсера |
-| `генератор.zip` | API генератора ZIPB |
-| `главное.zip` | CLI-точка входа |
+| `лексика_чистая.zip` | API лексера → `zip_lex_полный` |
+| `парсер_чистый.zip` | API парсера → `zip_parse_полный` |
+| `генератор_чистый.zip` | API генератора → `zip_gen_полный` |
+| `главное_чистое.zip` | CLI selfc (stage-1+ без C) |
+| `главное.zip` | Legacy драйвер v4/v5 |
 
-## Запуск
+## Fixed-point без C
 
 ```bash
-# 1. C-bootstrap собирает selfc
-./bootstrap/zipc zip-self-zip/главное.zip /tmp/selfc_v1.zipb
-
-# 2. Selfc компилирует себя (через VM + тот же движок)
+./bootstrap/zipc zip-self-zip/главное_чистое.zip /tmp/selfc_v1.zipb
 ./zip-vm/target/release/zip-vm /tmp/selfc_v1.zipb \
-    zip-self-zip/главное.zip /tmp/selfc_v2.zipb
-
-# 3. Fixed-point: хеши v1 == v2
+    zip-self-zip/главное_чистое.zip /tmp/selfc_v2.zipb
+./zip-vm/target/release/zip-vm /tmp/selfc_v2.zipb \
+    zip-self-zip/главное_чистое.zip /tmp/selfc_v3.zipb
+# v2 == v3
 ```
 
-Windows: `pwsh zip-self-zip/тесты/тест_fixed_point.ps1`
+Windows: `pwsh zip-self-zip/тесты/тест_fixed_point_без_c.ps1`
 
-## Статус
+`zip_self_compile` пишет ZIPB через VM. Старый путь: `ZIP_USE_C_BOOTSTRAP=1`.
 
-- Управление конвейером — **на ZIP**
-- **Лексер:** полный алгоритм без C-bootstrap — [`лексика_полная.zip`](лексика_полная.zip) + [`zip_lex_полный`](../zip-vm/src/zip_lex_полный.rs)
-- Парсер / codegen на stage-1 пока через C-bootstrap (`zip_self_compile`)
-- Fixed-point `главное.zip` сохранён
-- Полный порт parse/codegen — [ROADMAP_V5.md](../ROADMAP_V5.md)
-
-См. [docs/ОТЧЁТ-v4.md](../docs/ОТЧЁТ-v4.md), [docs/САМОКОМПИЛЯЦИЯ.md](../docs/САМОКОМПИЛЯЦИЯ.md).
+См. [docs/ОТЧЁТ-v6.md](../docs/ОТЧЁТ-v6.md).

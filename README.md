@@ -1,7 +1,7 @@
 # ZIP — язык программирования на кириллице
 
-[![Версия](https://img.shields.io/badge/версия-5.0.0-blue)](CHANGELOG.md)
-[![Тесты](https://img.shields.io/badge/тесты-230%2B%20✅-green)](tests/)
+[![Версия](https://img.shields.io/badge/версия-6.0.0-blue)](CHANGELOG.md)
+[![Тесты](https://img.shields.io/badge/тесты-300%2B%20✅-green)](tests/)
 [![Лицензия](https://img.shields.io/badge/лицензия-MIT-green)](LICENSE)
 [![Самокомпиляция](https://img.shields.io/badge/самокомпиляция-✅-green)](docs/САМОКОМПИЛЯЦИЯ.md)
 
@@ -21,35 +21,42 @@
 
 ## Быстрый старт
 
-### Установка
+### Установка v6.0.0 (без C после bootstrap)
 
-#### Вариант 1: C-bootstrap (минимальный)
+#### Вариант 1: Готовые бинарники
 
-**Требования:** только C-компилятор (gcc/clang).
+Скачайте с [GitHub Releases](https://github.com/3537mari/zip/releases/tag/v6.0.0):
+
+- Windows / Linux / macOS — пакеты и `selfc.zipb`
 
 ```bash
-git clone https://github.com/3537mari/zip.git
-cd zip/bootstrap
-make
-./zipc ../zip-self/компилятор.zip /tmp/selfc.zipb
+zip-vm --gen программа.zip > программа.zipb
+zip-vm программа.zipb
 ```
 
-Готово! Компилятор `zipc` собран без Rust и LLVM.
+#### Вариант 2: Из исходников (C один раз)
 
-#### Вариант 2: Готовые пакеты
+```bash
+# 1. C-bootstrap (stage-0)
+cd bootstrap && make   # или: pwsh -File build.ps1
+cd ..
 
-Скачайте с [GitHub Releases](https://github.com/3537mari/zip/releases):
-- Windows: `ZIP-3.0.0-x64.msi`
-- Debian/Ubuntu: `zip-lang_3.0.0_amd64.deb`
-- Red Hat/Fedora: `zip-lang-3.0.0-1.x86_64.rpm`
-- macOS: `ZIP-3.0.0-macos.dmg`
-- Universal: `ZIP-3.0.0-offline-installer.sh`
+# 2. VM
+cargo build --release --manifest-path zip-vm/Cargo.toml
 
-Скрипты сборки: [`installers/`](installers/).
+# 3. Драйвер selfc
+./bootstrap/zipc zip-self-zip/главное_чистое.zip /tmp/selfc.zipb
 
-#### Вариант 3: Полная сборка (для разработки)
+# 4. Дальше — без C (VM-генератор)
+./zip-vm/target/release/zip-vm /tmp/selfc.zipb \
+    zip-self-zip/главное_чистое.zip /tmp/selfc-final.zipb
 
-**Требования:** Rust 1.75+.
+# Fixed-point: повторите шаг 4 — хеши совпадут
+```
+
+Тест: `pwsh zip-self-zip/тесты/тест_fixed_point_без_c.ps1`
+
+#### Вариант 3: Полная сборка (разработка)
 
 ```bash
 cargo build --release --manifest-path zipc/Cargo.toml
