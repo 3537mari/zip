@@ -176,6 +176,7 @@ Token *lex(const char *src, size_t *out_n) {
         else if (c == '%') { adv(&L); t.type = TK_PERCENT; }
         else if (c == '<') { adv(&L); t.type = TK_LT; }
         else if (c == '>') { adv(&L); t.type = TK_GT; }
+        else if (c == '&') { adv(&L); t.type = TK_AMP; }
         else if (c == '@') { adv(&L); t.type = TK_AT; }
         else if (c == '#') { adv(&L); t.type = TK_HASH; }
         else if (c == '"') t = tok_str(&L);

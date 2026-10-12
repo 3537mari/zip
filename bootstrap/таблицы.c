@@ -9,6 +9,7 @@ static const Kw KW[] = {
     {"глагол", TK_VERB}, {"агент", TK_AGENT}, {"поток", TK_FLOW},
     {"истина", TK_TRUE}, {"ложь", TK_FALSE}, {"и", TK_AND}, {"или", TK_OR},
     {"не", TK_NOT}, {"ничто", TK_NOTHING}, {"Ничто", TK_NOTHING},
+    {"ничего", TK_NOTHING},
     {"нечто", TK_SOMETHING}, {"Нечто", TK_SOMETHING},
     {"успех", TK_SUCCESS}, {"Успех", TK_SUCCESS},
     {"ошибка", TK_ERROR}, {"Ошибка", TK_ERROR},
@@ -59,6 +60,7 @@ const char *token_name(TokenType t) {
     case TK_SEMI: return ";";
     case TK_LBRACK: return "[";
     case TK_RBRACK: return "]";
+    case TK_AMP: return "&";
     default: return "?";
     }
 }

@@ -320,6 +320,24 @@ static void emit_expr(Node *n, Code *C, Locals *loc) {
         op0(C, OP_LOAD_INDEX);
         break;
     }
+    case NODE_ADDR_OF:
+        op_u32(C, OP_ADDR_OF, local_get(loc, n->name ? n->name : "_"));
+        break;
+    case NODE_DEREF:
+        if (n->n > 0) emit_expr(n->kids[0], C, loc);
+        else op_i64(C, OP_PUSH_I64, 0);
+        op0(C, OP_DEREF);
+        break;
+    case NODE_ALLOC:
+        if (n->n > 0) emit_expr(n->kids[0], C, loc);
+        else op_i64(C, OP_PUSH_I64, 0);
+        op0(C, OP_ALLOC);
+        break;
+    case NODE_FREE:
+        if (n->n > 0) emit_expr(n->kids[0], C, loc);
+        else op_i64(C, OP_PUSH_I64, 0);
+        op0(C, OP_FREE);
+        break;
     case NODE_STRUCT_LIT: {
         StructDef *d = struct_find(n->name);
         int nfields = d ? d->nfields : n->n;
@@ -410,6 +428,20 @@ static void emit_stmt(Node *n, Code *C, Locals *loc) {
         op0(C, OP_STORE_INDEX);
         break;
     }
+    case NODE_STORE_PTR: {
+        /* стек: адрес, значение */
+        if (n->n > 0) emit_expr(n->kids[0], C, loc);
+        else op_i64(C, OP_PUSH_I64, 0);
+        if (n->n > 1) emit_expr(n->kids[1], C, loc);
+        else op_i64(C, OP_PUSH_I64, 0);
+        op0(C, OP_STORE_PTR);
+        break;
+    }
+    case NODE_FREE:
+        if (n->n > 0) emit_expr(n->kids[0], C, loc);
+        else op_i64(C, OP_PUSH_I64, 0);
+        op0(C, OP_FREE);
+        break;
     case NODE_IF: {
         if (n->n > 0) emit_expr(n->kids[0], C, loc);
         size_t jelse = emit_jump(C, OP_JUMP_IF_NOT);
@@ -468,6 +500,9 @@ static void emit_stmt(Node *n, Code *C, Locals *loc) {
     case NODE_FIELD_ACCESS:
     case NODE_ARRAY_LIT:
     case NODE_INDEX_ACCESS:
+    case NODE_ADDR_OF:
+    case NODE_DEREF:
+    case NODE_ALLOC:
         emit_expr(n, C, loc);
         break;
     default:

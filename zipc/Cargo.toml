@@ -263,6 +263,10 @@ path = "../tests/тест_структур_полный.rs"
 name = "тест_массивов"
 path = "../tests/тест_массивов.rs"
 
+[[test]]
+name = "тест_указателей"
+path = "../tests/тест_указателей.rs"
+
 [profile.release]
 opt-level = 3
 lto = true

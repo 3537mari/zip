@@ -93,6 +93,11 @@ void print_ast(Node *n, int indent) {
     case NODE_ARRAY_LIT: tn = "ARRAY_LIT"; break;
     case NODE_INDEX_ACCESS: tn = "INDEX_ACCESS"; break;
     case NODE_INDEX_STORE: tn = "INDEX_STORE"; break;
+    case NODE_ADDR_OF: tn = "ADDR_OF"; break;
+    case NODE_DEREF: tn = "DEREF"; break;
+    case NODE_ALLOC: tn = "ALLOC"; break;
+    case NODE_FREE: tn = "FREE"; break;
+    case NODE_STORE_PTR: tn = "STORE_PTR"; break;
     default: break;
     }
     printf("%s", tn);

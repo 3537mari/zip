@@ -198,6 +198,35 @@ static Node *parse_primary(Parser *P) {
         }
 
         if (match(P, TK_LPAREN)) {
+            /* выделить(размер) / освободить(п) / размер_целого() */
+            if (zip_streq(name, "выделить")) {
+                Node *al = node_new(NODE_ALLOC);
+                if (!check(P, TK_RPAREN)) {
+                    Node *sz = parse_expr(P);
+                    if (sz) node_add(al, sz);
+                }
+                match(P, TK_RPAREN);
+                free(name);
+                return parse_postfix(P, al);
+            }
+            if (zip_streq(name, "освободить")) {
+                Node *fr = node_new(NODE_FREE);
+                if (!check(P, TK_RPAREN)) {
+                    Node *p = parse_expr(P);
+                    if (p) node_add(fr, p);
+                }
+                match(P, TK_RPAREN);
+                free(name);
+                return fr;
+            }
+            if (zip_streq(name, "размер_целого") || zip_streq(name, "размерЦелого")) {
+                match(P, TK_RPAREN);
+                free(name);
+                Node *n = node_new(NODE_CONST_I64);
+                n->i64 = 8;
+                return n;
+            }
+
             Node *call = node_new(NODE_CALL);
             call->name = name;
             if (!check(P, TK_RPAREN)) {
@@ -251,6 +280,25 @@ static Node *parse_unary(Parser *P) {
         Node *r = parse_unary(P);
         if (r) node_add(u, r);
         return u;
+    }
+    /* &переменная */
+    if (match(P, TK_AMP)) {
+        Node *a = node_new(NODE_ADDR_OF);
+        if (check(P, TK_IDENT) || check(P, TK_ROOT) || check(P, TK_TEMPLATE)
+            || check(P, TK_AND) || check(P, TK_OR) || check(P, TK_NOT) || check(P, TK_IN)) {
+            a->name = zip_strdup(peek(P)->str ? peek(P)->str : "_");
+            advance(P);
+        } else {
+            a->name = zip_strdup("_");
+        }
+        return a;
+    }
+    /* *указатель (разыменование; умножение — в parse_mul) */
+    if (match(P, TK_STAR)) {
+        Node *d = node_new(NODE_DEREF);
+        Node *r = parse_unary(P);
+        if (r) node_add(d, r);
+        return d;
     }
     return parse_primary(P);
 }
@@ -449,13 +497,22 @@ static Node *parse_stmt(Parser *P) {
     if (check(P, TK_WHILE)) return parse_while(P);
     if (check(P, TK_FOR)) return parse_for(P);
 
-    if (check(P, TK_IDENT) || check(P, TK_ROOT) || check(P, TK_TEMPLATE)
+    if (check(P, TK_STAR) || check(P, TK_AMP)
+        || check(P, TK_IDENT) || check(P, TK_ROOT) || check(P, TK_TEMPLATE)
         || check(P, TK_AND) || check(P, TK_OR) || check(P, TK_NOT) || check(P, TK_IN)) {
-        /* Присваивание: x = ...  или  x.поле = ... */
+        /* Присваивание: x = ... / x.поле = ... / x[i] = ... / *п = ... */
         size_t save = P->i;
-        Node *lhs = parse_primary(P);
+        Node *lhs = parse_unary(P);
         if (match(P, TK_EQ)) {
             Node *rhs = parse_expr(P);
+            if (lhs && lhs->type == NODE_DEREF && lhs->n > 0) {
+                Node *st = node_new(NODE_STORE_PTR);
+                node_add(st, lhs->kids[0]);
+                lhs->n = 0;
+                if (rhs) node_add(st, rhs);
+                node_free(lhs);
+                return st;
+            }
             if (lhs && lhs->type == NODE_FIELD_ACCESS && lhs->n > 0) {
                 Node *st = node_new(NODE_FIELD_STORE);
                 st->name = lhs->name;

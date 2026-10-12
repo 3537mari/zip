@@ -71,6 +71,16 @@ pub enum Опкод {
     LoadIndex = 0x98,
     StoreIndex = 0x99,
     ArrayLen = 0x9A,
+
+    AddrOf = 0x9B,
+    Deref = 0x9C,
+    Alloc = 0x9D,
+    Free = 0x9E,
+    PtrAdd = 0x9F,
+    PtrSub = 0xA0,
+    PtrDiff = 0xA1,
+    LoadPtr = 0xA2,
+    StorePtr = 0xA3,
 }
 
 impl Опкод {
@@ -128,6 +138,15 @@ impl Опкод {
             0x98 => Self::LoadIndex,
             0x99 => Self::StoreIndex,
             0x9A => Self::ArrayLen,
+            0x9B => Self::AddrOf,
+            0x9C => Self::Deref,
+            0x9D => Self::Alloc,
+            0x9E => Self::Free,
+            0x9F => Self::PtrAdd,
+            0xA0 => Self::PtrSub,
+            0xA1 => Self::PtrDiff,
+            0xA2 => Self::LoadPtr,
+            0xA3 => Self::StorePtr,
             _ => return None,
         })
     }
@@ -239,6 +258,15 @@ pub enum ИнстрV3 {
     LoadIndex,
     StoreIndex,
     ArrayLen,
+    AddrOf(u32),
+    Deref,
+    Alloc,
+    Free,
+    PtrAdd,
+    PtrSub,
+    PtrDiff,
+    LoadPtr,
+    StorePtr,
 }
 
 impl ИнстрV3 {
@@ -356,6 +384,18 @@ impl ИнстрV3 {
             LoadIndex => out.push(Опкод::LoadIndex as u8),
             StoreIndex => out.push(Опкод::StoreIndex as u8),
             ArrayLen => out.push(Опкод::ArrayLen as u8),
+            AddrOf(слот) => {
+                out.push(Опкод::AddrOf as u8);
+                out.extend_from_slice(&слот.to_le_bytes());
+            }
+            Deref => out.push(Опкод::Deref as u8),
+            Alloc => out.push(Опкод::Alloc as u8),
+            Free => out.push(Опкод::Free as u8),
+            PtrAdd => out.push(Опкод::PtrAdd as u8),
+            PtrSub => out.push(Опкод::PtrSub as u8),
+            PtrDiff => out.push(Опкод::PtrDiff as u8),
+            LoadPtr => out.push(Опкод::LoadPtr as u8),
+            StorePtr => out.push(Опкод::StorePtr as u8),
         }
     }
 }
