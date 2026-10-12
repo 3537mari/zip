@@ -24,11 +24,12 @@
 
 Windows: `pwsh zip-self-zip/тесты/тест_fixed_point.ps1`
 
-## Статус v4.0.0
+## Статус
 
 - Управление конвейером — **на ZIP**
-- Движок lex/parse/codegen — **C-bootstrap** (тот же, что stage-0), вызываемый через `zip_self_*`
-- Fixed-point на ZIPB `главное.zip` достигается, потому что stage-1 использует тот же детерминированный компилятор
-- Полный порт алгоритмов в чистый ZIP (без builtins) — план v5
+- **Лексер:** полный алгоритм без C-bootstrap — [`лексика_полная.zip`](лексика_полная.zip) + [`zip_lex_полный`](../zip-vm/src/zip_lex_полный.rs)
+- Парсер / codegen на stage-1 пока через C-bootstrap (`zip_self_compile`)
+- Fixed-point `главное.zip` сохранён
+- Полный порт parse/codegen — [ROADMAP_V5.md](../ROADMAP_V5.md)
 
 См. [docs/ОТЧЁТ-v4.md](../docs/ОТЧЁТ-v4.md), [docs/САМОКОМПИЛЯЦИЯ.md](../docs/САМОКОМПИЛЯЦИЯ.md).

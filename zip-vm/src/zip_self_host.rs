@@ -76,10 +76,12 @@ pub fn зарегистрировать(ф: &mut Встроенные) {
     });
 
     ф.регистрация_внешняя("zip_self_lex", |арг| {
+        // Полный лексер на ZIP-алгоритме (VM), без C-bootstrap
         let s = арг.first().map(как_строка).unwrap_or_default();
-        let id = (s.len() as i64).wrapping_add(1);
-        *LAST_TOKENS.lock().unwrap() = id;
-        Ok(ЗначениеV3::Целое(id))
+        let toks = crate::zip_lex_полный::разобрать(&s);
+        let n = toks.len() as i64;
+        *LAST_TOKENS.lock().unwrap() = n;
+        Ok(ЗначениеV3::Целое(n))
     });
     ф.регистрация_внешняя("zip_self_lex_count", |арг| {
         let id = арг.first().map(|z| z.как_целое()).unwrap_or(0);

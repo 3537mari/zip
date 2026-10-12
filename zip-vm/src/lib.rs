@@ -19,6 +19,8 @@ pub mod встроенные_v3;
 mod zip_std_v4;
 #[path = "zip_self_host.rs"]
 pub mod zip_self_host;
+#[path = "zip_lex_полный.rs"]
+pub mod zip_lex_полный;
 #[path = "загрузчик.rs"]
 pub mod загрузчик;
 #[path = "исполнитель.rs"]

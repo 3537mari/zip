@@ -7,6 +7,13 @@
 
 ## [Unreleased]
 
+### v5.0.0 — полный лексер без C-bootstrap
+
+- `zip-self-zip/лексика_полная.zip` — ZIP API / self-check
+- `zip-vm/src/zip_lex_полный.rs` — полный алгоритм (кириллица UTF-8, корни, шаблоны, операторы), совместим с `zipb.h`
+- `zip_self_lex` больше не stub — вызывает тот же алгоритм
+- Тесты: `tests/тест_лексера_zip.rs`
+
 ## [4.0.0] — 2026-10-12
 
 ### Runtime / STD / Bootstrap-конвейер на ZIP

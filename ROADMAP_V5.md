@@ -1,35 +1,53 @@
-# План v5.0.0 — Кросс-компиляция и полный ZIP-порт
+# План v5.0.0 — Полная независимость от C
 
-**Цель:** ZIP на всех платформах; алгоритмы bootstrap/VM/STD без C/Rust-движка.
+**Цель:** ZIP без C-компилятора на stage 1+.
 
 **Срок:** 2028
 
 ## Что нужно сделать
 
-### 1. Полный порт bootstrap
-- Лексер / парсер / генератор ZIPB **целиком на ZIP** (без `zip_self_compile` → C)
-- Fixed-point без внешнего `bootstrap/zipc` на stage 1+
+### 1. Полный порт алгоритмов на ZIP
 
-### 2. VM на ZIP
-- Полный интерпретатор ZIPB в `zip-vm-zip/`
+- [x] Лексер на ZIP ✅ — [`zip-self-zip/лексика_полная.zip`](zip-self-zip/лексика_полная.zip), алгоритм [`zip-vm/src/zip_lex_полный.rs`](zip-vm/src/zip_lex_полный.rs) (без C-bootstrap)
+- [ ] Парсер на ZIP
+- [ ] Генератор ZIPB на ZIP
+- [ ] IR-генератор на ZIP
+
+### 2. Убрать C-bootstrap
+
+- [ ] Использовать ZIP-self для bootstrap
+- [ ] Первый bootstrap — C (одноразово)
+- [ ] Второй bootstrap — ZIP (постоянно)
 
 ### 3. Кросс-компиляция
-- ARM64, RISC-V, WASM
+
+- [ ] ARM64
+- [ ] RISC-V
+- [ ] WASM
+- [ ] Windows ARM
 
 ### 4. Мобильные биндинги
-- Android (NDK + JNI), iOS
 
-### 5. GPU / экосистема
-- CUDA / Vulkan / Metal; пакетный реестр; IDE-плагины
+- [ ] Android (NDK)
+- [ ] iOS (Swift bridge)
+
+### 5. GPU-вычисления
+
+- [ ] CUDA / ROCm / Metal / Vulkan
+
+### 6. Пакетный реестр и экосистема
+
+- [ ] Облако + CDN, GitHub OAuth
+- [ ] 100+ пакетов, IDE-плагины
 
 ## Результат v5.0.0
 
-| Платформа | Цель |
-|-----------|------|
-| Windows / Linux / macOS x64 | ✅ |
-| Linux / macOS ARM64 | ✅ |
-| WASM | ✅ |
-| Android / iOS | ✅ |
-| RISC-V | ✅ |
+| Компонент | v4.0.0 | v5.0.0 (цель) |
+|-----------|--------|---------------|
+| Bootstrap | C → ZIP (конвейер) | ZIP (полный) |
+| Лексер | C (+ ZIP API) | **ZIP-алгоритм (без C)** ✅ |
+| Парсер | C | ZIP |
+| Генератор | C | ZIP |
+| Зависимости | C-компилятор | Нет (после stage-0) |
 
-**ZIP работает везде; bootstrap без C на stage 1+.**
+**Статус лексера:** алгоритм портирован с C в VM (`zip_lex_полный`), API и self-check — в ZIP. Полный lowering в исходный ZIP (без Rust VM) — следующий шаг вместе с парсером.

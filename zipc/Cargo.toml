@@ -227,6 +227,10 @@ path = "../tests/тест_vm_на_zip.rs"
 name = "тест_self_zip"
 path = "../tests/тест_self_zip.rs"
 
+[[test]]
+name = "тест_лексера_zip"
+path = "../tests/тест_лексера_zip.rs"
+
 [profile.release]
 opt-level = 3
 lto = true
