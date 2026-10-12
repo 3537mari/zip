@@ -7,8 +7,24 @@ typedef struct {
 
 typedef struct {
     char *names[ZIP_MAX_LOCALS];
+    char *types[ZIP_MAX_LOCALS]; /* имя структуры или NULL */
     int n;
 } Locals;
+
+#define ZIP_MAX_STRUCTS 64
+#define ZIP_MAX_FIELDS 32
+
+typedef struct {
+    char *name;
+    char *fields[ZIP_MAX_FIELDS];
+    char *ftypes[ZIP_MAX_FIELDS];
+    int nfields;
+} StructDef;
+
+typedef struct {
+    StructDef defs[ZIP_MAX_STRUCTS];
+    int n;
+} StructTab;
 
 typedef struct {
     char *names[ZIP_MAX_FUNCS];
@@ -24,8 +40,78 @@ typedef struct {
 
 static StrTab g_str;
 static FnTab g_fn;
+static StructTab g_st;
 
 static void str_init(void) { g_str.n = 0; }
+static void struct_init(void) { g_st.n = 0; }
+
+static StructDef *struct_find(const char *name) {
+    if (!name) return NULL;
+    for (int i = 0; i < g_st.n; i++)
+        if (strcmp(g_st.defs[i].name, name) == 0) return &g_st.defs[i];
+    return NULL;
+}
+
+static int field_index(const char *stype, const char *field) {
+    StructDef *d = struct_find(stype);
+    if (!d || !field) return -1;
+    for (int i = 0; i < d->nfields; i++)
+        if (strcmp(d->fields[i], field) == 0) return i;
+    return -1;
+}
+
+static const char *field_type(const char *stype, const char *field) {
+    StructDef *d = struct_find(stype);
+    if (!d || !field) return NULL;
+    for (int i = 0; i < d->nfields; i++)
+        if (strcmp(d->fields[i], field) == 0) return d->ftypes[i];
+    return NULL;
+}
+
+static void collect_structs(Node *ast) {
+    struct_init();
+    if (!ast) return;
+    for (int i = 0; i < ast->n; i++) {
+        Node *k = ast->kids[i];
+        if (k->type != NODE_STRUCT || !k->name || g_st.n >= ZIP_MAX_STRUCTS)
+            continue;
+        StructDef *d = &g_st.defs[g_st.n++];
+        d->name = zip_strdup(k->name);
+        d->nfields = 0;
+        for (int f = 0; f < k->n && d->nfields < ZIP_MAX_FIELDS; f++) {
+            Node *field = k->kids[f];
+            if (field->type != NODE_FIELD || !field->name) continue;
+            d->fields[d->nfields] = zip_strdup(field->name);
+            d->ftypes[d->nfields] = zip_strdup(field->type_name ? field->type_name : "Целое");
+            d->nfields++;
+        }
+    }
+}
+
+static const char *local_type_get(Locals *L, const char *name) {
+    for (int i = 0; i < L->n; i++)
+        if (strcmp(L->names[i], name) == 0) return L->types[i];
+    return NULL;
+}
+
+static void local_type_set(Locals *L, const char *name, const char *ty) {
+    for (int i = 0; i < L->n; i++) {
+        if (strcmp(L->names[i], name) == 0) {
+            free(L->types[i]);
+            L->types[i] = ty ? zip_strdup(ty) : NULL;
+            return;
+        }
+    }
+}
+
+static const char *expr_struct_type(Node *n, Locals *loc) {
+    if (!n) return NULL;
+    if (n->type == NODE_STRUCT_LIT) return n->name;
+    if (n->type == NODE_IDENT) return local_type_get(loc, n->name ? n->name : "_");
+    if (n->type == NODE_FIELD_ACCESS && n->n > 0)
+        return field_type(expr_struct_type(n->kids[0], loc), n->name);
+    return NULL;
+}
 static uint32_t str_add(const char *s) {
     if (!s) s = "";
     for (int i = 0; i < g_str.n; i++)
@@ -40,6 +126,7 @@ static uint32_t local_get(Locals *L, const char *name) {
         if (strcmp(L->names[i], name) == 0) return (uint32_t)i;
     if (L->n >= ZIP_MAX_LOCALS) return 0;
     L->names[L->n] = zip_strdup(name);
+    L->types[L->n] = NULL;
     return (uint32_t)L->n++;
 }
 
@@ -196,6 +283,49 @@ static void emit_expr(Node *n, Code *C, Locals *loc) {
         }
         break;
     }
+    case NODE_STRUCT_LIT: {
+        StructDef *d = struct_find(n->name);
+        int nfields = d ? d->nfields : n->n;
+        if (nfields < 0) nfields = 0;
+        op_u32(C, OP_NEW_STRUCT, (uint32_t)nfields);
+        if (d) {
+            for (int i = 0; i < d->nfields; i++) {
+                Node *val = NULL;
+                for (int k = 0; k < n->n; k++) {
+                    Node *f = n->kids[k];
+                    if (f->type == NODE_FIELD && f->name
+                        && strcmp(f->name, d->fields[i]) == 0 && f->n > 0) {
+                        val = f->kids[0];
+                        break;
+                    }
+                }
+                op0(C, OP_DUP);
+                if (val) emit_expr(val, C, loc);
+                else op_i64(C, OP_PUSH_I64, 0);
+                op_u32(C, OP_STORE_FIELD, (uint32_t)i);
+            }
+        } else {
+            for (int i = 0; i < n->n; i++) {
+                Node *f = n->kids[i];
+                op0(C, OP_DUP);
+                if (f->n > 0) emit_expr(f->kids[0], C, loc);
+                else op_i64(C, OP_PUSH_I64, 0);
+                op_u32(C, OP_STORE_FIELD, (uint32_t)i);
+            }
+        }
+        break;
+    }
+    case NODE_FIELD_ACCESS: {
+        if (n->n > 0) emit_expr(n->kids[0], C, loc);
+        else op_i64(C, OP_PUSH_I64, 0);
+        {
+            const char *st = n->n > 0 ? expr_struct_type(n->kids[0], loc) : NULL;
+            int idx = field_index(st, n->name);
+            if (idx < 0) idx = 0;
+            op_u32(C, OP_LOAD_FIELD, (uint32_t)idx);
+        }
+        break;
+    }
     default:
         for (int i = 0; i < n->n; i++) emit_expr(n->kids[i], C, loc);
         break;
@@ -211,9 +341,27 @@ static void emit_stmt(Node *n, Code *C, Locals *loc) {
         op0(C, OP_RET);
         break;
     case NODE_ASSIGN:
-        if (n->n > 0) emit_expr(n->kids[0], C, loc);
+        if (n->n > 0) {
+            emit_expr(n->kids[0], C, loc);
+            local_get(loc, n->name ? n->name : "_");
+            local_type_set(loc, n->name ? n->name : "_", expr_struct_type(n->kids[0], loc));
+        }
         op_u32(C, OP_STORE, local_get(loc, n->name ? n->name : "_"));
         break;
+    case NODE_FIELD_STORE: {
+        /* объект, значение — STORE_FIELD индекс */
+        if (n->n > 0) emit_expr(n->kids[0], C, loc);
+        else op_i64(C, OP_PUSH_I64, 0);
+        if (n->n > 1) emit_expr(n->kids[1], C, loc);
+        else op_i64(C, OP_PUSH_I64, 0);
+        {
+            const char *st = n->n > 0 ? expr_struct_type(n->kids[0], loc) : NULL;
+            int idx = field_index(st, n->name);
+            if (idx < 0) idx = 0;
+            op_u32(C, OP_STORE_FIELD, (uint32_t)idx);
+        }
+        break;
+    }
     case NODE_IF: {
         if (n->n > 0) emit_expr(n->kids[0], C, loc);
         size_t jelse = emit_jump(C, OP_JUMP_IF_NOT);
@@ -268,6 +416,8 @@ static void emit_stmt(Node *n, Code *C, Locals *loc) {
     case NODE_CONST_STR:
     case NODE_PULSE:
     case NODE_CHOIR:
+    case NODE_STRUCT_LIT:
+    case NODE_FIELD_ACCESS:
         emit_expr(n, C, loc);
         break;
     default:
@@ -331,11 +481,15 @@ static void emit_function(Node *fn, Code *C, uint16_t *out_locals, uint16_t *out
         op0(C, OP_RET);
     }
     *out_locals = (uint16_t)(loc.n < 16 ? 16 : loc.n + 4);
-    for (int i = 0; i < loc.n; i++) free(loc.names[i]);
+    for (int i = 0; i < loc.n; i++) {
+        free(loc.names[i]);
+        free(loc.types[i]);
+    }
 }
 
 Buf *codegen(Node *ast) {
     str_init();
+    collect_structs(ast);
     collect_fns(ast);
 
     Buf *codes[ZIP_MAX_FUNCS];
@@ -395,5 +549,12 @@ Buf *codegen(Node *ast) {
 
     for (int i = 0; i < g_str.n; i++) free(g_str.names[i]);
     for (int i = 0; i < g_fn.n; i++) free(g_fn.names[i]);
+    for (int i = 0; i < g_st.n; i++) {
+        free(g_st.defs[i].name);
+        for (int f = 0; f < g_st.defs[i].nfields; f++) {
+            free(g_st.defs[i].fields[f]);
+            free(g_st.defs[i].ftypes[f]);
+        }
+    }
     return out;
 }

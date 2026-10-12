@@ -184,3 +184,23 @@ fn тест_pulse_move() {
     let mut vm = ИсполнительV3::новый(модуль).unwrap();
     assert_eq!(vm.запустить().unwrap(), ЗначениеV3::Целое(9));
 }
+
+#[test]
+fn тест_struct_new_store_load() {
+    /* Точка { х: 10, у: 20 }; return точка.х */
+    let модуль = модуль_одна(vec![
+        ИнстрV3::NewStruct(2),
+        ИнстрV3::Dup,
+        ИнстрV3::PushI64(10),
+        ИнстрV3::StoreField(0),
+        ИнстрV3::Dup,
+        ИнстрV3::PushI64(20),
+        ИнстрV3::StoreField(1),
+        ИнстрV3::Store(0),
+        ИнстрV3::Load(0),
+        ИнстрV3::LoadField(0),
+        ИнстрV3::Ret,
+    ]);
+    let mut vm = ИсполнительV3::новый(модуль).unwrap();
+    assert_eq!(vm.запустить().unwrap(), ЗначениеV3::Целое(10));
+}

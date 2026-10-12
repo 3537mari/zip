@@ -86,6 +86,9 @@ void print_ast(Node *n, int indent) {
     case NODE_DIRECTIVE: tn = "DIRECTIVE"; break;
     case NODE_STRUCT: tn = "STRUCT"; break;
     case NODE_FIELD: tn = "FIELD"; break;
+    case NODE_STRUCT_LIT: tn = "STRUCT_LIT"; break;
+    case NODE_FIELD_ACCESS: tn = "FIELD_ACCESS"; break;
+    case NODE_FIELD_STORE: tn = "FIELD_STORE"; break;
     default: break;
     }
     printf("%s", tn);

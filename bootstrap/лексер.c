@@ -156,6 +156,8 @@ Token *lex(const char *src, size_t *out_n) {
             adv(&L); adv(&L); t.type = TK_ARROW;
         } else if (c == '.' && L.pos + 1 < L.len && L.data[L.pos + 1] == '.') {
             adv(&L); adv(&L); t.type = TK_RANGE;
+        } else if (c == '.') {
+            adv(&L); t.type = TK_DOT;
         } else if (c == '~') { adv(&L); t.type = TK_STREAM; }
         else if (c == '=') { adv(&L); t.type = TK_EQ; }
         else if (c == ':') { adv(&L); t.type = TK_COLON; }

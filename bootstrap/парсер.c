@@ -108,6 +108,35 @@ static Node *parse_primary(Parser *P) {
             && t->str)) {
         char *name = zip_strdup(t->str);
         advance(P);
+
+        /* Литерал структуры: Имя { поле: знач, ... } */
+        if (check(P, TK_LBRACE)) {
+            Node *lit = node_new(NODE_STRUCT_LIT);
+            lit->name = name;
+            advance(P); /* { */
+            while (!check(P, TK_RBRACE) && !check(P, TK_EOF)) {
+                if (check(P, TK_IDENT) || check(P, TK_ROOT) || check(P, TK_TEMPLATE)) {
+                    Node *field = node_new(NODE_FIELD);
+                    field->name = zip_strdup(peek(P)->str ? peek(P)->str : "_");
+                    advance(P);
+                    match(P, TK_COLON);
+                    Node *val = parse_expr(P);
+                    if (val) node_add(field, val);
+                    node_add(lit, field);
+                } else {
+                    advance(P);
+                    continue;
+                }
+                if (!match(P, TK_COMMA)) {
+                    if (!check(P, TK_RBRACE) && !check(P, TK_IDENT)
+                        && !check(P, TK_ROOT) && !check(P, TK_TEMPLATE))
+                        break;
+                }
+            }
+            match(P, TK_RBRACE);
+            return lit;
+        }
+
         if (match(P, TK_LPAREN)) {
             Node *call = node_new(NODE_CALL);
             call->name = name;
@@ -125,9 +154,21 @@ static Node *parse_primary(Parser *P) {
                 call->type = NODE_PRINT_I64;
             return call;
         }
-        Node *id = node_new(NODE_IDENT);
-        id->name = name;
-        return id;
+
+        Node *узел = node_new(NODE_IDENT);
+        узел->name = name;
+
+        /* Доступ к полю: имя.поле.вложенное */
+        while (match(P, TK_DOT)) {
+            if (!(check(P, TK_IDENT) || check(P, TK_ROOT) || check(P, TK_TEMPLATE)))
+                break;
+            Node *доступ = node_new(NODE_FIELD_ACCESS);
+            доступ->name = zip_strdup(peek(P)->str ? peek(P)->str : "_");
+            advance(P);
+            node_add(доступ, узел);
+            узел = доступ;
+        }
+        return узел;
     }
     if (match(P, TK_LPAREN)) {
         Node *e = parse_expr(P);
@@ -355,16 +396,38 @@ static Node *parse_stmt(Parser *P) {
     if (check(P, TK_WHILE)) return parse_while(P);
     if (check(P, TK_FOR)) return parse_for(P);
 
-    if ((check(P, TK_IDENT) || check(P, TK_ROOT) || check(P, TK_TEMPLATE)
-         || check(P, TK_AND) || check(P, TK_OR) || check(P, TK_NOT) || check(P, TK_IN))
-        && P->i + 1 < P->n && P->toks[P->i + 1].type == TK_EQ) {
-        Node *n = node_new(NODE_ASSIGN);
-        n->name = zip_strdup(peek(P)->str ? peek(P)->str : "_");
-        advance(P);
-        advance(P);
-        Node *e = parse_expr(P);
-        if (e) node_add(n, e);
-        return n;
+    if (check(P, TK_IDENT) || check(P, TK_ROOT) || check(P, TK_TEMPLATE)
+        || check(P, TK_AND) || check(P, TK_OR) || check(P, TK_NOT) || check(P, TK_IN)) {
+        /* Присваивание: x = ...  или  x.поле = ... */
+        size_t save = P->i;
+        Node *lhs = parse_primary(P);
+        if (match(P, TK_EQ)) {
+            Node *rhs = parse_expr(P);
+            if (lhs && lhs->type == NODE_FIELD_ACCESS && lhs->n > 0) {
+                Node *st = node_new(NODE_FIELD_STORE);
+                st->name = lhs->name;
+                lhs->name = NULL;
+                node_add(st, lhs->kids[0]);
+                lhs->n = 0;
+                if (rhs) node_add(st, rhs);
+                node_free(lhs);
+                return st;
+            }
+            if (lhs && lhs->type == NODE_IDENT) {
+                Node *n = node_new(NODE_ASSIGN);
+                n->name = lhs->name;
+                lhs->name = NULL;
+                if (rhs) node_add(n, rhs);
+                node_free(lhs);
+                return n;
+            }
+            node_free(lhs);
+            if (rhs) node_free(rhs);
+            return NULL;
+        }
+        /* Не присваивание — откат и обычное выражение */
+        node_free(lhs);
+        P->i = save;
     }
     return parse_expr(P);
 }

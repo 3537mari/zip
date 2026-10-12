@@ -61,6 +61,11 @@ pub enum Опкод {
     Print = 0x90,
     PrintLn = 0x91,
     PrintI64 = 0x92,
+
+    NewStruct = 0x93,
+    LoadField = 0x94,
+    StoreField = 0x95,
+    GetFieldPtr = 0x96,
 }
 
 impl Опкод {
@@ -110,6 +115,10 @@ impl Опкод {
             0x90 => Self::Print,
             0x91 => Self::PrintLn,
             0x92 => Self::PrintI64,
+            0x93 => Self::NewStruct,
+            0x94 => Self::LoadField,
+            0x95 => Self::StoreField,
+            0x96 => Self::GetFieldPtr,
             _ => return None,
         })
     }
@@ -213,6 +222,10 @@ pub enum ИнстрV3 {
     Print,
     PrintLn,
     PrintI64,
+    NewStruct(u32),
+    LoadField(u32),
+    StoreField(u32),
+    GetFieldPtr(u32),
 }
 
 impl ИнстрV3 {
@@ -307,6 +320,22 @@ impl ИнстрV3 {
             Print => out.push(Опкод::Print as u8),
             PrintLn => out.push(Опкод::PrintLn as u8),
             PrintI64 => out.push(Опкод::PrintI64 as u8),
+            NewStruct(n) => {
+                out.push(Опкод::NewStruct as u8);
+                out.extend_from_slice(&n.to_le_bytes());
+            }
+            LoadField(о) => {
+                out.push(Опкод::LoadField as u8);
+                out.extend_from_slice(&о.to_le_bytes());
+            }
+            StoreField(о) => {
+                out.push(Опкод::StoreField as u8);
+                out.extend_from_slice(&о.to_le_bytes());
+            }
+            GetFieldPtr(о) => {
+                out.push(Опкод::GetFieldPtr as u8);
+                out.extend_from_slice(&о.to_le_bytes());
+            }
         }
     }
 }

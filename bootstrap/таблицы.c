@@ -55,6 +55,7 @@ const char *token_name(TokenType t) {
     case TK_STRING: return "string";
     case TK_IDENT: return "ident";
     case TK_STRUCT: return "структура";
+    case TK_DOT: return ".";
     default: return "?";
     }
 }
