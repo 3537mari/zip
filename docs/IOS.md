@@ -86,7 +86,7 @@ xcodebuild -scheme ZipDemo \
 
 ## Требования
 
-- iOS 13.0+
+- iOS 14.0+ (SwiftUI App lifecycle)
 - Xcode 15+
 - Swift 5.9+
 - macOS для сборки targets / XCFramework
