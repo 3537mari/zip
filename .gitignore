@@ -15,6 +15,15 @@
 **/*.s
 **/*.ll
 
+# ZIPB binaries (generated)
+*.zipb
+!docs/**/*.zipb
+
+# Debug-артефакты self-host
+zip-self-zip/_*.zip
+zip-self-zip/_*.zipb
+zip-self-zip/главное_чистое.zipb
+
 # Generated tests (Idea 20)
 *_автотесты.zip
 *_тесты.zip
@@ -26,9 +35,23 @@
 build-release.log
 **/build-release.log
 zipc/build-release.log
+/tmp/
+tmp/
 
 # Local helper scripts (not part of the product)
 tools/_*.py
+tools/build_v61.py
+tools/emit_v61.py
+tools/_*.zip
+tools/_*.txt
+!tools/_v61_header.txt
+!tools/_lex_body.txt
+!tools/_parse_part1.txt
+!tools/_parse_part2.txt
+!tools/_gen_part1.txt
+!tools/_gen_part2.txt
+!tools/_sync_v61_modules.py
+!tools/_parity_v61.py
 
 # Jekyll / WASM build outputs
 веб-сайт/_site/
@@ -64,5 +87,5 @@ zipc/*.exe
 # Bootstrap local probes
 bootstrap/тест.*
 bootstrap/t_hello.*
+bootstrap/t_std.zip
 bootstrap/*.zipb
-

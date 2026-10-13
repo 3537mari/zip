@@ -11,20 +11,32 @@
 
 ### Полный lowering лексера/парсера/генератора в ZIP-байткод
 
-**Чистый ZIP (без Rust-функций компилятора в цепочке):**
-- `zip-self-zip/лексика_чистая.zip` — лексер на ZIP (structs/массивы)
-- `zip-self-zip/парсер_чистый.zip` — рекурсивный спуск на ZIP
-- `zip-self-zip/генератор_чистый.zip` / `главное_чистое.zip` — эмиссия ZIPB v3
-- `zip_self_lex` / `zip_self_parse` / `zip_self_gen` — только маркеры в `zip_self_host.rs`
+**Что это значит:**
+- Лексер — алгоритм на чистом ZIP (`zip-self-zip/лексика_чистая.zip`)
+- Парсер — алгоритм на чистом ZIP (`zip-self-zip/парсер_чистый.zip`)
+- Генератор ZIPB — алгоритм на чистом ZIP (`zip-self-zip/генератор_чистый.zip`)
+- ZIP-модули больше **НЕ вызывают Rust-функции компилятора** (`zip_self_lex` / `zip_self_parse` / `zip_self_gen` в `zip_self_host.rs` — только маркеры)
+- Rust-VM — **только интерпретатор**, а не компилятор
 
-**Fixed-point без Rust-алгоритмов компилятора:**
-- C-bootstrap → selfc_v1; VM(selfc_v1) → v2; VM(selfc_v2) → v3
-- **v2 == v3** (SHA-256 совпадает)
-- v1 ≠ v2 ожидаемо (C stage-0 заполняет массивы иначе)
+**Fixed-point без Rust-функций компилятора:**
+- v2 = v3 = v4 = `03ec79b9...C6A98C59`
+- v1 ≠ v2 — ожидаемо (C-bootstrap stage-0 vs ZIP-генератор)
+- Fixed-point достигается **через ZIP-алгоритм**, а не через Rust
 
-**VM:** `CallNative` берёт арность сверху стека (исправление id байтбуферов).
+**Ключевые фиксы:**
+- Постфикс `[` для корней/шаблонов — `поз[0]` больше не ломает `виды[поз[0]]`
+- `CallNative` берёт арность сверху стека (байтбуферы)
+- C-bootstrap: `POP` после statement-CALL
 
-**Тесты:** `zip-self-zip/тесты/тест_fixed_point_без_c.ps1`, `tools/_parity_v61.py`.
+**Следствие:**
+- «ZIP = Rust = Go = Swift» — теперь **честно**, без звёздочки
+- ARM64/WASM — задача **бэкенда** (Rust-VM), а не порта всего компилятора
+
+**Тесты:** `zip-self-zip/тесты/тест_fixed_point_без_c.ps1`, `tools/_parity_v61.py`
+
+**Ссылки:**
+- Коммит: `95d6395`
+- Релиз: https://github.com/3537mari/zip/releases/tag/v6.1.0
 
 ## [6.0.0] — 2026-10-12
 

@@ -2,6 +2,8 @@
 
 [![Версия](https://img.shields.io/badge/версия-6.1.0-blue)](CHANGELOG.md)
 [![Тесты](https://img.shields.io/badge/тесты-300%2B%20✅-green)](tests/)
+[![Fixed-point](https://img.shields.io/badge/fixed--point-v2=v3=v4-brightgreen)](zip-self-zip/)
+[![Лексер/парсер/генератор](https://img.shields.io/badge/ядро-ZIP-brightgreen)](zip-self-zip/)
 [![Лицензия](https://img.shields.io/badge/лицензия-MIT-green)](LICENSE)
 [![Самокомпиляция](https://img.shields.io/badge/самокомпиляция-✅-green)](docs/САМОКОМПИЛЯЦИЯ.md)
 
@@ -19,96 +21,103 @@
 - **Самокомпиляция** — компилятор на самом себе
 - **Кириллица** — только русские буквы в коде
 
-## Быстрый старт
+## Установка v6.1.0
 
-### Установка v6.1.0 (лексер/парсер/ген на чистом ZIP)
-
-#### Вариант 1: Готовые бинарники
+### Вариант 1: Готовые бинарники (рекомендуется)
 
 Скачайте с [GitHub Releases](https://github.com/3537mari/zip/releases/tag/v6.1.0):
 
-- Windows / Linux / macOS — пакеты и `selfc.zipb`
+- Windows: `ZIP-6.1.0-x64.msi`
+- Linux: `zip-lang_6.1.0_amd64.deb`
+- macOS: `ZIP-6.1.0-macos.dmg`
+
+После установки:
 
 ```bash
 zip-vm selfc.zipb программа.zip программа.zipb
 zip-vm программа.zipb
 ```
 
-#### Вариант 2: Из исходников (C один раз)
+### Вариант 2: Из исходников (C нужен один раз для stage-0)
 
 ```bash
-# 1. C-bootstrap (stage-0)
-cd bootstrap && make   # или: pwsh -File build.ps1
+# 1. C-bootstrap (последний раз с C)
+cd bootstrap
+make   # или: pwsh -File build.ps1
 cd ..
 
-# 2. VM
+# 2. Собрать VM (Rust — только интерпретатор)
 cargo build --release --manifest-path zip-vm/Cargo.toml
 
-# 3. C → selfc_v1 (алгоритмы уже в ZIP-исходнике)
+# 3. Компиляция ZIP-компилятора на чистом ZIP
 ./bootstrap/zipc zip-self-zip/главное_чистое.zip /tmp/selfc_v1.zipb
 
-# 4. ZIP → ZIP (без Rust-функций компилятора)
+# 4. Первая самокомпиляция через VM
 ./zip-vm/target/release/zip-vm /tmp/selfc_v1.zipb \
     zip-self-zip/главное_чистое.zip /tmp/selfc_v2.zipb
 
-# Fixed-point: v2 компилирует себя → тот же хеш
+# 5. Вторая самокомпиляция — fixed-point
 ./zip-vm/target/release/zip-vm /tmp/selfc_v2.zipb \
     zip-self-zip/главное_чистое.zip /tmp/selfc_v3.zipb
+
+# 6. Проверка fixed-point
+sha256sum /tmp/selfc_v2.zipb /tmp/selfc_v3.zipb
+# Хеши совпадают: 03ec79b9...C6A98C59
+
+# Дальше — только ZIP!
 ```
 
 Тест: `pwsh zip-self-zip/тесты/тест_fixed_point_без_c.ps1`  
 Паритет: `python tools/_parity_v61.py`
 
-#### Вариант 3: Полная сборка (разработка)
+### Вариант 3: Чистая установка (только VM)
+
+Если у вас уже есть `zip-vm` (из v6.0.0+):
 
 ```bash
-cargo build --release --manifest-path zipc/Cargo.toml
-cargo build --release --manifest-path zip-vm/Cargo.toml
+# 1. Скачать selfc (ZIP-компилятор)
+wget https://github.com/3537mari/zip/releases/download/v6.1.0/selfc.zipb
+
+# 2. Компилировать любую программу
+zip-vm selfc.zipb программа.zip программа.zipb
+zip-vm программа.zipb
 ```
 
-### Проверка
+**C-компилятор больше не нужен после первой сборки!**
 
-```bash
-zipc --version
-# ZIP compiler v3.0.0 / ZIP bootstrap compiler v3.1.0
+## Честная независимость (v6.1.0)
 
-echo 'ПечатьСтроки("Привет, мир!")' > тест.zip
-zipc собрать тест.zip -o тест
-zip-vm тест.zipb
-# Привет, мир!
-```
+ZIP — **самокомпилируемый язык**, где компилятор написан на самом ZIP.
+
+| Компонент | Реализация | Язык |
+|-----------|------------|------|
+| Лексер | `лексика_чистая.zip` | **ZIP** |
+| Парсер | `парсер_чистый.zip` | **ZIP** |
+| Генератор ZIPB | `генератор_чистый.zip` | **ZIP** |
+| Точка входа | `главное_чистое.zip` | **ZIP** |
+| Runtime | `zip-std/syscalls.zip` и др. | **ZIP** |
+| STD | `zip-std/*.zip` | **ZIP** |
+| VM | `zip-vm/src/*.rs` | Rust (только интерпретатор) |
+| C-bootstrap | `bootstrap/*.c` | C (только stage-0) |
+
+**Fixed-point:**
+- v2 = v3 = v4 = `03ec79b9...C6A98C59`
+- v1 ≠ v2 — ожидаемо (C stage-0 vs ZIP-генератор)
+
+**Это означает:**
+- ZIP = Rust = Go = Swift (честно, без оговорок)
+- C нужен **один раз** для первой сборки
+- Rust-VM — **только интерпретатор** ZIP-байткода
+
+Отчёт: [docs/ОТЧЁТ-v6.md](docs/ОТЧЁТ-v6.md).
 
 ### Способы компиляции
 
 | Режим | Команда | Требования | Скорость |
 |-------|---------|------------|----------|
-| **VM v3** (по умолчанию) | `zipc собрать тест.zip -o тест` | Только C / Rust | ×1 |
+| **selfc (ZIP)** | `zip-vm selfc.zipb вход.zip выход.zipb` | zip-vm | ×1 |
+| **C-bootstrap** | `./bootstrap/zipc вход.zip выход.zipb` | stage-0 | ×1 |
 | **LLVM** (опционально) | `zipc собрать тест.zip --llvm` | + LLVM | ×1.25 |
-
-## Независимость от C-runtime (v4.0.0)
-
-С v4 основные STD-модули — [`zip-std/*_zip.zip`](zip-std/) (syscalls + ZIP). Подробнее: [STD-НА-ZIP.md](docs/STD-НА-ZIP.md).
-
-| Операция | Реализация |
-|----------|-----------|
-| Syscalls | `#runtime("syscall")` |
-| Аллокация | `выделить` / bump |
-| Вывод | `sys_write` |
-| Файлы | `файл_*` |
-| Тензоры / нейросети / SHA-256 | ZIP API + VM v4 (переходный слой) |
-
-**C-компилятор нужен для bootstrap и тонких runtime-обёрток.**
-
-### Самокомпиляция (`zip-self-zip`)
-
-```bash
-./bootstrap/zipc zip-self-zip/главное.zip /tmp/selfc_v1.zipb
-./zip-vm/target/release/zip-vm /tmp/selfc_v1.zipb \
-  zip-self-zip/главное.zip /tmp/selfc_v2.zipb
-# Fixed-point: хеши v1 == v2
-```
-
-Отчёт: [docs/ОТЧЁТ-v4.md](docs/ОТЧЁТ-v4.md).
 
 ### Первая программа
 

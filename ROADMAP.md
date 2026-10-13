@@ -17,29 +17,46 @@
 - [x] Structs в ZIP ✅
 - [x] Массивы в ZIP ✅
 - [x] Указатели в ZIP ✅
-- [x] Компилятор на чистом ZIP ✅
-- [x] Fixed-point без C (stage-1+) ✅
+- [x] Компилятор-драйвер на чистом ZIP (fixed-point v2 = v3) ✅
 
 **Дата:** 2026-10-12 · [docs/ОТЧЁТ-v6.md](docs/ОТЧЁТ-v6.md) · [ROADMAP_V6.md](ROADMAP_V6.md)
 
+## v6.1.0 (2026-10-12) — ✅ ЗАВЕРШЁН
+
+- [x] Полный lowering лексера в ZIP-байткод ✅
+- [x] Полный lowering парсера в ZIP-байткод ✅
+- [x] Полный lowering генератора ZIPB в ZIP-байткод ✅
+- [x] Убраны Rust-функции компилятора (`zip_self_lex` / `zip_self_parse` / `zip_self_gen`) ✅
+- [x] Fixed-point без Rust-алгоритмов: v2 = v3 = v4 = `03ec79b9...` ✅
+
+**Релиз:** https://github.com/3537mari/zip/releases/tag/v6.1.0
+
 ## v7.0.0 (2028) — Кросс-компиляция
 
-- [ ] ARM64
-- [ ] RISC-V
-- [ ] WASM
+**Важно:** начиная с v6.1.0 кросс-компиляция — это **задача бэкенда (Rust-VM)**, а не порта всего компилятора.
+
+- [ ] ARM64 (Linux, macOS, Windows)
+- [ ] RISC-V (RV32I, RV64I)
+- [ ] WASM (браузер, edge)
 - [ ] Windows ARM
 
 См. [ROADMAP_V7.md](ROADMAP_V7.md).
 
 ## v8.0.0 (2028) — Мобильные биндинги
 
-- [ ] Android (NDK)
-- [ ] iOS (Swift bridge)
+- [ ] Android (NDK + JNI)
+- [ ] iOS (Swift + Objective-C bridge)
 
 ## v9.0.0 (2029) — GPU-вычисления
 
-- [ ] CUDA / ROCm / Metal / Vulkan
+- [ ] CUDA (NVIDIA)
+- [ ] ROCm (AMD)
+- [ ] Metal (Apple)
+- [ ] Vulkan Compute
 
 ## v10.0.0 (2029) — Пакетный реестр
 
-- [ ] Облако + CDN, GitHub OAuth, 100+ пакетов
+- [ ] Облако + CDN (zip-lang.org)
+- [ ] GitHub OAuth
+- [ ] 100+ пакетов
+- [ ] CDN для быстрой загрузки
