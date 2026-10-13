@@ -29,6 +29,11 @@ struct Аргументы {
     #[arg(long = "v3")]
     только_v3: bool,
 
+    /// Целевая архитектура (информационный флаг: ZIPB платформонезависим).
+    /// Примеры: native, aarch64-unknown-linux-gnu, aarch64-apple-darwin.
+    #[arg(long = "target", default_value = "native")]
+    target: String,
+
     /// Аргументы программы (selfc: вход.zip выход.zipb)
     #[arg(value_name = "АРГ", trailing_var_arg = true, allow_hyphen_values = true)]
     программа: Vec<String>,
@@ -36,6 +41,13 @@ struct Аргументы {
 
 fn main() -> Result<()> {
     let аргументы = Аргументы::parse();
+
+    if аргументы.target != "native" {
+        eprintln!(
+            "zip-vm: --target={} (информационно; ZIPB платформонезависим)",
+            аргументы.target
+        );
+    }
 
     if аргументы.режим_генерации {
         let входной = аргументы

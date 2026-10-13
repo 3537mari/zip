@@ -6,57 +6,41 @@
 
 **Ключевой факт:** после v6.1.0 компилятор ZIP написан на самом ZIP (fixed-point v2 = v3 = v4). Для кросс-компиляции нужно **портировать только VM-интерпретатор** (Rust), а не весь компилятор.
 
-## Что нужно сделать
+## v7.0.0-alpha (2026-10-13) — ARM64
 
-### 1. ARM64
+- [x] ARM64 Linux (`aarch64-unknown-linux-gnu`) + QEMU CI ✅
+- [x] ARM64 macOS target (`aarch64-apple-darwin`) ✅
+- [x] ARM64 Windows target (`aarch64-pc-windows-msvc`) ✅
+- [x] Флаг `zip-vm --target …` (информационный) ✅
+- [x] Документация [docs/ARM64.md](docs/ARM64.md) ✅
+- [ ] RISC-V (следующий)
+- [ ] WASM
+- [ ] Нативные артефакты в GitHub Releases (все ARM64)
 
-**Платформы:** Raspberry Pi, Apple Silicon, серверы ARM.
+## Что нужно сделать дальше
 
-**Что нужно:**
-- `cargo build --target aarch64-unknown-linux-gnu` для VM
-- Тесты через QEMU (`qemu-aarch64`)
-- ZIP-байткод — платформонезависим, не меняется
-- Опционально: LLVM-бэкенд под ARM64 для `.exe`
-
-```bash
-zip-vm --target aarch64-unknown-linux-gnu программа.zipb
-```
-
-### 2. RISC-V
+### 1. RISC-V
 
 **Платформы:** IoT, встраиваемые, education.
 
-**Что нужно:**
-- `cargo build --target riscv64gc-unknown-linux-gnu` для VM
-- Тесты через QEMU (`qemu-riscv64`)
-- Поддержка RV32I, RV64I
-
 ```bash
-zip-vm --target riscv64gc-unknown-linux-gnu программа.zipb
+rustup target add riscv64gc-unknown-linux-gnu
+cargo build --release --target riscv64gc-unknown-linux-gnu --manifest-path zip-vm/Cargo.toml
+qemu-riscv64 ./zip-vm/target/riscv64gc-unknown-linux-gnu/release/zip-vm программа.zipb
 ```
 
-### 3. WASM
+### 2. WASM
 
 **Платформы:** Браузер, edge computing.
 
-**Что нужно:**
-- `wasm-pack build --target web` для VM (или отдельная WASM-сборка)
-- Работа с памятью WASM (линейная память)
-- Интеграция с JS (плейграунд)
-- Уже есть `zipc.js` в `веб-сайт/wasm/` — обновить
-
 ```bash
-zip-vm --target wasm32-unknown-unknown программа.zipb
+wasm-pack build --target web  # или отдельная WASM-сборка VM
 ```
 
-### 4. Windows ARM
+### 3. Нативные релизы ARM64
 
-**Платформы:** Surface Pro X, новые Windows-устройства.
-
-**Что нужно:**
-- `cargo build --target aarch64-pc-windows-msvc` для VM
-- Интеграция с Windows API
-- Упаковка в `.exe` (опционально — через LLVM)
+- Бинарники `zip-vm` для Linux/macOS/Windows ARM64 в Releases
+- MSI/DEB/DMG под ARM64
 
 ## Результат v7.0.0
 
@@ -65,10 +49,10 @@ zip-vm --target wasm32-unknown-unknown программа.zipb
 | x86-64 Linux | ✅ |
 | x86-64 Windows | ✅ |
 | x86-64 macOS | ✅ |
-| ARM64 Linux | ⏳ |
-| ARM64 macOS | ⏳ |
-| ARM64 Windows | ⏳ |
+| ARM64 Linux | ✅ (v7.0.0-alpha, QEMU CI) |
+| ARM64 macOS | ✅ (target) |
+| ARM64 Windows | ✅ (target) |
 | RISC-V | ⏳ |
 | WASM | ⏳ |
 
-**ZIP работает везде.**
+**ZIP-байткод один на всех платформах.** См. [docs/ARM64.md](docs/ARM64.md).

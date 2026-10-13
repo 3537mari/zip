@@ -7,6 +7,17 @@
 
 ## [Unreleased]
 
+## [7.0.0-alpha] — 2026-10-13
+
+### Кросс-компиляция ARM64 (VM)
+
+- Targets: `aarch64-unknown-linux-gnu`, `aarch64-apple-darwin`, `aarch64-pc-windows-msvc`
+- CI: [`.github/workflows/arm64.yml`](.github/workflows/arm64.yml) — сборка + QEMU
+- `zip-vm --target …` — информационный флаг (ZIPB платформонезависим)
+- Документация: [docs/ARM64.md](docs/ARM64.md)
+
+**Доказательство платформонезависимости:** один и тот же `selfc.zipb` на ARM64 через QEMU даёт байткод с хешем `03ec79b9...` (как на x86-64).
+
 ## [6.1.0] — 2026-10-12
 
 ### Полный lowering лексера/парсера/генератора в ZIP-байткод

@@ -1,0 +1,83 @@
+name: ARM64 Build & Test
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  build-arm64:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-unknown-linux-gnu
+
+      - name: Install cross-linker and QEMU
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu qemu-user qemu-user-static
+
+      - name: Build zip-vm for ARM64
+        run: |
+          cargo build --release \
+            --target aarch64-unknown-linux-gnu \
+            --manifest-path zip-vm/Cargo.toml
+
+      - name: Verify ARM64 binary
+        run: |
+          file zip-vm/target/aarch64-unknown-linux-gnu/release/zip-vm
+          file zip-vm/target/aarch64-unknown-linux-gnu/release/zip-vm | grep -qi aarch64
+
+      - name: Build native zip-vm + C-bootstrap selfc
+        run: |
+          cargo build --release --manifest-path zip-vm/Cargo.toml
+          (cd bootstrap && make -j"$(nproc)")
+          ./bootstrap/zipc zip-self-zip/главное_чистое.zip /tmp/selfc_v1.zipb
+          ./zip-vm/target/release/zip-vm /tmp/selfc_v1.zipb \
+            zip-self-zip/главное_чистое.zip /tmp/selfc_v2.zipb
+
+      - name: Compile ARM hello via selfc
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          src = """#runtime(\"syscall\")
+          #runtime(\"allocator\")
+          #runtime(\"io\")
+
+          функция главная() {
+              напечатать_строку(\"Привет с ARM64!\")
+              возврат(0)
+          }
+          """
+          Path("/tmp/arm_привет.zip").write_text(src, encoding="utf-8")
+          PY
+          ./zip-vm/target/release/zip-vm /tmp/selfc_v2.zipb \
+            /tmp/arm_привет.zip /tmp/arm_привет.zipb
+
+      - name: Run ARM64 VM via QEMU
+        run: |
+          out=$(qemu-aarch64 -L /usr/aarch64-linux-gnu \
+            ./zip-vm/target/aarch64-unknown-linux-gnu/release/zip-vm \
+            /tmp/arm_привет.zipb)
+          echo "$out"
+          echo "$out" | grep -q "Привет с ARM64"
+
+      - name: selfc on ARM64 produces identical ZIPB
+        run: |
+          qemu-aarch64 -L /usr/aarch64-linux-gnu \
+            ./zip-vm/target/aarch64-unknown-linux-gnu/release/zip-vm \
+            /tmp/selfc_v2.zipb \
+            zip-self-zip/главное_чистое.zip /tmp/selfc_arm.zipb
+          sha256sum /tmp/selfc_v2.zipb /tmp/selfc_arm.zipb
+          diff -q /tmp/selfc_v2.zipb /tmp/selfc_arm.zipb
+
+      - name: Upload ARM64 zip-vm
+        uses: actions/upload-artifact@v4
+        with:
+          name: zip-vm-aarch64-linux
+          path: zip-vm/target/aarch64-unknown-linux-gnu/release/zip-vm

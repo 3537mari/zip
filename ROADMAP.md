@@ -31,14 +31,20 @@
 
 **Релиз:** https://github.com/3537mari/zip/releases/tag/v6.1.0
 
+## v7.0.0-alpha (2026-10-13) — ✅ ARM64
+
+- [x] ARM64 Linux + QEMU CI ✅
+- [x] ARM64 macOS / Windows targets ✅
+- [x] Документация [docs/ARM64.md](docs/ARM64.md) ✅
+
 ## v7.0.0 (2028) — Кросс-компиляция
 
 **Важно:** начиная с v6.1.0 кросс-компиляция — это **задача бэкенда (Rust-VM)**, а не порта всего компилятора.
 
-- [ ] ARM64 (Linux, macOS, Windows)
+- [x] ARM64 (Linux, macOS, Windows) — alpha ✅
 - [ ] RISC-V (RV32I, RV64I)
 - [ ] WASM (браузер, edge)
-- [ ] Windows ARM
+- [ ] Нативные ARM64-пакеты в Releases
 
 См. [ROADMAP_V7.md](ROADMAP_V7.md).
 

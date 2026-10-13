@@ -40,10 +40,12 @@ tmp/
 
 # Local helper scripts (not part of the product)
 tools/_*.py
+tools/_*.md
 tools/build_v61.py
 tools/emit_v61.py
 tools/_*.zip
 tools/_*.txt
+tools/_*.sh
 !tools/_v61_header.txt
 !tools/_lex_body.txt
 !tools/_parse_part1.txt
