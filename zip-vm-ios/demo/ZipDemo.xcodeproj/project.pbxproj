@@ -270,8 +270,6 @@
 				GENERATE_INFOPLIST_FILE = NO;
 				HEADER_SEARCH_PATHS = (
 					"$(SRCROOT)/../include",
-					"$(SRCROOT)/../ZipVM.xcframework/ios-arm64/Headers",
-					"$(SRCROOT)/../ZipVM.xcframework/ios-arm64_x86_64-simulator/Headers",
 				);
 				INFOPLIST_FILE = ZipDemo/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
@@ -304,8 +302,6 @@
 				GENERATE_INFOPLIST_FILE = NO;
 				HEADER_SEARCH_PATHS = (
 					"$(SRCROOT)/../include",
-					"$(SRCROOT)/../ZipVM.xcframework/ios-arm64/Headers",
-					"$(SRCROOT)/../ZipVM.xcframework/ios-arm64_x86_64-simulator/Headers",
 				);
 				INFOPLIST_FILE = ZipDemo/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
