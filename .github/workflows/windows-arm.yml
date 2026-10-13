@@ -1,0 +1,146 @@
+name: Windows ARM Build & Test
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  # Нативный Windows ARM64 runner (GitHub-hosted)
+  build-windows-arm:
+    runs-on: windows-11-arm
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Host architecture
+        shell: pwsh
+        run: |
+          Write-Host "PROCESSOR_ARCHITECTURE=$env:PROCESSOR_ARCHITECTURE"
+          Write-Host "PROCESSOR_IDENTIFIER=$env:PROCESSOR_IDENTIFIER"
+          if ($env:PROCESSOR_ARCHITECTURE -ne "ARM64") {
+            Write-Warning "Ожидался ARM64 host"
+          }
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-pc-windows-msvc
+
+      - name: Build zip-vm for Windows ARM64
+        shell: pwsh
+        run: |
+          cargo build --release `
+            --target aarch64-pc-windows-msvc `
+            --manifest-path zip-vm/Cargo.toml
+
+      - name: Verify PE machine = ARM64
+        shell: pwsh
+        run: |
+          $exe = "zip-vm\target\aarch64-pc-windows-msvc\release\zip-vm.exe"
+          if (-not (Test-Path $exe)) { throw "нет $exe" }
+          $bytes = [System.IO.File]::ReadAllBytes((Resolve-Path $exe))
+          $peOff = [BitConverter]::ToInt32($bytes, 0x3C)
+          $machine = [BitConverter]::ToUInt16($bytes, $peOff + 4)
+          Write-Host ("PE machine = 0x{0:X4}" -f $machine)
+          # IMAGE_FILE_MACHINE_ARM64 = 0xAA64
+          if ($machine -ne 0xAA64) {
+            throw "Binary is not ARM64 (got 0x$("{0:X4}" -f $machine))"
+          }
+          Write-Host "OK: ARM64 PE"
+
+      - name: Build C-bootstrap (zipc)
+        shell: pwsh
+        run: |
+          pwsh -File bootstrap/build.ps1
+          if (-not (Test-Path bootstrap\zipc.exe)) { throw "zipc.exe не собран" }
+
+      - name: Build selfc fixed-point
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path $env:TEMP\zip-winarm | Out-Null
+          $tmp = Join-Path $env:TEMP "zip-winarm"
+          $vm = "zip-vm\target\aarch64-pc-windows-msvc\release\zip-vm.exe"
+          & .\bootstrap\zipc.exe zip-self-zip\главное_чистое.zip "$tmp\selfc_v1.zipb"
+          if ($LASTEXITCODE -ne 0) { throw "zipc failed" }
+          & $vm "$tmp\selfc_v1.zipb" zip-self-zip\главное_чистое.zip "$tmp\selfc_v2.zipb"
+          if ($LASTEXITCODE -ne 0) { throw "selfc v1->v2 failed" }
+          & $vm "$tmp\selfc_v2.zipb" zip-self-zip\главное_чистое.zip "$tmp\selfc_v3.zipb"
+          if ($LASTEXITCODE -ne 0) { throw "selfc v2->v3 failed" }
+          $h2 = (Get-FileHash "$tmp\selfc_v2.zipb" -Algorithm SHA256).Hash.ToLower()
+          $h3 = (Get-FileHash "$tmp\selfc_v3.zipb" -Algorithm SHA256).Hash.ToLower()
+          Write-Host "v2: $h2"
+          Write-Host "v3: $h3"
+          if ($h2 -ne $h3) { throw "fixed-point нарушен: v2 != v3" }
+          $expected = "03ec79b9901fd5793663d49dc49e51d222d667af5ef617eb795b2977c6a98c59"
+          if ($h2 -ne $expected) {
+            throw "unexpected hash (want $expected)"
+          }
+          Write-Host "ZIPB fixed-point OK (03ec79b9...)"
+
+      - name: Hello on Windows ARM64
+        shell: pwsh
+        run: |
+          $tmp = Join-Path $env:TEMP "zip-winarm"
+          $vm = "zip-vm\target\aarch64-pc-windows-msvc\release\zip-vm.exe"
+          $src = @"
+          #runtime("syscall")
+          #runtime("allocator")
+          #runtime("io")
+
+          функция главная() {
+              напечатать_строку("Привет с Windows ARM64!")
+              возврат(0)
+          }
+          "@
+          [System.IO.File]::WriteAllText("$tmp\win_arm_test.zip", $src, [System.Text.UTF8Encoding]::new($false))
+          & $vm "$tmp\selfc_v2.zipb" "$tmp\win_arm_test.zip" "$tmp\win_arm_test.zipb"
+          if ($LASTEXITCODE -ne 0) { throw "compile hello failed" }
+          $out = & $vm "$tmp\win_arm_test.zipb" 2>&1 | Out-String
+          Write-Host $out
+          if ($out -notmatch "Привет с Windows ARM64") {
+            throw "нет ожидаемого вывода"
+          }
+          Write-Host "Hello OK"
+
+      - name: Upload Windows ARM zip-vm
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-arm-zip-vm
+          path: zip-vm/target/aarch64-pc-windows-msvc/release/zip-vm.exe
+
+  # Fallback: кросс-сборка с windows-latest (без запуска ARM-бинаря)
+  cross-build-windows-arm:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust + ARM64 target
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-pc-windows-msvc
+
+      - name: Build for Windows ARM64 (cross)
+        shell: pwsh
+        run: |
+          cargo build --release `
+            --target aarch64-pc-windows-msvc `
+            --manifest-path zip-vm/Cargo.toml
+
+      - name: Verify PE machine = ARM64
+        shell: pwsh
+        run: |
+          $exe = "zip-vm\target\aarch64-pc-windows-msvc\release\zip-vm.exe"
+          $bytes = [System.IO.File]::ReadAllBytes((Resolve-Path $exe))
+          $peOff = [BitConverter]::ToInt32($bytes, 0x3C)
+          $machine = [BitConverter]::ToUInt16($bytes, $peOff + 4)
+          Write-Host ("PE machine = 0x{0:X4}" -f $machine)
+          if ($machine -ne 0xAA64) {
+            throw "Binary is not ARM64"
+          }
+
+      - name: Upload cross-built artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-arm-zip-vm-cross
+          path: zip-vm/target/aarch64-pc-windows-msvc/release/zip-vm.exe

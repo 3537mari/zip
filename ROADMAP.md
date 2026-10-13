@@ -47,16 +47,17 @@
 - [x] WASM VM + плейграунд (compile + run) ✅
 - [x] Документация [docs/WASM.md](docs/WASM.md) ✅
 
-## v7.0.0 (2028) — Кросс-компиляция
+## v7.0.0 (2026-10-13) — ✅ Кросс-компиляция (финал)
 
 **Важно:** начиная с v6.1.0 кросс-компиляция — это **задача бэкенда (Rust-VM)**, а не порта всего компилятора.
 
-- [x] ARM64 (Linux, macOS, Windows) — alpha ✅
+- [x] ARM64 Linux / macOS — alpha ✅
 - [x] RISC-V 64 — beta ✅
 - [x] WASM (браузер) — rc ✅
-- [ ] Нативные ARM64/RISC-V пакеты в Releases
+- [x] **Windows ARM64** — v7.0.0 ✅
+- [ ] Нативные пакеты ARM64/RISC-V в Releases (post-v7)
 
-См. [ROADMAP_V7.md](ROADMAP_V7.md).
+См. [ROADMAP_V7.md](ROADMAP_V7.md), [docs/WINDOWS-ARM.md](docs/WINDOWS-ARM.md).
 
 ## v8.0.0 (2028) — Мобильные биндинги
 

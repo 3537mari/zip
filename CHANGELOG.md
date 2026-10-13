@@ -7,6 +7,15 @@
 
 ## [Unreleased]
 
+## [7.0.0] — 2026-10-13
+
+### Кросс-компиляция Windows ARM64 — финал v7
+- Target: `aarch64-pc-windows-msvc`
+- CI: [`.github/workflows/windows-arm.yml`](.github/workflows/windows-arm.yml)
+  — нативный `windows-11-arm` + cross-build на `windows-latest`
+- Docs: [docs/WINDOWS-ARM.md](docs/WINDOWS-ARM.md)
+- **v7.0.0 закрыт:** x86-64 · ARM64 (Linux/macOS/Windows) · RISC-V · WASM
+
 ## [7.0.0-rc] — 2026-10-13
 
 ### Кросс-компиляция WASM (VM в браузере)

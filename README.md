@@ -4,6 +4,7 @@
 [![ARM64](https://img.shields.io/badge/ARM64-v7.0.0--alpha-brightgreen)](docs/ARM64.md)
 [![RISC-V](https://img.shields.io/badge/RISC--V-v7.0.0--beta-brightgreen)](docs/RISCV.md)
 [![WASM](https://img.shields.io/badge/WASM-v7.0.0--rc-brightgreen)](docs/WASM.md)
+[![v7.0.0](https://img.shields.io/badge/v7.0.0-все%20платформы-brightgreen)](docs/WINDOWS-ARM.md)
 [![Тесты](https://img.shields.io/badge/тесты-300%2B%20✅-green)](tests/)
 [![Fixed-point](https://img.shields.io/badge/fixed--point-v2=v3=v4-brightgreen)](zip-self-zip/)
 [![Лексер/парсер/генератор](https://img.shields.io/badge/ядро-ZIP-brightgreen)](zip-self-zip/)
@@ -123,12 +124,12 @@ ZIP — **самокомпилируемый язык**, где компилят
 | x86-64 macOS | Rust | ✅ |
 | **ARM64 Linux** | Rust | ✅ (через QEMU / CI) |
 | **ARM64 macOS** | Rust | ✅ (target) |
-| **ARM64 Windows** | Rust | ✅ (target) |
+| **ARM64 Windows** | Rust | ✅ (v7.0.0, CI `windows-11-arm`) |
 | **RISC-V 64** | Rust | ✅ (через QEMU / CI) |
 | **WASM (браузер)** | **wasm-bindgen** | ✅ (v7.0.0-rc) |
 
-**ZIP-байткод платформонезависим.** Один и тот же `.zipb` работает на всех платформах.  
-Подробнее: [docs/ARM64.md](docs/ARM64.md) · [docs/RISCV.md](docs/RISCV.md).
+**ZIP-байткод платформонезависим.** Один и тот же `.zipb` работает на **всех** платформах.  
+Подробнее: [docs/ARM64.md](docs/ARM64.md) · [docs/RISCV.md](docs/RISCV.md) · [docs/WASM.md](docs/WASM.md) · [docs/WINDOWS-ARM.md](docs/WINDOWS-ARM.md).
 
 ### Способы компиляции
 

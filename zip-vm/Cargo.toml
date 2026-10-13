@@ -59,6 +59,10 @@ path = "tests/тест_arm64.rs"
 name = "тест_riscv"
 path = "tests/тест_riscv.rs"
 
+[[test]]
+name = "тест_windows_arm"
+path = "tests/тест_windows_arm.rs"
+
 [features]
 default = ["cli"]
 cli = ["dep:clap", "dep:anyhow"]
