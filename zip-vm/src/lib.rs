@@ -40,17 +40,25 @@ pub mod загрузчик;
 pub mod исполнитель;
 #[path = "исполнитель_v3.rs"]
 pub mod исполнитель_v3;
-#[cfg(all(not(target_arch = "wasm32"), not(target_os = "android")))]
+#[cfg(all(
+    not(target_arch = "wasm32"),
+    not(target_os = "android"),
+    not(target_os = "ios")
+))]
 #[path = "jit.rs"]
 pub mod jit;
-#[cfg(any(target_arch = "wasm32", target_os = "android"))]
+#[cfg(any(target_arch = "wasm32", target_os = "android", target_os = "ios"))]
 #[path = "jit_stub.rs"]
 pub mod jit;
 
-#[cfg(all(not(target_arch = "wasm32"), not(target_os = "android")))]
+#[cfg(all(
+    not(target_arch = "wasm32"),
+    not(target_os = "android"),
+    not(target_os = "ios")
+))]
 #[path = "параллельный_jit.rs"]
 pub mod параллельный_jit;
-#[cfg(any(target_arch = "wasm32", target_os = "android"))]
+#[cfg(any(target_arch = "wasm32", target_os = "android", target_os = "ios"))]
 #[path = "параллельный_jit_stub.rs"]
 pub mod параллельный_jit;
 #[path = "память.rs"]

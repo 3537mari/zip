@@ -67,4 +67,4 @@ gradle assembleDebug   # или ./gradlew после wrapper
 
 ## Что дальше
 
-- iOS (Swift / FFI) — следующий шаг v7.x
+- iOS (Swift + C-API) — ✅ [docs/IOS.md](IOS.md) (v7.2.0)

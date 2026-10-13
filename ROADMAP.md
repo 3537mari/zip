@@ -62,11 +62,14 @@
 ## v7.1.0 (2026-10-13) — ✅ Android
 
 - [x] Android (NDK + JNI) ✅
-- [ ] iOS (Swift + FFI) — следующий
 
-## v8.0.0 (2028) — Мобильный UX / iOS
+## v7.2.0 (2026-10-13) — ✅ iOS
 
-- [ ] iOS (Swift + Objective-C bridge)
+- [x] iOS (Swift + Objective-C bridge / XCFramework) ✅
+
+## v8.0.0 — Мобильный UX
+
+- [ ] Расширенный мобильный UX / App Store packaging
 - [ ] Публикация в Google Play / App Store (опционально)
 
 ## v9.0.0 (2029) — GPU-вычисления

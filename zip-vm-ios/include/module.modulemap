@@ -1,0 +1,4 @@
+module ZipVM {
+    header "zip.h"
+    export *
+}

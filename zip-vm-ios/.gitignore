@@ -1,0 +1,8 @@
+/target/
+ZipVM.xcframework/
+*.xcframework/
+.DS_Store
+demo/build/
+demo/DerivedData/
+demo/*.xcuserstate
+demo/xcuserdata/

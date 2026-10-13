@@ -7,6 +7,17 @@
 
 ## [Unreleased]
 
+## [7.2.0] — 2026-10-13
+
+### iOS (Swift + Objective-C bridge)
+- Crate `zip-vm-ios` → `libzip_vm_ios.a` (`aarch64-apple-ios`, `aarch64-apple-ios-sim`, `x86_64-apple-ios`)
+- `ZipVM.xcframework` (lipo universal simulator + device)
+- C-API: `zip_compile`, `zip_run`, `zip_compile_and_run`, `zip_free`, `zip_version`, `zip_last_success`
+- Swift: `Zip.compile` / `run` / `compileAndRun` / `version`
+- Демо SwiftUI + XCTest на симуляторе
+- CI: [`.github/workflows/ios.yml`](.github/workflows/ios.yml)
+- Docs: [docs/IOS.md](docs/IOS.md)
+
 ## [7.1.0] — 2026-10-13
 
 ### Android (NDK + JNI)

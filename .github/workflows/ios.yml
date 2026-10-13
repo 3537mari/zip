@@ -1,0 +1,134 @@
+name: iOS Build & Test
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  build-ios:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust + iOS targets
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-ios,aarch64-apple-ios-sim,x86_64-apple-ios
+
+      - name: Host C-API tests
+        run: cargo test --manifest-path zip-vm-ios/Cargo.toml -- --nocapture
+
+      - name: Host zip_компилятор smoke
+        run: cargo test --manifest-path zip-vm/Cargo.toml --lib zip_компилятор -- --nocapture
+
+      - name: Build static libraries
+        run: |
+          cd zip-vm-ios
+          cargo build --release --target aarch64-apple-ios
+          cargo build --release --target aarch64-apple-ios-sim
+          cargo build --release --target x86_64-apple-ios
+
+      - name: Verify architectures
+        run: |
+          echo "=== device aarch64 ==="
+          file zip-vm-ios/target/aarch64-apple-ios/release/libzip_vm_ios.a
+          echo "=== sim aarch64 ==="
+          file zip-vm-ios/target/aarch64-apple-ios-sim/release/libzip_vm_ios.a
+          echo "=== sim x86_64 ==="
+          file zip-vm-ios/target/x86_64-apple-ios/release/libzip_vm_ios.a
+          ls -lh zip-vm-ios/target/*/release/libzip_vm_ios.a \
+            zip-vm-ios/target/aarch64-apple-ios-sim/release/libzip_vm_ios.a
+
+      - name: Create universal simulator library
+        run: |
+          cd zip-vm-ios
+          mkdir -p target/ios-sim-universal/release
+          lipo -create \
+            target/aarch64-apple-ios-sim/release/libzip_vm_ios.a \
+            target/x86_64-apple-ios/release/libzip_vm_ios.a \
+            -output target/ios-sim-universal/release/libzip_vm_ios.a
+          lipo -info target/ios-sim-universal/release/libzip_vm_ios.a
+
+      - name: Create XCFramework
+        run: |
+          cd zip-vm-ios
+          rm -rf ZipVM.xcframework
+          xcodebuild -create-xcframework \
+            -library target/aarch64-apple-ios/release/libzip_vm_ios.a \
+              -headers include \
+            -library target/ios-sim-universal/release/libzip_vm_ios.a \
+              -headers include \
+            -output ZipVM.xcframework
+          ls -la ZipVM.xcframework/
+          find ZipVM.xcframework -type f | sort
+
+      - name: C smoke (iphonesimulator SDK)
+        run: |
+          set -euo pipefail
+          SDK=$(xcrun --sdk iphonesimulator --show-sdk-path)
+          ARCH=$(uname -m)
+          if [ "$ARCH" = "arm64" ]; then
+            LIB=zip-vm-ios/target/aarch64-apple-ios-sim/release/libzip_vm_ios.a
+            TARGET_TRIPLE=arm64-apple-ios13.0-simulator
+          else
+            LIB=zip-vm-ios/target/x86_64-apple-ios/release/libzip_vm_ios.a
+            TARGET_TRIPLE=x86_64-apple-ios13.0-simulator
+          fi
+          clang -target "$TARGET_TRIPLE" -isysroot "$SDK" \
+            -I zip-vm-ios/include \
+            zip-vm-ios/demo/smoke_c_api.c \
+            "$LIB" \
+            -lc++ -lresolv \
+            -o /tmp/zip_ios_smoke
+          # Нельзя запустить iOS-бинарник на macOS host — только линковка.
+          file /tmp/zip_ios_smoke
+          echo "c_smoke_link_ok"
+
+      - name: Select simulator destination
+        id: sim
+        run: |
+          set -euo pipefail
+          # Предпочитаем iPhone 15 / 16; иначе любой доступный iPhone.
+          DEST=""
+          for name in "iPhone 16" "iPhone 15" "iPhone 14" "iPhone SE (3rd generation)"; do
+            if xcrun simctl list devices available | grep -q "$name"; then
+              DEST="platform=iOS Simulator,name=$name"
+              break
+            fi
+          done
+          if [ -z "$DEST" ]; then
+            DEST="generic/platform=iOS Simulator"
+          fi
+          echo "destination=$DEST" >> "$GITHUB_OUTPUT"
+          echo "Using: $DEST"
+          xcrun simctl list devices available | head -40
+
+      - name: Build demo app for simulator
+        env:
+          DEST: ${{ steps.sim.outputs.destination }}
+        run: |
+          cd zip-vm-ios/demo
+          xcodebuild -scheme ZipDemo \
+            -sdk iphonesimulator \
+            -destination "$DEST" \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+      - name: Run tests on simulator
+        env:
+          DEST: ${{ steps.sim.outputs.destination }}
+        run: |
+          cd zip-vm-ios/demo
+          xcodebuild -scheme ZipDemo \
+            -sdk iphonesimulator \
+            -destination "$DEST" \
+            CODE_SIGNING_ALLOWED=NO \
+            test
+
+      - name: Upload XCFramework
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-xcframework
+          path: zip-vm-ios/ZipVM.xcframework/
