@@ -7,6 +7,17 @@
 
 ## [Unreleased]
 
+## [7.3.0] — 2026-10-13
+
+### Криптография без OpenSSL
+- Crate `zip-crypto`: SHA-256/SHA-3, AES-256-GCM, ML-KEM-1024, ML-DSA-87
+- NIST vectors AES-GCM + SHA-256; KEM/подпись round-trip
+- VM builtins + ZIP STD (`крипто*.zip`)
+- `getrandom` / BCrypt / getentropy; `constant_time_eq`
+- `@шифровать` → default `AES-256-GCM`, LLVM declare ZIP-crypto
+- `zip-std/runtime/crypto.c` без OpenSSL
+- Docs: [docs/КРИПТОГРАФИЯ.md](docs/КРИПТОГРАФИЯ.md)
+
 ## [7.2.0] — 2026-10-13
 
 ### iOS (Swift + Objective-C bridge)

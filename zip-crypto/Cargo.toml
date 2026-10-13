@@ -1,0 +1,26 @@
+[package]
+name = "zip-crypto"
+version = "7.3.0"
+edition = "2021"
+description = "Криптография ZIP без OpenSSL: SHA-2/3, AES-256-GCM, ML-KEM-1024 (Kyber), ML-DSA-87 (Dilithium-5)"
+license = "MIT"
+rust-version = "1.74"
+
+[dependencies]
+aes-gcm = "0.10"
+sha2 = "0.10"
+sha3 = "0.10"
+hex = "0.4"
+ml-kem = "0.2.1"
+fips204 = "0.4"
+rand_core = { version = "0.6", features = ["getrandom"] }
+subtle = "2.6"
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+getrandom = "0.2"
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+getrandom = { version = "0.2", features = ["js"] }
+
+[dev-dependencies]
+hex-literal = "0.4"

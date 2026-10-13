@@ -1,0 +1,14 @@
+// ZIP STD: Kyber-1024 / ML-KEM-1024 (FIPS 203) G5@57 zip-crypto
+#runtime("allocator")
+
+DC=:F8O kyber1024_35=5@0F8O_:;NG59() {
+    2>72@0B(zip_crypto_kyber_keygen())
+}
+
+DC=:F8O kyber1024_8=:0?AC;OF8O(?C1;8G=K9_hex) {
+    2>72@0B(zip_crypto_kyber_encap(?C1;8G=K9_hex))
+}
+
+DC=:F8O kyber1024_45:0?AC;OF8O(H8D@>B5:AB_hex, A5:@5B=K9_hex) {
+    2>72@0B(zip_crypto_kyber_decap(H8D@>B5:AB_hex, A5:@5B=K9_hex))
+}

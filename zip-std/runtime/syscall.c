@@ -73,6 +73,39 @@ int64_t zip_sys_exit(int64_t код) {
     return zip_syscall(60, код, 0, 0, 0, 0, 0);
 }
 
+/* CSPRNG без OpenSSL — см. также crypto.c::zip_заполнить_случайными */
+#if defined(_WIN32)
+#include <bcrypt.h>
+#pragma comment(lib, "bcrypt.lib")
+int64_t zip_заполнить_случайными(void *буфер, int64_t количество) {
+    if (!буфер || количество <= 0) return -1;
+    NTSTATUS st = BCryptGenRandom(
+        NULL, (PUCHAR)буфер, (ULONG)количество, BCRYPT_USE_SYSTEM_PREFERRED_RNG);
+    return (st == 0) ? количество : -1;
+}
+#elif defined(__APPLE__)
+#include <sys/random.h>
+int64_t zip_заполнить_случайными(void *буфер, int64_t количество) {
+    if (!буфер || количество <= 0) return -1;
+    uint8_t *p = (uint8_t *)буфер;
+    int64_t left = количество;
+    while (left > 0) {
+        size_t chunk = left > 256 ? 256 : (size_t)left;
+        if (getentropy(p, chunk) != 0) return -1;
+        p += chunk;
+        left -= (int64_t)chunk;
+    }
+    return количество;
+}
+#else
+#include <sys/random.h>
+int64_t zip_заполнить_случайными(void *буфер, int64_t количество) {
+    if (!буфер || количество <= 0) return -1;
+    ssize_t n = getrandom(буфер, (size_t)количество, 0);
+    return (n == количество) ? количество : -1;
+}
+#endif
+
 #if defined(ZIP_SYSCALL_MAIN) && !defined(ZIP_SYSCALL_MAIN_DISABLED)
 int main(void) {
     const char *msg = "=== ЧИСТЫЙ ZIP (syscall runtime) ===\n";

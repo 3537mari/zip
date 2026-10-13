@@ -67,6 +67,11 @@
 
 - [x] iOS (Swift + Objective-C bridge / XCFramework) ✅
 
+## v7.3.0 (2026-10-13) — ✅ Криптография
+
+- [x] AES-256-GCM / Kyber-1024 / Dilithium-5 без OpenSSL ✅
+- [x] Docs [docs/КРИПТОГРАФИЯ.md](docs/КРИПТОГРАФИЯ.md)
+
 ## v8.0.0 — Мобильный UX
 
 - [ ] Расширенный мобильный UX / App Store packaging

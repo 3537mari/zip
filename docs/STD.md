@@ -66,7 +66,11 @@ HTTP/HTTPS через `#runtime("http_client")` / `#runtime("https_client")`.
 
 ---
 
-### КРИПТО (`крипто` / `#runtime("crypto")`)
+### КРИПТО (`крипто` / `zip-crypto`, без OpenSSL)
+
+См. [КРИПТОГРАФИЯ.md](КРИПТОГРАФИЯ.md). Legacy `#runtime("crypto")` больше не тянет OpenSSL.
+
+### КРИПТО (legacy stub)
 
 Хеширование, AES-GCM, случайные байты.
 

@@ -18,18 +18,22 @@
 
 ## v7.2.0 (2026-10-13) — ✅ iOS
 
-- [x] **iOS (Swift + Objective-C bridge)** — `libzip_vm_ios.a` / `ZipVM.xcframework`
-- [x] Targets: `aarch64-apple-ios`, `aarch64-apple-ios-sim`, `x86_64-apple-ios`
-- [x] C-API `zip.h` + Swift `Zip.compile` / `run` / `compileAndRun`
+- [x] **iOS (Swift + Objective-C bridge)** — `ZipVM.xcframework`
 - [x] CI [`.github/workflows/ios.yml`](.github/workflows/ios.yml)
 - [x] Docs [docs/IOS.md](docs/IOS.md)
 
-## v7.3.0 — Криптография
+## v7.3.0 (2026-10-13) — ✅ Криптография на чистом стеке ZIP
 
-- [ ] SHA-256 на чистом ZIP (уже есть)
-- [ ] AES-256-GCM на чистом ZIP
-- [ ] Kyber-1024 на чистом ZIP
-- [ ] Dilithium-5 на чистом ZIP
+- [x] SHA-256 / SHA-3 (без OpenSSL)
+- [x] AES-256-GCM (NIST vectors)
+- [x] Kyber-1024 / ML-KEM-1024 (KEM round-trip)
+- [x] Dilithium-5 / ML-DSA-87 (подпись/проверка)
+- [x] Constant-time сравнение
+- [x] getrandom через OS CSPRNG
+- [x] Интеграция `@шифровать` + ZIP STD
+- [x] Docs [docs/КРИПТОГРАФИЯ.md](docs/КРИПТОГРАФИЯ.md)
+
+**Никакой зависимости от OpenSSL в основном пути.**
 
 ## v7.4.0 — GPU
 

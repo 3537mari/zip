@@ -1,0 +1,18 @@
+name: Crypto (no OpenSSL)
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  zip-crypto:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: NIST + PQ tests
+        run: cargo test --manifest-path zip-crypto/Cargo.toml --lib -- --nocapture
+      - name: zip-vm with zip-crypto
+        run: cargo test --manifest-path zip-vm/Cargo.toml --lib -- --nocapture

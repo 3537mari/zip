@@ -1,0 +1,6 @@
+// ZIP STD: constant-time CB8;8BK
+#runtime("allocator")
+
+DC=:F8O constant_time_eq(a, b) {
+    2>72@0B(zip_crypto_ct_eq(a, b))
+}

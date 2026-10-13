@@ -1,4 +1,4 @@
-// ZIP STD: КРИПТО (SHA-256 через встроенный zip_std_sha256)
+// ZIP STD: SHA-256 / SHA-3 через zip-crypto (без OpenSSL)
 #runtime("allocator")
 
 функция хеш_ша256(данные, длина) {

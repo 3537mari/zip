@@ -6,6 +6,7 @@
 [![WASM](https://img.shields.io/badge/WASM-v7.0.0--rc-brightgreen)](docs/WASM.md)
 [![v7.0.0](https://img.shields.io/badge/v7.0.0-все%20платформы-brightgreen)](docs/WINDOWS-ARM.md)
 [![iOS](https://img.shields.io/badge/iOS-v7.2.0-brightgreen)](docs/IOS.md)
+[![Crypto](https://img.shields.io/badge/crypto-v7.3.0%20no%20OpenSSL-brightgreen)](docs/КРИПТОГРАФИЯ.md)
 [![Тесты](https://img.shields.io/badge/тесты-300%2B%20✅-green)](tests/)
 [![Fixed-point](https://img.shields.io/badge/fixed--point-v2=v3=v4-brightgreen)](zip-self-zip/)
 [![Лексер/парсер/генератор](https://img.shields.io/badge/ядро-ZIP-brightgreen)](zip-self-zip/)
@@ -19,7 +20,7 @@
 ## Ключевые возможности
 
 - **Скорость** — LLVM-бэкенд, ≈19× быстрее ASM
-- **Защита** — постквантовая криптография, анализ владения
+- **Защита** — AES-256-GCM + Kyber-1024 + Dilithium-5 **без OpenSSL**, анализ владения
 - **ИИ** — встроенные примитивы для нейросетей
 - **Потоковость** — VSO-синтаксис, `>>` и `||`
 - **Биология** — 64 корня, комплементарность, эпигенетика
@@ -130,7 +131,18 @@ ZIP — **самокомпилируемый язык**, где компилят
 | **WASM (браузер)** | **wasm-bindgen** | ✅ (v7.0.0-rc) |
 | **Android (ARM64, x86-64)** | Rust + JNI | ✅ (v7.1.0) |
 | **iOS (ARM64 + sim)** | Rust + Swift (C-API / XCFramework) | ✅ (v7.2.0) |
-| GPU (CUDA, ROCm, Metal, Vulkan) | — | ⏳ v7.3+ |
+| GPU (CUDA, ROCm, Metal, Vulkan) | — | ⏳ v7.4+ |
+
+## Криптография
+
+| Алгоритм | Статус |
+|----------|--------|
+| SHA-256 / SHA-3 | ✅ без OpenSSL |
+| AES-256-GCM | ✅ NIST vectors |
+| Kyber-1024 (ML-KEM-1024) | ✅ KEM round-trip |
+| Dilithium-5 (ML-DSA-87) | ✅ подпись/проверка |
+
+См. [docs/КРИПТОГРАФИЯ.md](docs/КРИПТОГРАФИЯ.md).
 
 **ZIP-байткод платформонезависим.** Один и тот же `.zipb` работает на **всех** платформах.  
 Подробнее: [docs/ARM64.md](docs/ARM64.md) · [docs/RISCV.md](docs/RISCV.md) · [docs/WASM.md](docs/WASM.md) · [docs/WINDOWS-ARM.md](docs/WINDOWS-ARM.md) · [docs/ANDROID.md](docs/ANDROID.md) · [docs/IOS.md](docs/IOS.md).

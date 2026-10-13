@@ -1,0 +1,14 @@
+// ZIP STD: Dilithium-5 / ML-DSA-87 (FIPS 204) G5@57 zip-crypto
+#runtime("allocator")
+
+DC=:F8O dilithium5_35=5@0F8O_:;NG59() {
+    2>72@0B(zip_crypto_dilithium_keygen())
+}
+
+DC=:F8O dilithium5_?>4?8A0BL(A>>1I5=85, A5:@5B=K9_hex) {
+    2>72@0B(zip_crypto_dilithium_sign(A>>1I5=85, A5:@5B=K9_hex))
+}
+
+DC=:F8O dilithium5_?@>25@8BL(A>>1I5=85, ?>4?8AL_hex, ?C1;8G=K9_hex) {
+    2>72@0B(zip_crypto_dilithium_verify(A>>1I5=85, ?>4?8AL_hex, ?C1;8G=K9_hex))
+}
