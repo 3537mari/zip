@@ -1,0 +1,83 @@
+name: RISC-V Build & Test
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  build-riscv:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: riscv64gc-unknown-linux-gnu
+
+      - name: Install cross-linker and QEMU
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-riscv64-linux-gnu qemu-user qemu-user-static
+
+      - name: Build zip-vm for RISC-V
+        run: |
+          cargo build --release \
+            --target riscv64gc-unknown-linux-gnu \
+            --manifest-path zip-vm/Cargo.toml
+
+      - name: Verify RISC-V binary
+        run: |
+          file zip-vm/target/riscv64gc-unknown-linux-gnu/release/zip-vm
+          file zip-vm/target/riscv64gc-unknown-linux-gnu/release/zip-vm | grep -qi 'RISC-V\|riscv'
+
+      - name: Build native zip-vm + C-bootstrap selfc
+        run: |
+          cargo build --release --manifest-path zip-vm/Cargo.toml
+          (cd bootstrap && make -j"$(nproc)")
+          ./bootstrap/zipc zip-self-zip/главное_чистое.zip /tmp/selfc_v1.zipb
+          ./zip-vm/target/release/zip-vm /tmp/selfc_v1.zipb \
+            zip-self-zip/главное_чистое.zip /tmp/selfc_v2.zipb
+
+      - name: Compile RISC-V hello via selfc
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          src = """#runtime(\"syscall\")
+          #runtime(\"allocator\")
+          #runtime(\"io\")
+
+          функция главная() {
+              напечатать_строку(\"Привет с RISC-V!\")
+              возврат(0)
+          }
+          """
+          Path("/tmp/riscv_привет.zip").write_text(src, encoding="utf-8")
+          PY
+          ./zip-vm/target/release/zip-vm /tmp/selfc_v2.zipb \
+            /tmp/riscv_привет.zip /tmp/riscv_привет.zipb
+
+      - name: Run RISC-V VM via QEMU
+        run: |
+          out=$(qemu-riscv64 -L /usr/riscv64-linux-gnu \
+            ./zip-vm/target/riscv64gc-unknown-linux-gnu/release/zip-vm \
+            /tmp/riscv_привет.zipb)
+          echo "$out"
+          echo "$out" | grep -q "Привет с RISC-V"
+
+      - name: selfc on RISC-V produces identical ZIPB
+        run: |
+          qemu-riscv64 -L /usr/riscv64-linux-gnu \
+            ./zip-vm/target/riscv64gc-unknown-linux-gnu/release/zip-vm \
+            /tmp/selfc_v2.zipb \
+            zip-self-zip/главное_чистое.zip /tmp/selfc_riscv.zipb
+          sha256sum /tmp/selfc_v2.zipb /tmp/selfc_riscv.zipb
+          diff -q /tmp/selfc_v2.zipb /tmp/selfc_riscv.zipb
+
+      - name: Upload RISC-V zip-vm
+        uses: actions/upload-artifact@v4
+        with:
+          name: zip-vm-riscv64-linux
+          path: zip-vm/target/riscv64gc-unknown-linux-gnu/release/zip-vm

@@ -53,6 +53,10 @@ path = "tests/тест_указателей_vm.rs"
 name = "тест_arm64"
 path = "tests/тест_arm64.rs"
 
+[[test]]
+name = "тест_riscv"
+path = "tests/тест_riscv.rs"
+
 [dependencies]
 clap = { version = "4.5", features = ["derive"] }
 anyhow = "1.0"

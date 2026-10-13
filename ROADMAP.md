@@ -37,14 +37,19 @@
 - [x] ARM64 macOS / Windows targets ✅
 - [x] Документация [docs/ARM64.md](docs/ARM64.md) ✅
 
+## v7.0.0-beta (2026-10-13) — ✅ RISC-V
+
+- [x] RISC-V 64 (`riscv64gc-unknown-linux-gnu`) + QEMU CI ✅
+- [x] Документация [docs/RISCV.md](docs/RISCV.md) ✅
+
 ## v7.0.0 (2028) — Кросс-компиляция
 
 **Важно:** начиная с v6.1.0 кросс-компиляция — это **задача бэкенда (Rust-VM)**, а не порта всего компилятора.
 
 - [x] ARM64 (Linux, macOS, Windows) — alpha ✅
-- [ ] RISC-V (RV32I, RV64I)
+- [x] RISC-V 64 — beta ✅
 - [ ] WASM (браузер, edge)
-- [ ] Нативные ARM64-пакеты в Releases
+- [ ] Нативные ARM64/RISC-V пакеты в Releases
 
 См. [ROADMAP_V7.md](ROADMAP_V7.md).
 

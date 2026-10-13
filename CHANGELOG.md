@@ -7,6 +7,16 @@
 
 ## [Unreleased]
 
+## [7.0.0-beta] — 2026-10-13
+
+### Кросс-компиляция RISC-V (VM)
+
+- Target: `riscv64gc-unknown-linux-gnu`
+- CI: [`.github/workflows/riscv.yml`](.github/workflows/riscv.yml) — сборка + QEMU
+- Документация: [docs/RISCV.md](docs/RISCV.md)
+
+**Доказательство:** `selfc` на RISC-V через QEMU даёт тот же хеш `03ec79b9...c6a98c59`, что x86-64 и ARM64.
+
 ## [7.0.0-alpha] — 2026-10-13
 
 ### Кросс-компиляция ARM64 (VM)
