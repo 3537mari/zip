@@ -26,27 +26,31 @@
     p { color: var(--muted); margin-top: 0; }
     .row { display: flex; gap: 16px; flex-wrap: wrap; }
     .col { flex: 1 1 320px; min-width: 280px; }
-    textarea, #out {
-      width: 100%; height: 420px;
+    textarea, pre.out {
+      width: 100%; min-height: 160px;
       background: var(--panel); color: var(--text);
       border: 1px solid #2a3a52; border-radius: 8px;
       padding: 12px; font-family: "Cascadia Code", Consolas, monospace;
       font-size: 14px; line-height: 1.45;
+      white-space: pre-wrap; overflow: auto; margin: 0;
     }
-    #out { white-space: pre-wrap; overflow: auto; }
+    textarea { height: 320px; resize: vertical; }
+    .кнопки { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
     button {
-      margin-top: 12px; padding: 10px 18px;
+      padding: 10px 16px;
       background: var(--accent); color: #041018; border: 0;
       border-radius: 8px; font-weight: 650; cursor: pointer;
     }
+    button.secondary { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
     button:disabled { opacity: 0.5; cursor: wait; }
     .status { margin-top: 8px; font-size: 13px; color: var(--muted); }
     a { color: var(--accent); }
+    h3 { margin: 16px 0 8px; font-size: 15px; color: var(--muted); font-weight: 600; }
     .tasks {
       margin-top: 32px; padding: 20px;
       background: var(--panel); border: 1px solid #2a3a52; border-radius: 8px;
     }
-    .tasks h3 { margin: 0 0 16px; }
+    .tasks h3 { margin: 0 0 16px; color: var(--text); font-size: 18px; }
     .task {
       margin-bottom: 14px; padding: 12px 14px;
       border-left: 3px solid var(--accent); background: rgba(0,0,0,0.2);
@@ -69,20 +73,31 @@
 </head>
 <body>
   <h1>ZIP Playground</h1>
-  <p>Онлайн-разбор ZIP (WASM). <a href="./">← на сайт</a> · <a href="курс/">курс</a></p>
+  <p>
+    Компиляция и запуск ZIP в браузере (WASM VM).
+    <a href="./">← на сайт</a> · <a href="курс/">курс</a> ·
+    <span id="версия">…</span>
+  </p>
   <div class="row">
     <div class="col">
       <h3>Исходник</h3>
-      <textarea id="code">функция главная() {
-    ПечатьСтроки("Привет, мир!")
+      <textarea id="код">функция главная() {
+    напечатать_строку("Привет, мир!")
+    возврат(42)
 }
 </textarea>
-      <button id="btn" onclick="run()">Скомпилировать</button>
+      <div class="кнопки">
+        <button id="btn-compile" type="button" disabled>⚙ Скомпилировать</button>
+        <button id="btn-run" type="button" disabled>▶ Запустить</button>
+        <button id="btn-both" type="button" disabled>⚡ Компилировать и запустить</button>
+      </div>
       <div class="status" id="status">Загрузка WASM…</div>
     </div>
     <div class="col">
-      <h3>Вывод</h3>
-      <div id="out"></div>
+      <h3>Вывод программы</h3>
+      <pre class="out" id="вывод_программы">—</pre>
+      <h3>ZIPB (hex, первые 128 байт)</h3>
+      <pre class="out" id="zipb_hex">—</pre>
     </div>
   </div>
 
@@ -92,8 +107,11 @@
     <div class="task" data-task="1">
       <h4>Задача 1: Hello, World</h4>
       <p>Напишите программу, которая печатает «Привет, мир!».</p>
-      <details><summary>Подсказка</summary><p>Используйте <code>ПечатьСтроки("...")</code></p></details>
-      <button class="load" type="button" data-snippet='ПечатьСтроки("Привет, мир!")'>Вставить шаблон</button>
+      <details><summary>Подсказка</summary><p>Используйте <code>напечатать_строку("...")</code></p></details>
+      <button class="load" type="button" data-snippet='функция главная() {
+    напечатать_строку("Привет, мир!")
+    возврат(0)
+}'>Вставить шаблон</button>
       <button class="check" type="button" data-check="1">Проверить</button>
       <div class="check-msg" hidden></div>
     </div>
@@ -107,7 +125,8 @@
 }
 
 функция главная() {
-    ПечатьЧисло(сложить(2, 3))
+    напечатать_число_строкой(сложить(2, 3))
+    возврат(0)
 }'>Вставить шаблон</button>
       <button class="check" type="button" data-check="2">Проверить</button>
       <div class="check-msg" hidden></div>
@@ -116,16 +135,14 @@
     <div class="task" data-task="3">
       <h4>Задача 3: Факториал</h4>
       <p>Напишите рекурсивную функцию <code>факториал(н)</code>.</p>
-      <details><summary>Подсказка</summary><p>База: <code>н &lt;= 1</code> → <code>возврат(1)</code>.</p></details>
+      <details><summary>Подсказка</summary><p>База: <code>н &lt; 2</code> → <code>возврат(1)</code>.</p></details>
       <button class="load" type="button" data-snippet='функция факториал(н) {
-    если н <= 1 {
-        возврат(1)
-    }
+    если (н < 2) { возврат(1) }
     возврат(н * факториал(н - 1))
 }
 
 функция главная() {
-    ПечатьЧисло(факториал(5))
+    возврат(факториал(5))
 }'>Вставить шаблон</button>
       <button class="check" type="button" data-check="3">Проверить</button>
       <div class="check-msg" hidden></div>
@@ -140,7 +157,7 @@
     <div class="task" data-task="5">
       <h4>Задача 5: Цикл</h4>
       <p>Напечатайте числа от 1 до 10.</p>
-      <details><summary>Подсказка</summary><p>Используйте <code>пока</code> или цикл по счётчику из документации.</p></details>
+      <details><summary>Подсказка</summary><p>Используйте <code>пока</code>.</p></details>
     </div>
 
     <div class="task" data-task="6">
@@ -160,68 +177,105 @@
 
     <div class="task" data-task="9">
       <h4>Задача 9: XOR-слой (концепт)</h4>
-      <p>Опишите два слоя <code>создать_слой</code> для XOR (как в видео 04).</p>
-      <details><summary>Подсказка</summary><p>См. <code>zip-std/примеры/xor_обучение.zip</code> и урок 7 курса.</p></details>
+      <p>Опишите два слоя <code>создать_слой</code> для XOR.</p>
     </div>
 
     <div class="task" data-task="10">
       <h4>Задача 10: Мини-API контракт</h4>
-      <p>Набросайте функцию-обработчик «создать задачу» с полями id и текст (как в TODO-сервисе).</p>
+      <p>Набросайте функцию-обработчик «создать задачу» с полями id и текст.</p>
     </div>
   </div>
+
   <script type="module">
     const status = document.getElementById("status");
-    const out = document.getElementById("out");
-    let compileFn = null;
+    const вывод = document.getElementById("вывод_программы");
+    const zipbEl = document.getElementById("zipb_hex");
+    const версияEl = document.getElementById("версия");
+
+    let api = {
+      compile: null,
+      run: null,
+      both: null,
+      ready: false,
+    };
 
     async function load() {
       try {
-        const mod = await import("./wasm/zipc.js");
+        const mod = await import("./wasm/zip_vm.js");
         await mod.default();
-        compileFn = mod.compileZip || mod.скомпилировать || mod.compile;
-        const ver = mod.versionZip || mod.версия || mod.version;
-        status.textContent = "ZIP " + (ver ? ver() : "?") + " · WASM готов";
+        api.compile = mod.compileZip;
+        api.run = mod.runZip;
+        api.both = mod.compileAndRun;
+        const ver = mod.versionZip ? mod.versionZip() : "?";
+        версияEl.textContent = `ZIP VM v${ver}`;
+        status.textContent = "WASM VM готов — можно компилировать и запускать";
+        api.ready = true;
       } catch (e) {
-        status.textContent = "WASM не собран — fallback-анализатор (лексер JS)";
-        compileFn = null;
-        console.warn(e);
+        console.warn("zip_vm.js недоступен, пробуем zipc.js", e);
+        try {
+          const mod = await import("./wasm/zipc.js");
+          await mod.default();
+          api.compile = mod.compileZip || mod.скомпилировать || mod.compile;
+          api.run = null;
+          api.both = null;
+          const ver = mod.versionZip || mod.версия || mod.version;
+          версияEl.textContent = "ZIP " + (ver ? ver() : "?") + " (только компиляция)";
+          status.textContent = "WASM zipc (compile-only) — кнопка «Запустить» недоступна";
+          api.ready = !!api.compile;
+        } catch (e2) {
+          status.textContent = "WASM не собран — нужен zip_vm.js (см. docs/WASM.md)";
+          console.warn(e2);
+        }
       }
+      document.getElementById("btn-compile").disabled = !api.compile;
+      document.getElementById("btn-run").disabled = !api.run;
+      document.getElementById("btn-both").disabled = !api.both;
     }
 
-    function fallback(src) {
-      const lines = src.split(/\n/).filter(Boolean).length;
-      const hasMain = /функция\s+главная/.test(src);
-      const hasPrint = /ПечатьСтроки|печать_строки/.test(src);
-      return [
-        "Fallback (без WASM)",
-        "Строк: " + lines,
-        "главная: " + (hasMain ? "да" : "нет"),
-        "печать: " + (hasPrint ? "да" : "нет"),
-        "",
-        "Сборка WASM выполняется в GitHub Actions при деплое сайта.",
-      ].join("\n");
+    function showHex(hex) {
+      if (!hex || hex.startsWith("Ошибка")) {
+        zipbEl.textContent = hex || "—";
+        return;
+      }
+      zipbEl.textContent = hex.length > 256 ? hex.slice(0, 256) + "…" : hex;
     }
 
-    window.run = function () {
-      const src = document.getElementById("code").value;
-      try {
-        out.textContent = compileFn ? compileFn(src) : fallback(src);
-      } catch (e) {
-        out.textContent = "Ошибка: " + e;
+    document.getElementById("btn-compile").onclick = () => {
+      const код = document.getElementById("код").value;
+      const hex = api.compile(код);
+      showHex(hex);
+      вывод.textContent = hex.startsWith("Ошибка") ? hex : "ZIPB готов (hex выше)";
+    };
+
+    document.getElementById("btn-run").onclick = () => {
+      const код = document.getElementById("код").value;
+      const hex = api.compile(код);
+      showHex(hex);
+      if (hex.startsWith("Ошибка")) {
+        вывод.textContent = hex;
+        return;
       }
+      вывод.textContent = api.run(hex);
+    };
+
+    document.getElementById("btn-both").onclick = () => {
+      const код = document.getElementById("код").value;
+      const hex = api.compile ? api.compile(код) : "";
+      if (hex && !hex.startsWith("Ошибка")) showHex(hex);
+      вывод.textContent = api.both(код);
     };
 
     document.querySelectorAll(".task button.load").forEach((btn) => {
       btn.addEventListener("click", () => {
         const snip = btn.getAttribute("data-snippet");
-        if (snip) document.getElementById("code").value = snip;
+        if (snip) document.getElementById("код").value = snip;
       });
     });
 
     const checks = {
-      1: (c, o) => /ПечатьСтроки\s*\(\s*["']Привет,\s*мир!["']/.test(c) || String(o).includes("Привет"),
+      1: (c, o) => /напечатать_строку|ПечатьСтроки/.test(c) || String(o).includes("Привет"),
       2: (c) => c.includes("функция") && /сложить/.test(c) && c.includes("возврат"),
-      3: (c, o) => /факториал/.test(c) && (c.includes("возврат") || /120|3628800/.test(String(o))),
+      3: (c, o) => /факториал/.test(c) && (c.includes("возврат") || /120/.test(String(o))),
       4: (c) => /если/.test(c),
       5: (c) => /пока|для/.test(c),
       6: (c) => /\[|список|массив/.test(c),
@@ -231,38 +285,47 @@
       10: (c) => /задач|создать|функция/.test(c.toLowerCase()),
     };
 
+    function runCheck(id, msgEl) {
+      const code = document.getElementById("код").value;
+      let outText = "";
+      try {
+        if (api.both) {
+          outText = String(api.both(code));
+          вывод.textContent = outText;
+          if (api.compile) showHex(api.compile(code));
+        } else if (api.compile) {
+          outText = String(api.compile(code));
+          showHex(outText);
+          вывод.textContent = outText;
+        }
+      } catch (e) {
+        outText = String(e);
+        вывод.textContent = "Ошибка: " + e;
+      }
+      const fn = checks[id];
+      const ok = fn ? !!fn(code, outText) : false;
+      if (msgEl) {
+        msgEl.hidden = false;
+        msgEl.className = "check-msg " + (ok ? "ok" : "bad");
+        msgEl.textContent = ok ? "✓ Задача решена!" : "✗ Решение не подходит. Попробуйте ещё раз.";
+      }
+      if (ok) {
+        try {
+          const key = "zip-course-progress";
+          const data = JSON.parse(localStorage.getItem(key) || "{}");
+          data["задача_" + id] = { статус: "решена", время: new Date().toISOString() };
+          localStorage.setItem(key, JSON.stringify(data));
+        } catch (_) {}
+      }
+    }
+
     document.querySelectorAll(".task button.check").forEach((btn) => {
       btn.addEventListener("click", () => {
         const id = Number(btn.getAttribute("data-check"));
-        const code = document.getElementById("code").value;
-        let outText = "";
-        try {
-          outText = compileFn ? String(compileFn(code)) : fallback(code);
-          out.textContent = outText;
-        } catch (e) {
-          outText = String(e);
-          out.textContent = "Ошибка: " + e;
-        }
-        const fn = checks[id];
-        const ok = fn ? !!fn(code, outText) : false;
-        const msg = btn.parentElement.querySelector(".check-msg");
-        if (msg) {
-          msg.hidden = false;
-          msg.className = "check-msg " + (ok ? "ok" : "bad");
-          msg.textContent = ok ? "✓ Задача решена!" : "✗ Решение не подходит. Попробуйте ещё раз.";
-        }
-        if (ok) {
-          try {
-            const key = "zip-course-progress";
-            const data = JSON.parse(localStorage.getItem(key) || "{}");
-            data["задача_" + id] = { статус: "решена", время: new Date().toISOString() };
-            localStorage.setItem(key, JSON.stringify(data));
-          } catch (_) {}
-        }
+        runCheck(id, btn.parentElement.querySelector(".check-msg"));
       });
     });
 
-    // Add check buttons for tasks 4–10 if missing
     document.querySelectorAll(".task[data-task]").forEach((task) => {
       const id = task.getAttribute("data-task");
       if (!task.querySelector("button.check")) {
@@ -276,21 +339,7 @@
         m.className = "check-msg";
         m.hidden = true;
         task.appendChild(m);
-        b.addEventListener("click", () => {
-          const code = document.getElementById("code").value;
-          let outText = "";
-          try {
-            outText = compileFn ? String(compileFn(code)) : fallback(code);
-            out.textContent = outText;
-          } catch (e) {
-            outText = String(e);
-          }
-          const fn = checks[Number(id)];
-          const ok = fn ? !!fn(code, outText) : false;
-          m.hidden = false;
-          m.className = "check-msg " + (ok ? "ok" : "bad");
-          m.textContent = ok ? "✓ Задача решена!" : "✗ Решение не подходит. Попробуйте ещё раз.";
-        });
+        b.addEventListener("click", () => runCheck(Number(id), m));
       }
     });
 
