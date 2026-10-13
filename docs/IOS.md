@@ -14,7 +14,7 @@
 - **Static library** (`.a`), не `.so` (App Store не принимает произвольные dylib).
 - **XCFramework** — универсальный бандл для устройства + симулятора.
 - **C-API** + Swift-обёртка (не JNI, как на Android).
-- Bridging header / `module.modulemap` для Objective-C / Swift.
+- Bridging header (`ZipDemo-Bridging-Header.h`) для Objective-C / Swift.
 
 ## Сборка
 
