@@ -7,6 +7,15 @@
 
 ## [Unreleased]
 
+## [7.1.0] — 2026-10-13
+
+### Android (NDK + JNI)
+- Crate `zip-vm-android` → `libzip_vm_android.so` (arm64-v8a, x86_64)
+- Публичный API `zip_vm::zip_компилятор`
+- Kotlin: `Zip.скомпилировать` / `запустить` / `скомпилироватьИЗапустить` / `версия`
+- CI: [`.github/workflows/android.yml`](.github/workflows/android.yml)
+- Docs: [docs/ANDROID.md](docs/ANDROID.md)
+
 ## [7.0.0] — 2026-10-13
 
 ### Кросс-компиляция Windows ARM64 — финал v7

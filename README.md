@@ -127,9 +127,11 @@ ZIP — **самокомпилируемый язык**, где компилят
 | **ARM64 Windows** | Rust | ✅ (v7.0.0, CI `windows-11-arm`) |
 | **RISC-V 64** | Rust | ✅ (через QEMU / CI) |
 | **WASM (браузер)** | **wasm-bindgen** | ✅ (v7.0.0-rc) |
+| **Android (ARM64, x86-64)** | Rust + JNI | ✅ (v7.1.0) |
+| iOS | Rust + Swift | ⏳ |
 
 **ZIP-байткод платформонезависим.** Один и тот же `.zipb` работает на **всех** платформах.  
-Подробнее: [docs/ARM64.md](docs/ARM64.md) · [docs/RISCV.md](docs/RISCV.md) · [docs/WASM.md](docs/WASM.md) · [docs/WINDOWS-ARM.md](docs/WINDOWS-ARM.md).
+Подробнее: [docs/ARM64.md](docs/ARM64.md) · [docs/RISCV.md](docs/RISCV.md) · [docs/WASM.md](docs/WASM.md) · [docs/WINDOWS-ARM.md](docs/WINDOWS-ARM.md) · [docs/ANDROID.md](docs/ANDROID.md).
 
 ### Способы компиляции
 

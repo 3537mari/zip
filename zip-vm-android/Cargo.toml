@@ -1,0 +1,21 @@
+[package]
+name = "zip-vm-android"
+version = "7.1.0"
+edition = "2021"
+description = "JNI-обёртка ZIP-VM для Android"
+license = "MIT"
+
+[lib]
+name = "zip_vm_android"
+crate-type = ["cdylib"]
+
+[dependencies]
+zip-vm = { path = "../zip-vm", default-features = false }
+jni = "0.21"
+
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+strip = true
+panic = "abort"

@@ -1,0 +1,97 @@
+name: Android Build & Test
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust + Android targets
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android,x86_64-linux-android
+
+      - name: Setup Android NDK
+        uses: nttld/setup-ndk@v1
+        id: setup-ndk
+        with:
+          ndk-version: r26b
+          add-to-path: false
+
+      - name: Install cargo-ndk
+        run: cargo install cargo-ndk --locked
+
+      - name: Build zip-vm-android (.so)
+        env:
+          ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
+        run: |
+          cd zip-vm-android
+          cargo ndk \
+            -t arm64-v8a \
+            -t x86_64 \
+            -o ./app/src/main/jniLibs \
+            build --release
+
+      - name: Verify .so architecture
+        run: |
+          # zip-vm тоже cdylib (для WASM) — убираем лишний .so из jniLibs
+          rm -f zip-vm-android/app/src/main/jniLibs/*/libzip_vm.so
+          file zip-vm-android/app/src/main/jniLibs/arm64-v8a/libzip_vm_android.so
+          file zip-vm-android/app/src/main/jniLibs/x86_64/libzip_vm_android.so
+          file zip-vm-android/app/src/main/jniLibs/arm64-v8a/libzip_vm_android.so | grep -qi 'aarch64\|ARM aarch64'
+          file zip-vm-android/app/src/main/jniLibs/x86_64/libzip_vm_android.so | grep -qi 'x86-64\|x86_64'
+          ls -lh zip-vm-android/app/src/main/jniLibs/*/libzip_vm_android.so
+          python3 - <<'PY'
+          from pathlib import Path
+          for p in Path("zip-vm-android/app/src/main/jniLibs").rglob("libzip_vm_android.so"):
+              n = p.stat().st_size
+              print(p, n)
+              assert n < 5 * 1024 * 1024, n
+              assert n > 50_000, n
+          PY
+
+      - name: Host smoke (zip_компилятор)
+        run: |
+          cargo test --manifest-path zip-vm/Cargo.toml --lib zip_компилятор -- --nocapture || \
+          cargo test --manifest-path zip-vm/Cargo.toml zip_gen_полный -- --nocapture
+
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build debug APK
+        run: |
+          cd zip-vm-android
+          gradle assembleDebug --no-daemon
+          ls -lh app/build/outputs/apk/debug/*.apk
+
+      - name: Instrumentation tests (x86_64 emulator)
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 30
+          arch: x86_64
+          script: |
+            cd zip-vm-android
+            gradle connectedDebugAndroidTest --no-daemon
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-build
+          path: |
+            zip-vm-android/app/src/main/jniLibs/**/*.so
+            zip-vm-android/app/build/outputs/apk/debug/*.apk

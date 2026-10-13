@@ -59,10 +59,15 @@
 
 См. [ROADMAP_V7.md](ROADMAP_V7.md), [docs/WINDOWS-ARM.md](docs/WINDOWS-ARM.md).
 
-## v8.0.0 (2028) — Мобильные биндинги
+## v7.1.0 (2026-10-13) — ✅ Android
 
-- [ ] Android (NDK + JNI)
+- [x] Android (NDK + JNI) ✅
+- [ ] iOS (Swift + FFI) — следующий
+
+## v8.0.0 (2028) — Мобильный UX / iOS
+
 - [ ] iOS (Swift + Objective-C bridge)
+- [ ] Публикация в Google Play / App Store (опционально)
 
 ## v9.0.0 (2029) — GPU-вычисления
 
