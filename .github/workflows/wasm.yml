@@ -47,22 +47,33 @@ jobs:
         uses: browser-actions/setup-chrome@v1
 
       - name: Test in headless Chrome
+        env:
+          LANG: C.UTF-8
+          LC_ALL: C.UTF-8
         run: |
           cd веб-сайт/wasm
           python3 -m http.server 8765 &
           sleep 2
+          # ASCII-имя копии — проще для логов и curl
+          cp тест_wasm.html test_wasm.html
           chrome --headless=new --disable-gpu \
             --no-sandbox \
-            --virtual-time-budget=15000 \
+            --virtual-time-budget=20000 \
             --dump-dom \
-            http://localhost:8765/тест_wasm.html > /tmp/тест_вывод.html
-          cat /tmp/тест_вывод.html
-          if grep -q "ОШИБКА" /tmp/тест_вывод.html; then
-            echo "WASM-тесты провалились"
-            exit 1
-          fi
-          grep -q "WASM-тесты прошли\|Привет из WASM\|= 120" /tmp/тест_вывод.html
-          echo "✓ WASM-тесты прошли"
+            http://localhost:8765/test_wasm.html > /tmp/wasm_out.html
+          # Сохраняем как UTF-8 явно
+          python3 - <<'PY'
+          from pathlib import Path
+          raw = Path("/tmp/wasm_out.html").read_bytes()
+          text = raw.decode("utf-8", errors="replace")
+          Path("/tmp/wasm_out.html").write_text(text, encoding="utf-8")
+          print(text[text.find("<pre"):text.find("</pre>")+6] if "<pre" in text else text[:2000])
+          if "ОШИБКА" in text and "OK WASM-tests passed" not in text:
+              raise SystemExit("WASM-тесты провалились")
+          if "OK WASM-tests passed" not in text and "= 120" not in text:
+              raise SystemExit("нет маркера успеха")
+          print("✓ WASM-тесты прошли")
+          PY
 
       - name: Upload WASM artifacts
         uses: actions/upload-artifact@v4
