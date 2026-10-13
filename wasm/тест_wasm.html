@@ -19,41 +19,57 @@
       лог.textContent += s + "\n";
     }
 
+    // Юникод-эскейпы — чтобы тест не зависел от кодировки HTML на диске.
+    const привет = "\u041f\u0440\u0438\u0432\u0435\u0442 \u0438\u0437 WASM!";
+
     async function run() {
       await init();
       write(`ZIP v${versionZip()}`);
 
       write("--- Тест 1: пустая программа ---");
-      write(compileAndRun("функция главная() { возврат(0) }"));
+      const t1 = compileAndRun("\u0444\u0443\u043d\u043a\u0446\u0438\u044f \u0433\u043b\u0430\u0432\u043d\u0430\u044f() { \u0432\u043e\u0437\u0432\u0440\u0430\u0442(0) }");
+      write(t1);
 
       write("--- Тест 2: 2+3 ---");
-      write(compileAndRun("функция главная() { возврат(2 + 3) }"));
+      const t2 = compileAndRun("\u0444\u0443\u043d\u043a\u0446\u0438\u044f \u0433\u043b\u0430\u0432\u043d\u0430\u044f() { \u0432\u043e\u0437\u0432\u0440\u0430\u0442(2 + 3) }");
+      write(t2);
 
       write("--- Тест 3: строка ---");
-      write(
-        compileAndRun(`функция главная() {
-    напечатать_строку("Привет из WASM!")
-    возврат(0)
-}`)
+      const t3 = compileAndRun(
+        "\u0444\u0443\u043d\u043a\u0446\u0438\u044f \u0433\u043b\u0430\u0432\u043d\u0430\u044f() {\n" +
+          "    \u043d\u0430\u043f\u0435\u0447\u0430\u0442\u0430\u0442\u044c_\u0441\u0442\u0440\u043e\u043a\u0443(\"" +
+          привет +
+          "\")\n" +
+          "    \u0432\u043e\u0437\u0432\u0440\u0430\u0442(0)\n}"
       );
+      write(t3);
 
       write("--- Тест 4: факториал(5) ---");
-      write(
-        compileAndRun(`функция факториал(н) {
-    если (н < 2) { возврат(1) }
-    возврат(н * факториал(н - 1))
-}
-функция главная() { возврат(факториал(5)) }
-`)
+      const t4 = compileAndRun(
+        "\u0444\u0443\u043d\u043a\u0446\u0438\u044f \u0444\u0430\u043a\u0442\u043e\u0440\u0438\u0430\u043b(\u043d) {\n" +
+          "    \u0435\u0441\u043b\u0438 (\u043d < 2) { \u0432\u043e\u0437\u0432\u0440\u0430\u0442(1) }\n" +
+          "    \u0432\u043e\u0437\u0432\u0440\u0430\u0442(\u043d * \u0444\u0430\u043a\u0442\u043e\u0440\u0438\u0430\u043b(\u043d - 1))\n" +
+          "}\n" +
+          "\u0444\u0443\u043d\u043a\u0446\u0438\u044f \u0433\u043b\u0430\u0432\u043d\u0430\u044f() { \u0432\u043e\u0437\u0432\u0440\u0430\u0442(\u0444\u0430\u043a\u0442\u043e\u0440\u0438\u0430\u043b(5)) }\n"
       );
+      write(t4);
 
       write("--- ИТОГ ---");
       const text = лог.textContent;
-      if (text.includes("Ошибка") && !text.includes("= 120")) {
-        write("ОШИБКА: есть ошибки компиляции/выполнения");
-      } else if (!text.includes("Привет из WASM") || !text.includes("= 120") || !text.includes("= 5")) {
+      const ok =
+        t1.includes("= 0") &&
+        t2.includes("= 5") &&
+        t3.includes("WASM!") &&
+        t3.includes(привет) &&
+        t4.includes("= 120") &&
+        !text.includes("Ошибка компиляции") &&
+        !text.includes("Ошибка VM");
+      if (!ok) {
         write("ОШИБКА: ожидаемый вывод не найден");
+        write("t3_has_hello=" + t3.includes(привет));
+        write("t3_has_wasm=" + t3.includes("WASM!"));
       } else {
+        write("OK WASM-tests passed");
         write("✓ WASM-тесты прошли");
       }
     }
