@@ -66,13 +66,14 @@ jobs:
           from pathlib import Path
           raw = Path("/tmp/wasm_out.html").read_bytes()
           text = raw.decode("utf-8", errors="replace")
-          Path("/tmp/wasm_out.html").write_text(text, encoding="utf-8")
-          print(text[text.find("<pre"):text.find("</pre>")+6] if "<pre" in text else text[:2000])
-          if "ОШИБКА" in text and "OK WASM-tests passed" not in text:
-              raise SystemExit("WASM-тесты провалились")
-          if "OK WASM-tests passed" not in text and "= 120" not in text:
-              raise SystemExit("нет маркера успеха")
-          print("✓ WASM-тесты прошли")
+          print(text[text.find("<pre"): text.find("</pre>") + 6] if "<pre" in text else text[:2000])
+          if "OK WASM-tests passed" not in text:
+              raise SystemExit("WASM-тесты провалились: нет OK WASM-tests passed")
+          if "t3_has_hello=false" in text:
+              raise SystemExit("WASM-тесты: кириллица в строках сломана")
+          if "= 120" not in text or "= 5" not in text:
+              raise SystemExit("WASM-тесты: нет ожидаемых результатов")
+          print("OK WASM CI passed")
           PY
 
       - name: Upload WASM artifacts

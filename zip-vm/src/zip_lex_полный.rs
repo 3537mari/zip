@@ -90,6 +90,20 @@ fn is_cyr(data: &[u8], pos: usize) -> bool {
     (b0 == 0xD0 || b0 == 0xD1) && (0x80..=0xBF).contains(&b1)
 }
 
+fn utf8_ширина(b0: u8) -> usize {
+    if b0 < 0x80 {
+        1
+    } else if b0 & 0xE0 == 0xC0 {
+        2
+    } else if b0 & 0xF0 == 0xE0 {
+        3
+    } else if b0 & 0xF8 == 0xF0 {
+        4
+    } else {
+        1
+    }
+}
+
 impl<'a> Лексер<'a> {
     fn cur(&self) -> u8 {
         if self.pos < self.data.len() {
@@ -206,8 +220,27 @@ impl<'a> Лексер<'a> {
                 });
                 self.adv();
             } else {
-                out.push(self.cur() as char);
-                self.adv();
+                // Декодируем один UTF-8 символ (не байт как Latin-1).
+                let start = self.pos;
+                let b0 = self.cur();
+                let width = utf8_ширина(b0).min(self.data.len() - start);
+                match std::str::from_utf8(&self.data[start..start + width]) {
+                    Ok(s) => {
+                        if let Some(ch) = s.chars().next() {
+                            out.push(ch);
+                            for _ in 0..ch.len_utf8() {
+                                self.adv();
+                            }
+                        } else {
+                            out.push('\u{FFFD}');
+                            self.adv();
+                        }
+                    }
+                    Err(_) => {
+                        out.push('\u{FFFD}');
+                        self.adv();
+                    }
+                }
             }
         }
         if self.cur() == b'"' {
