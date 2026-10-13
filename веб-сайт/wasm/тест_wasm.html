@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>ZIP WASM — тесты</title>
+</head>
+<body>
+  <h1>Тесты ZIP WASM</h1>
+  <pre id="лог"></pre>
+
+  <script type="module">
+    import init, {
+      compileAndRun,
+      versionZip,
+    } from "./zip_vm.js";
+
+    const лог = document.getElementById("лог");
+    function write(s) {
+      лог.textContent += s + "\n";
+    }
+
+    async function run() {
+      await init();
+      write(`ZIP v${versionZip()}`);
+
+      write("--- Тест 1: пустая программа ---");
+      write(compileAndRun("функция главная() { возврат(0) }"));
+
+      write("--- Тест 2: 2+3 ---");
+      write(compileAndRun("функция главная() { возврат(2 + 3) }"));
+
+      write("--- Тест 3: строка ---");
+      write(
+        compileAndRun(`функция главная() {
+    напечатать_строку("Привет из WASM!")
+    возврат(0)
+}`)
+      );
+
+      write("--- Тест 4: факториал(5) ---");
+      write(
+        compileAndRun(`функция факториал(н) {
+    если (н < 2) { возврат(1) }
+    возврат(н * факториал(н - 1))
+}
+функция главная() { возврат(факториал(5)) }
+`)
+      );
+
+      write("--- ИТОГ ---");
+      const text = лог.textContent;
+      if (text.includes("Ошибка") && !text.includes("= 120")) {
+        write("ОШИБКА: есть ошибки компиляции/выполнения");
+      } else if (!text.includes("Привет из WASM") || !text.includes("= 120") || !text.includes("= 5")) {
+        write("ОШИБКА: ожидаемый вывод не найден");
+      } else {
+        write("✓ WASM-тесты прошли");
+      }
+    }
+
+    run().catch((e) => write("ОШИБКА: " + e));
+  </script>
+</body>
+</html>

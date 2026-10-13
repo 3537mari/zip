@@ -1,0 +1,75 @@
+name: WASM Build & Test
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  build-wasm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust + wasm32 target
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Install wasm-bindgen-cli
+        run: cargo install wasm-bindgen-cli --version 0.2.100 --locked --force
+
+      - name: Build zip-vm for WASM
+        run: |
+          cargo build --lib --release \
+            --target wasm32-unknown-unknown \
+            --no-default-features --features wasm \
+            --manifest-path zip-vm/Cargo.toml
+
+      - name: Run wasm-bindgen
+        run: |
+          wasm-bindgen \
+            --target web \
+            --out-dir веб-сайт/wasm \
+            zip-vm/target/wasm32-unknown-unknown/release/zip_vm.wasm
+          ls -lh веб-сайт/wasm/zip_vm_bg.wasm
+          # Размер < 5 МБ
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("веб-сайт/wasm/zip_vm_bg.wasm")
+          size = p.stat().st_size
+          print(f"size={size}")
+          assert size < 5 * 1024 * 1024, size
+          PY
+
+      - name: Setup Chrome
+        uses: browser-actions/setup-chrome@v1
+
+      - name: Test in headless Chrome
+        run: |
+          cd веб-сайт/wasm
+          python3 -m http.server 8765 &
+          sleep 2
+          chrome --headless=new --disable-gpu \
+            --no-sandbox \
+            --virtual-time-budget=15000 \
+            --dump-dom \
+            http://localhost:8765/тест_wasm.html > /tmp/тест_вывод.html
+          cat /tmp/тест_вывод.html
+          if grep -q "ОШИБКА" /tmp/тест_вывод.html; then
+            echo "WASM-тесты провалились"
+            exit 1
+          fi
+          grep -q "WASM-тесты прошли\|Привет из WASM\|= 120" /tmp/тест_вывод.html
+          echo "✓ WASM-тесты прошли"
+
+      - name: Upload WASM artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: wasm-build
+          path: |
+            веб-сайт/wasm/zip_vm.js
+            веб-сайт/wasm/zip_vm_bg.wasm
+            веб-сайт/wasm/zip_vm.d.ts
+            веб-сайт/wasm/тест_wasm.html

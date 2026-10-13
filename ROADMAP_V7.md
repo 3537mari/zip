@@ -18,23 +18,15 @@
 
 - [x] RISC-V 64 (`riscv64gc-unknown-linux-gnu`) + QEMU CI ✅
 - [x] Документация [docs/RISCV.md](docs/RISCV.md) ✅
-- [ ] WASM (следующий)
+
+## v7.0.0-rc (2026-10-13) — WASM
+
+- [x] **WASM (браузер)** ✅ — `wasm32-unknown-unknown` + wasm-bindgen
+- [x] Плейграунд: компилировать и запускать ZIP в браузере
+- [x] CI: [`.github/workflows/wasm.yml`](.github/workflows/wasm.yml) + headless Chrome
+- [x] Документация [docs/WASM.md](docs/WASM.md) ✅
 - [ ] Нативные артефакты в GitHub Releases (ARM64 / RISC-V)
-
-## Что нужно сделать дальше
-
-### 1. WASM
-
-**Платформы:** Браузер, edge computing.
-
-```bash
-wasm-pack build --target web  # или отдельная WASM-сборка VM
-```
-
-### 2. Нативные релизы
-
-- Бинарники `zip-vm` для Linux ARM64 / RISC-V в Releases
-- MSI/DEB/DMG под ARM64
+- [ ] Windows ARM (нативная сборка) — следующий
 
 ## Результат v7.0.0
 
@@ -47,6 +39,6 @@ wasm-pack build --target web  # или отдельная WASM-сборка VM
 | ARM64 macOS | ✅ (target) |
 | ARM64 Windows | ✅ (target) |
 | RISC-V 64 | ✅ (v7.0.0-beta, QEMU CI) |
-| WASM | ⏳ |
+| WASM | ✅ (v7.0.0-rc, браузер) |
 
-**ZIP-байткод один на всех платформах.** См. [docs/ARM64.md](docs/ARM64.md), [docs/RISCV.md](docs/RISCV.md).
+**ZIP-байткод один на всех платформах.** См. [docs/ARM64.md](docs/ARM64.md), [docs/RISCV.md](docs/RISCV.md), [docs/WASM.md](docs/WASM.md).

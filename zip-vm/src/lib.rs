@@ -15,10 +15,15 @@ pub mod байткод_в_llvm;
 pub mod ir_в_байткод;
 #[path = "встроенные_v3.rs"]
 pub mod встроенные_v3;
+#[path = "вывод.rs"]
+pub mod вывод;
 #[path = "zip_std_v4.rs"]
 mod zip_std_v4;
 #[path = "zip_self_host.rs"]
 pub mod zip_self_host;
+#[cfg(feature = "wasm")]
+#[path = "wasm_библиотека.rs"]
+pub mod wasm_библиотека;
 #[path = "zip_lex_полный.rs"]
 pub mod zip_lex_полный;
 #[path = "zip_ast.rs"]
@@ -57,7 +62,9 @@ pub use байткод::{Значение, Инструкция, Модуль, �
 pub use байткод_v3::{Кодировщик, Опкод, МАГИЯ_V3, ВЕРСИЯ_V3};
 pub use байткод_v3_декодер::{декодировать_код, разобрать_v3, это_zipb};
 pub use байткод_в_llvm::байткод_в_llvm_ir;
-pub use загрузчик::{загрузить, разобрать, сериализовать};
+#[cfg(not(target_arch = "wasm32"))]
+pub use загрузчик::загрузить;
+pub use загрузчик::{разобрать, сериализовать};
 pub use исполнитель::Исполнитель;
 pub use исполнитель_v3::{ИсполнительV3, ЗначениеV3, ОшибкаV3};
 pub use jit::JitКомпилятор;

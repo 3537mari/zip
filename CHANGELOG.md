@@ -7,6 +7,15 @@
 
 ## [Unreleased]
 
+## [7.0.0-rc] — 2026-10-13
+
+### Кросс-компиляция WASM (VM в браузере)
+- Rust-VM: `wasm32-unknown-unknown` + `wasm-bindgen` (`--features wasm`)
+- Web-backend: захват вывода без `std::process` / файлов
+- Плейграунд: компилировать **и запускать** ZIP (`compileAndRun`)
+- CI: `.github/workflows/wasm.yml` (headless Chrome)
+- Docs: [docs/WASM.md](docs/WASM.md)
+
 ## [7.0.0-beta] — 2026-10-13
 
 ### Кросс-компиляция RISC-V (VM)

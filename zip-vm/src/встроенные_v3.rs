@@ -1,8 +1,8 @@
 //! Встроенные функции для VM v3 (+ runtime syscalls / аллокатор / I/O).
 
+use crate::вывод;
 use crate::исполнитель_v3::ЗначениеV3;
 use std::collections::HashMap;
-use std::io::{self, Write};
 use std::sync::Mutex;
 
 pub type ВстроеннаяФункция = fn(&[ЗначениеV3]) -> Result<ЗначениеV3, String>;
@@ -63,15 +63,11 @@ fn как_строка(з: &ЗначениеV3) -> String {
 fn sys_write_impl(fd: i64, данные: &[u8]) -> Result<i64, String> {
     match fd {
         1 => {
-            let mut out = io::stdout().lock();
-            out.write_all(данные).map_err(|e| e.to_string())?;
-            out.flush().ok();
+            вывод::писать(данные);
             Ok(данные.len() as i64)
         }
         2 => {
-            let mut err = io::stderr().lock();
-            err.write_all(данные).map_err(|e| e.to_string())?;
-            err.flush().ok();
+            вывод::писать_ошибку(данные);
             Ok(данные.len() as i64)
         }
         _ => Err(format!("sys_write: fd {fd} не поддержан в VM")),
@@ -136,12 +132,12 @@ impl Встроенные {
 
         ф.регистрация("печать_число", |арг| {
             let n = арг.first().map(|з| з.как_целое()).unwrap_or(0);
-            println!("{n}");
+            вывод::писать(format!("{n}\n").as_bytes());
             Ok(ЗначениеV3::Ничто)
         });
         ф.регистрация("ПечатьЧисло", |арг| {
             let n = арг.first().map(|з| з.как_целое()).unwrap_or(0);
-            println!("{n}");
+            вывод::писать(format!("{n}\n").as_bytes());
             Ok(ЗначениеV3::Ничто)
         });
 
@@ -151,7 +147,7 @@ impl Встроенные {
                 Some(з) => format!("{з:?}"),
                 None => String::new(),
             };
-            println!("{s}");
+            вывод::писать(format!("{s}\n").as_bytes());
             Ok(ЗначениеV3::Ничто)
         });
         ф.регистрация("ПечатьСтроки", |арг| {
@@ -160,19 +156,19 @@ impl Встроенные {
                 Some(з) => format!("{з:?}"),
                 None => String::new(),
             };
-            println!("{s}");
+            вывод::писать(format!("{s}\n").as_bytes());
             Ok(ЗначениеV3::Ничто)
         });
 
         ф.регистрация("печать", |арг| {
             if let Some(з) = арг.first() {
-                print!("{з}");
+                вывод::писать(format!("{з}").as_bytes());
             }
             Ok(ЗначениеV3::Ничто)
         });
         ф.регистрация("Печать", |арг| {
             if let Some(з) = арг.first() {
-                print!("{з}");
+                вывод::писать(format!("{з}").as_bytes());
             }
             Ok(ЗначениеV3::Ничто)
         });
@@ -275,15 +271,23 @@ impl Встроенные {
             Ok(ЗначениеV3::Целое(n))
         });
         ф.регистрация("байтбуфер_сохранить", |арг| {
-            let id = арг.first().map(|з| з.как_целое()).unwrap_or(0);
-            let путь = арг.get(1).map(как_строка).unwrap_or_default();
-            let map = БАЙТБУФЕРЫ.lock().unwrap();
-            let buf = map
-                .as_ref()
-                .and_then(|m| m.get(&id))
-                .ok_or_else(|| format!("байтбуфер {id} не найден"))?;
-            std::fs::write(&путь, buf).map_err(|e| e.to_string())?;
-            Ok(ЗначениеV3::Целое(buf.len() as i64))
+            #[cfg(target_arch = "wasm32")]
+            {
+                let _ = арг;
+                return Err("файлы недоступны в WASM".into());
+            }
+            #[cfg(not(target_arch = "wasm32"))]
+            {
+                let id = арг.first().map(|з| з.как_целое()).unwrap_or(0);
+                let путь = арг.get(1).map(как_строка).unwrap_or_default();
+                let map = БАЙТБУФЕРЫ.lock().unwrap();
+                let buf = map
+                    .as_ref()
+                    .and_then(|m| m.get(&id))
+                    .ok_or_else(|| format!("байтбуфер {id} не найден"))?;
+                std::fs::write(&путь, buf).map_err(|e| e.to_string())?;
+                Ok(ЗначениеV3::Целое(buf.len() as i64))
+            }
         });
         ф.регистрация("байтбуфер_слить", |арг| {
             let dst = арг.first().map(|з| з.как_целое()).unwrap_or(0);
@@ -323,10 +327,18 @@ impl Встроенные {
         });
 
         ф.регистрация("длина_файла", |арг| {
-            let путь = арг.first().map(как_строка).unwrap_or_default();
-            match std::fs::metadata(&путь) {
-                Ok(m) => Ok(ЗначениеV3::Целое(m.len() as i64)),
-                Err(_) => Ok(ЗначениеV3::Целое(0)),
+            #[cfg(target_arch = "wasm32")]
+            {
+                let _ = арг;
+                Ok(ЗначениеV3::Целое(0))
+            }
+            #[cfg(not(target_arch = "wasm32"))]
+            {
+                let путь = арг.first().map(как_строка).unwrap_or_default();
+                match std::fs::metadata(&путь) {
+                    Ok(m) => Ok(ЗначениеV3::Целое(m.len() as i64)),
+                    Err(_) => Ok(ЗначениеV3::Целое(0)),
+                }
             }
         });
 
@@ -490,28 +502,53 @@ impl Встроенные {
         });
         ф.регистрация("файл_закрыть", |_арг| Ok(ЗначениеV3::Целое(0)));
         ф.регистрация("файл_записать", |арг| {
-            let путь = арг.first().map(как_строка).unwrap_or_default();
-            let данные = арг.get(1).map(как_строка).unwrap_or_default();
-            std::fs::write(&путь, данные.as_bytes()).map_err(|e| e.to_string())?;
-            Ok(ЗначениеV3::Целое(данные.len() as i64))
+            #[cfg(target_arch = "wasm32")]
+            {
+                let _ = арг;
+                Err("файлы недоступны в WASM".into())
+            }
+            #[cfg(not(target_arch = "wasm32"))]
+            {
+                let путь = арг.first().map(как_строка).unwrap_or_default();
+                let данные = арг.get(1).map(как_строка).unwrap_or_default();
+                std::fs::write(&путь, данные.as_bytes()).map_err(|e| e.to_string())?;
+                Ok(ЗначениеV3::Целое(данные.len() as i64))
+            }
         });
         ф.регистрация("файл_дописать", |арг| {
-            let путь = арг.first().map(как_строка).unwrap_or_default();
-            let данные = арг.get(1).map(как_строка).unwrap_or_default();
-            use std::fs::OpenOptions;
-            let mut f = OpenOptions::new()
-                .create(true)
-                .append(true)
-                .open(&путь)
-                .map_err(|e| e.to_string())?;
-            f.write_all(данные.as_bytes()).map_err(|e| e.to_string())?;
-            Ok(ЗначениеV3::Целое(данные.len() as i64))
+            #[cfg(target_arch = "wasm32")]
+            {
+                let _ = арг;
+                Err("файлы недоступны в WASM".into())
+            }
+            #[cfg(not(target_arch = "wasm32"))]
+            {
+                use std::io::Write;
+                let путь = арг.first().map(как_строка).unwrap_or_default();
+                let данные = арг.get(1).map(как_строка).unwrap_or_default();
+                use std::fs::OpenOptions;
+                let mut f = OpenOptions::new()
+                    .create(true)
+                    .append(true)
+                    .open(&путь)
+                    .map_err(|e| e.to_string())?;
+                f.write_all(данные.as_bytes()).map_err(|e| e.to_string())?;
+                Ok(ЗначениеV3::Целое(данные.len() as i64))
+            }
         });
         ф.регистрация("файл_прочитать", |арг| {
-            let путь = арг.first().map(как_строка).unwrap_or_default();
-            match std::fs::read_to_string(&путь) {
-                Ok(s) => Ok(ЗначениеV3::Строка(s)),
-                Err(_) => Ok(ЗначениеV3::Целое(0)),
+            #[cfg(target_arch = "wasm32")]
+            {
+                let _ = арг;
+                Ok(ЗначениеV3::Целое(0))
+            }
+            #[cfg(not(target_arch = "wasm32"))]
+            {
+                let путь = арг.first().map(как_строка).unwrap_or_default();
+                match std::fs::read_to_string(&путь) {
+                    Ok(s) => Ok(ЗначениеV3::Строка(s)),
+                    Err(_) => Ok(ЗначениеV3::Целое(0)),
+                }
             }
         });
         ф.регистрация("zip_file_open", |арг| {
@@ -530,28 +567,53 @@ impl Встроенные {
             Ok(ЗначениеV3::Целое(fd))
         });
         ф.регистрация("zip_file_write", |арг| {
-            let путь = арг.first().map(как_строка).unwrap_or_default();
-            let данные = арг.get(1).map(как_строка).unwrap_or_default();
-            std::fs::write(&путь, данные.as_bytes()).map_err(|e| e.to_string())?;
-            Ok(ЗначениеV3::Целое(данные.len() as i64))
+            #[cfg(target_arch = "wasm32")]
+            {
+                let _ = арг;
+                Err("файлы недоступны в WASM".into())
+            }
+            #[cfg(not(target_arch = "wasm32"))]
+            {
+                let путь = арг.first().map(как_строка).unwrap_or_default();
+                let данные = арг.get(1).map(как_строка).unwrap_or_default();
+                std::fs::write(&путь, данные.as_bytes()).map_err(|e| e.to_string())?;
+                Ok(ЗначениеV3::Целое(данные.len() as i64))
+            }
         });
         ф.регистрация("zip_file_append", |арг| {
-            let путь = арг.first().map(как_строка).unwrap_or_default();
-            let данные = арг.get(1).map(как_строка).unwrap_or_default();
-            use std::fs::OpenOptions;
-            let mut f = OpenOptions::new()
-                .create(true)
-                .append(true)
-                .open(&путь)
-                .map_err(|e| e.to_string())?;
-            f.write_all(данные.as_bytes()).map_err(|e| e.to_string())?;
-            Ok(ЗначениеV3::Целое(данные.len() as i64))
+            #[cfg(target_arch = "wasm32")]
+            {
+                let _ = арг;
+                Err("файлы недоступны в WASM".into())
+            }
+            #[cfg(not(target_arch = "wasm32"))]
+            {
+                use std::io::Write;
+                let путь = арг.first().map(как_строка).unwrap_or_default();
+                let данные = арг.get(1).map(как_строка).unwrap_or_default();
+                use std::fs::OpenOptions;
+                let mut f = OpenOptions::new()
+                    .create(true)
+                    .append(true)
+                    .open(&путь)
+                    .map_err(|e| e.to_string())?;
+                f.write_all(данные.as_bytes()).map_err(|e| e.to_string())?;
+                Ok(ЗначениеV3::Целое(данные.len() as i64))
+            }
         });
         ф.регистрация("zip_file_read", |арг| {
-            let путь = арг.first().map(как_строка).unwrap_or_default();
-            match std::fs::read_to_string(&путь) {
-                Ok(s) => Ok(ЗначениеV3::Строка(s)),
-                Err(_) => Ok(ЗначениеV3::Целое(0)),
+            #[cfg(target_arch = "wasm32")]
+            {
+                let _ = арг;
+                Ok(ЗначениеV3::Целое(0))
+            }
+            #[cfg(not(target_arch = "wasm32"))]
+            {
+                let путь = арг.first().map(как_строка).unwrap_or_default();
+                match std::fs::read_to_string(&путь) {
+                    Ok(s) => Ok(ЗначениеV3::Строка(s)),
+                    Err(_) => Ok(ЗначениеV3::Целое(0)),
+                }
             }
         });
 

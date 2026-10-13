@@ -33,14 +33,22 @@ jobs:
         with:
           targets: wasm32-unknown-unknown
 
-      - name: Build WASM playground
-        working-directory: zipc
+      - name: Build WASM playground (zip-vm + zipc)
         run: |
-          cargo install wasm-bindgen-cli --version 0.2.100 --force
-          cargo build --lib --target wasm32-unknown-unknown --features wasm --release
-          wasm-bindgen --target web --out-dir ../веб-сайт/wasm \
-            target/wasm32-unknown-unknown/release/zipc.wasm
-          ls -la ../веб-сайт/wasm
+          cargo install wasm-bindgen-cli --version 0.2.100 --locked --force
+          # Полная VM: компиляция + запуск в браузере
+          cargo build --lib --release \
+            --target wasm32-unknown-unknown \
+            --no-default-features --features wasm \
+            --manifest-path zip-vm/Cargo.toml
+          wasm-bindgen --target web --out-dir веб-сайт/wasm \
+            zip-vm/target/wasm32-unknown-unknown/release/zip_vm.wasm
+          # Совместимость: старый zipc compile-only
+          cargo build --lib --target wasm32-unknown-unknown --features wasm --release \
+            --manifest-path zipc/Cargo.toml
+          wasm-bindgen --target web --out-dir веб-сайт/wasm \
+            zipc/target/wasm32-unknown-unknown/release/zipc.wasm
+          ls -lh веб-сайт/wasm/
 
       # Bundler ломается на кириллическом пути — собираем из ASCII-копии
       - name: Prepare ASCII build directory

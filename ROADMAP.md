@@ -42,13 +42,18 @@
 - [x] RISC-V 64 (`riscv64gc-unknown-linux-gnu`) + QEMU CI ✅
 - [x] Документация [docs/RISCV.md](docs/RISCV.md) ✅
 
+## v7.0.0-rc (2026-10-13) — ✅ WASM
+
+- [x] WASM VM + плейграунд (compile + run) ✅
+- [x] Документация [docs/WASM.md](docs/WASM.md) ✅
+
 ## v7.0.0 (2028) — Кросс-компиляция
 
 **Важно:** начиная с v6.1.0 кросс-компиляция — это **задача бэкенда (Rust-VM)**, а не порта всего компилятора.
 
 - [x] ARM64 (Linux, macOS, Windows) — alpha ✅
 - [x] RISC-V 64 — beta ✅
-- [ ] WASM (браузер, edge)
+- [x] WASM (браузер) — rc ✅
 - [ ] Нативные ARM64/RISC-V пакеты в Releases
 
 См. [ROADMAP_V7.md](ROADMAP_V7.md).

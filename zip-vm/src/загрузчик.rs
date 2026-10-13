@@ -3,11 +3,12 @@
 use crate::байткод::{
     опкоды, Инструкция, Модуль, Функция, ОшибкаVM, ВЕРСИЯ, МАГИЯ,
 };
-use std::fs;
+#[cfg(not(target_arch = "wasm32"))]
 use std::path::Path;
 
+#[cfg(not(target_arch = "wasm32"))]
 pub fn загрузить(путь: &Path) -> Result<Модуль, ОшибкаVM> {
-    let байты = fs::read(путь).map_err(|е| ОшибкаVM::новый(е.to_string()))?;
+    let байты = std::fs::read(путь).map_err(|е| ОшибкаVM::новый(е.to_string()))?;
     разобрать(&байты)
 }
 
