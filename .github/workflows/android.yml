@@ -7,7 +7,7 @@ on:
     branches: [master]
 
 jobs:
-  build-android:
+  build-android-so:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -40,7 +40,6 @@ jobs:
 
       - name: Verify .so architecture
         run: |
-          # zip-vm тоже cdylib (для WASM) — убираем лишний .so из jniLibs
           rm -f zip-vm-android/app/src/main/jniLibs/*/libzip_vm.so
           file zip-vm-android/app/src/main/jniLibs/arm64-v8a/libzip_vm_android.so
           file zip-vm-android/app/src/main/jniLibs/x86_64/libzip_vm_android.so
@@ -57,9 +56,25 @@ jobs:
           PY
 
       - name: Host smoke (zip_компилятор)
-        run: |
-          cargo test --manifest-path zip-vm/Cargo.toml --lib zip_компилятор -- --nocapture || \
-          cargo test --manifest-path zip-vm/Cargo.toml zip_gen_полный -- --nocapture
+        run: cargo test --manifest-path zip-vm/Cargo.toml --lib zip_компилятор -- --nocapture
+
+      - name: Upload .so artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-jniLibs
+          path: zip-vm-android/app/src/main/jniLibs
+
+  build-android-apk:
+    runs-on: ubuntu-latest
+    needs: build-android-so
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download .so
+        uses: actions/download-artifact@v4
+        with:
+          name: android-jniLibs
+          path: zip-vm-android/app/src/main/jniLibs
 
       - name: Setup JDK 17
         uses: actions/setup-java@v4
@@ -67,31 +82,28 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Build debug APK
-        run: |
-          cd zip-vm-android
-          gradle assembleDebug --no-daemon
-          ls -lh app/build/outputs/apk/debug/*.apk
-
-      - name: Instrumentation tests (x86_64 emulator)
+      - name: Build APK + instrumented tests (emulator)
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 30
           arch: x86_64
+          force-avd-creation: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
+          disable-animations: true
           script: |
+            set -e
             cd zip-vm-android
+            find app/src/main/jniLibs -type f -name '*.so' -ls
+            gradle assembleDebug --no-daemon
+            ls -lh app/build/outputs/apk/debug/*.apk
             gradle connectedDebugAndroidTest --no-daemon
 
-      - name: Upload artifacts
+      - name: Upload APK
+        if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: android-build
-          path: |
-            zip-vm-android/app/src/main/jniLibs/**/*.so
-            zip-vm-android/app/build/outputs/apk/debug/*.apk
+          name: android-apk
+          path: zip-vm-android/app/build/outputs/apk/debug/*.apk
