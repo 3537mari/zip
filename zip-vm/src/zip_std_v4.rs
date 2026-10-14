@@ -210,51 +210,6 @@ pub fn зарегистрировать(ф: &mut Встроенные) {
         let b = zip_crypto::случайные_байты(n)?;
         Ok(ЗначениеV3::Строка(hex::encode(b)))
     });
-    ф.регистрация_внешняя("zip_crypto_aes_encrypt", |арг| {
-        let data = арг.first().map(как_строка).unwrap_or_default();
-        let key_hex = арг.get(1).map(как_строка).unwrap_or_default();
-        let key_bytes = hex::decode(key_hex.trim()).map_err(|e| format!("key hex: {e}"))?;
-        if key_bytes.len() != 32 {
-            return Err("AES-256 key must be 32 bytes (64 hex)".into());
-        }
-        let mut key = [0u8; 32];
-        key.copy_from_slice(&key_bytes);
-        let pkt = zip_crypto::аес256_гцм_зашифровать_с_iv(data.as_bytes(), &key)?;
-        Ok(ЗначениеV3::Строка(format!(
-            "{}:{}:{}",
-            hex::encode(pkt.iv),
-            hex::encode(pkt.tag),
-            hex::encode(pkt.ciphertext)
-        )))
-    });
-    ф.регистрация_внешняя("zip_crypto_aes_decrypt", |арг| {
-        let packet = арг.first().map(как_строка).unwrap_or_default();
-        let key_hex = арг.get(1).map(как_строка).unwrap_or_default();
-        let key_bytes = hex::decode(key_hex.trim()).map_err(|e| format!("key hex: {e}"))?;
-        if key_bytes.len() != 32 {
-            return Err("AES-256 key must be 32 bytes".into());
-        }
-        let mut key = [0u8; 32];
-        key.copy_from_slice(&key_bytes);
-        let parts: Vec<_> = packet.split(':').collect();
-        if parts.len() != 3 {
-            return Err("packet format iv:tag:ct".into());
-        }
-        let iv_b = hex::decode(parts[0]).map_err(|e| format!("iv: {e}"))?;
-        let tag_b = hex::decode(parts[1]).map_err(|e| format!("tag: {e}"))?;
-        let ct = hex::decode(parts[2]).map_err(|e| format!("ct: {e}"))?;
-        if iv_b.len() != 12 || tag_b.len() != 16 {
-            return Err("iv=12 tag=16 required".into());
-        }
-        let mut iv = [0u8; 12];
-        let mut tag = [0u8; 16];
-        iv.copy_from_slice(&iv_b);
-        tag.copy_from_slice(&tag_b);
-        let plain = zip_crypto::аес256_гцм_расшифровать(&ct, &key, &iv, &tag)?;
-        Ok(ЗначениеV3::Строка(
-            String::from_utf8_lossy(&plain).into_owned(),
-        ))
-    });
     ф.регистрация_внешняя("zip_crypto_kyber_keygen", |_арг| {
         let (pk, sk) = zip_crypto::kyber1024_генерация_ключей()?;
         Ok(ЗначениеV3::Строка(format!(
@@ -348,8 +303,6 @@ pub fn зарегистрировать(ф: &mut Встроенные) {
         "хеш_ша256",
         "хеш_ша3_256",
         "случайные_байты",
-        "шифровать_аес",
-        "расшифровать_аес",
         "kyber1024_генерация_ключей",
         "kyber1024_инкапсуляция",
         "kyber1024_декапсуляция",
@@ -374,8 +327,6 @@ pub fn зарегистрировать(ф: &mut Встроенные) {
             "хеш_ша256" => "zip_std_sha256",
             "хеш_ша3_256" => "zip_std_sha3_256",
             "случайные_байты" => "zip_crypto_random",
-            "шифровать_аес" => "zip_crypto_aes_encrypt",
-            "расшифровать_аес" => "zip_crypto_aes_decrypt",
             "kyber1024_генерация_ключей" => "zip_crypto_kyber_keygen",
             "kyber1024_инкапсуляция" => "zip_crypto_kyber_encap",
             "kyber1024_декапсуляция" => "zip_crypto_kyber_decap",

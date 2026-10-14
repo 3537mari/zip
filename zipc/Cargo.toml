@@ -67,6 +67,10 @@ name = "тест_эпигенетики"
 path = "../tests/тест_эпигенетики.rs"
 
 [[test]]
+name = "тест_aes_zip"
+path = "../tests/тест_aes_zip.rs"
+
+[[test]]
 name = "тест_опциональных"
 path = "../tests/тест_опциональных.rs"
 

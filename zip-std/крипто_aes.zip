@@ -1,10 +1,6 @@
-// ZIP STD: AES-256-GCM API (?CBL  zip-crypto / VM, 157 OpenSSL)
-#runtime("allocator")
-
-DC=:F8O H8D@>20BL_05A(40==K5, :;NG_hex) {
-    2>72@0B(zip_crypto_aes_encrypt(40==K5, :;NG_hex))
-}
-
-DC=:F8O @0AH8D@>20BL_05A(?0:5B, :;NG_hex) {
-    2>72@0B(zip_crypto_aes_decrypt(?0:5B, :;NG_hex))
-}
+// ============================================
+// ZIP STD: AES-256-GCM (чистый ZIP)
+// ============================================
+// Реальная реализация — в крипто_aes_zip.zip.
+// Подключите крипто_aes_zip.zip к программе.
+// ============================================

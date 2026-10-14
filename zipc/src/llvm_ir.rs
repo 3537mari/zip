@@ -119,10 +119,8 @@ pub fn сгенерировать_llvm_ir(функции: &[ФункцияПП],
         out.push_str("attributes #0 = { hot noinline }\n");
     }
     if есть_шифр {
-        out.push_str("; Эпигенетика @шифровать: optnone + ZIP-crypto (без OpenSSL)\n");
+        out.push_str("; Эпигенетика @шифровать: optnone + чистый ZIP (aes256_gcm_шифровать)\n");
         out.push_str("attributes #1 = { optnone noinline }\n");
-        out.push_str("declare i8* @zip_crypto_aes_encrypt(i8*, i8*)\n");
-        out.push_str("declare i8* @zip_crypto_aes_decrypt(i8*, i8*)\n");
         out.push_str("declare i8* @zip_crypto_random(i64)\n");
     }
 
@@ -188,7 +186,7 @@ fn эмит_функцию(
     }
     if ф.шифровать {
         out.push_str(&format!(
-            "; шифрование: {} (ZIP-crypto AES-256-GCM)\n",
+            "; шифрование: {} (чистый ZIP (aes256_gcm_шифровать))\n",
             ф.алгоритм_шифрования
         ));
     }

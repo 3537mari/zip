@@ -131,16 +131,16 @@ ZIP — **самокомпилируемый язык**, где компилят
 | **WASM (браузер)** | **wasm-bindgen** | ✅ (v7.0.0-rc) |
 | **Android (ARM64, x86-64)** | Rust + JNI | ✅ (v7.1.0) |
 | **iOS (ARM64 + sim)** | Rust + Swift (C-API / XCFramework) | ✅ (v7.2.0) |
-| GPU (CUDA, ROCm, Metal, Vulkan) | — | ⏳ v7.4+ |
+| GPU (CUDA, ROCm, Metal, Vulkan) | — | ⏳ v7.5+ |
 
 ## Криптография
 
 | Алгоритм | Статус |
 |----------|--------|
-| SHA-256 / SHA-3 | ✅ без OpenSSL |
-| AES-256-GCM | ✅ NIST vectors |
-| Kyber-1024 (ML-KEM-1024) | ✅ KEM round-trip |
-| Dilithium-5 (ML-DSA-87) | ✅ подпись/проверка |
+| SHA-256 / SHA-3 | ✅ Чистый ZIP / без OpenSSL |
+| **AES-256-GCM** | ✅ **Чистый ZIP** (v7.4.0, NIST) |
+| Kyber-1024 (ML-KEM-1024) | ⚠️ RustCrypto (перенос v7.4.1) |
+| Dilithium-5 (ML-DSA-87) | ⚠️ RustCrypto (перенос v7.4.2) |
 
 См. [docs/КРИПТОГРАФИЯ.md](docs/КРИПТОГРАФИЯ.md).
 

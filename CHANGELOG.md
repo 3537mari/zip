@@ -5,6 +5,20 @@
 Формат: [Keep a Changelog](https://keepachangelog.com/ru/1.0.0/),
 версионирование: [Semantic Versioning](https://semver.org/lang/ru/).
 
+
+## [7.4.0] — 2026-10-13
+
+### Added
+- AES-256-GCM на чистом ZIP (`zip-std/крипто_aes_zip.zip`)
+- NIST AES-GCM vector tests via bootstrap zipc + zip-vm
+
+### Changed
+- `@шифровать` указывает на чистый ZIP, не на RustCrypto AES builtins
+- Удалены VM builtins `zip_crypto_aes_encrypt` / `zip_crypto_aes_decrypt`
+
+### Notes
+- Kyber / Dilithium остаются на RustCrypto до v7.4.1 / v7.4.2
+
 ## [Unreleased]
 
 ## [7.3.0] — 2026-10-13

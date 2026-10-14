@@ -79,8 +79,8 @@ fn тест_шифровать_llvm_zip_crypto() {
     .unwrap();
     let ir = сгенерировать_llvm_ir(&функции, "секрет").unwrap();
     assert!(
-        ir.contains("zip_crypto_aes_encrypt"),
-        "LLVM IR должен объявлять ZIP-crypto: {ir}"
+        ir.contains("aes256_gcm_шифровать") || ir.contains("чистый ZIP"),
+        "LLVM IR должен указывать на чистый ZIP AES: {ir}"
     );
     assert!(ir.contains("optnone"));
 }

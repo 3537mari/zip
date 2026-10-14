@@ -35,7 +35,24 @@
 
 **Никакой зависимости от OpenSSL в основном пути.**
 
-## v7.4.0 — GPU
+## v7.4.0 (2026-10-13) — AES-256-GCM на чистом ZIP
+
+- [x] AES-256 (S-box, key expansion, шифрование блоков)
+- [x] GCM (CTR + GHASH)
+- [x] Constant-time сравнение
+- [x] NIST-вектора
+- [x] Fixed-point сохранён
+- [x] VM builtins `zip_crypto_aes_*` убраны
+
+## v7.4.1 — Kyber-1024 на чистом ZIP
+
+- [ ] ML-KEM-1024 (FIPS 203) на чистом ZIP
+
+## v7.4.2 — Dilithium-5 на чистом ZIP
+
+- [ ] ML-DSA-87 (FIPS 204) на чистом ZIP
+
+## v7.5.0 — GPU
 
 - [ ] CUDA
 - [ ] ROCm
