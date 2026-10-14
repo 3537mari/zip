@@ -52,9 +52,23 @@
 
 - [ ] ML-DSA-87 (FIPS 204) на чистом ZIP
 
-## v7.5.0 — GPU
+## v7.5.0 (2026-10-14) — GPU: CUDA
 
-- [ ] CUDA
-- [ ] ROCm
-- [ ] Metal
-- [ ] Vulkan
+- [x] cudarc + NVRTC (`feature = "cuda"`)
+- [x] GEMM на CUDA (`gpu_cuda.rs`)
+- [x] Fallback на CPU blocked GEMM
+- [x] Интеграция `zip_std_gemm` / `тензоры.zip`
+- [x] Тесты CPU vs GPU / fallback
+- [x] Docs [docs/CUDA.md](docs/CUDA.md)
+
+## v7.6.0 — GPU: ROCm
+
+- [ ] HIP / ROCm
+
+## v7.7.0 — GPU: Metal
+
+- [ ] Metal Performance Shaders
+
+## v7.8.0 — GPU: Vulkan
+
+- [ ] Vulkan Compute

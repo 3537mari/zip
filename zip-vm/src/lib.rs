@@ -17,8 +17,10 @@ pub mod ir_в_байткод;
 pub mod встроенные_v3;
 #[path = "вывод.rs"]
 pub mod вывод;
+#[path = "gpu_cuda.rs"]
+pub mod gpu_cuda;
 #[path = "zip_std_v4.rs"]
-mod zip_std_v4;
+pub mod zip_std_v4;
 #[path = "zip_self_host.rs"]
 pub mod zip_self_host;
 #[cfg(feature = "wasm")]

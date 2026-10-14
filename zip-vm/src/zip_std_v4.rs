@@ -5,6 +5,16 @@ use crate::исполнитель_v3::ЗначениеV3;
 use std::collections::HashMap;
 use std::sync::Mutex;
 
+/// CPU blocked GEMM N×N (для тестов / без CUDA).
+pub fn gemm_cpu_blocked(a: &[f32], b: &[f32], n: usize) -> Vec<f32> {
+    crate::gpu_cuda::gemm_cpu_blocked(a, b, n, n, n)
+}
+
+/// GEMM N×N с GPU если доступен, иначе CPU.
+pub fn матричное_умножение(a: &[f32], b: &[f32], n: usize) -> Vec<f32> {
+    crate::gpu_cuda::матричное_умножение(a, b, n)
+}
+
 static SIPRA: Mutex<Option<HashMap<i64, Vec<i64>>>> = Mutex::new(None);
 static TENSORS: Mutex<Option<HashMap<i64, Vec<f64>>>> = Mutex::new(None);
 static LAYERS: Mutex<Option<HashMap<i64, (i64, i64)>>> = Mutex::new(None);
@@ -137,18 +147,57 @@ pub fn зарегистрировать(ф: &mut Встроенные) {
             .unwrap_or(0);
         Ok(ЗначениеV3::Целое(n))
     });
+    // матричное_умножение(a, b, m, k, n) → id тензора C[m×n]
+    // При feature `cuda` и наличии GPU — CUDA GEMM, иначе CPU blocked.
     ф.регистрация_внешняя("zip_std_gemm", |арг| {
-        let m = i64_arg(арг, 2).max(1);
-        let n = i64_arg(арг, 4).max(1);
+        let a_id = i64_arg(арг, 0);
+        let b_id = i64_arg(арг, 1);
+        let m = i64_arg(арг, 2).max(1) as usize;
+        let k = i64_arg(арг, 3).max(1) as usize;
+        let n = i64_arg(арг, 4).max(1) as usize;
+
+        let (a_f32, b_f32) = {
+            let g = TENSORS.lock().unwrap();
+            let map = g.as_ref();
+            let a = map
+                .and_then(|m| m.get(&a_id))
+                .cloned()
+                .unwrap_or_else(|| vec![0.0; m * k]);
+            let b = map
+                .and_then(|m| m.get(&b_id))
+                .cloned()
+                .unwrap_or_else(|| vec![0.0; k * n]);
+            let a_f32: Vec<f32> = a.iter().take(m * k).map(|x| *x as f32).collect();
+            let b_f32: Vec<f32> = b.iter().take(k * n).map(|x| *x as f32).collect();
+            // pad if short
+            let mut a_f32 = a_f32;
+            let mut b_f32 = b_f32;
+            if a_f32.len() < m * k {
+                a_f32.resize(m * k, 0.0);
+            }
+            if b_f32.len() < k * n {
+                b_f32.resize(k * n, 0.0);
+            }
+            (a_f32, b_f32)
+        };
+
+        let c_f32 = crate::gpu_cuda::матричное_умножение_mnk(&a_f32, &b_f32, m, k, n);
+        let c: Vec<f64> = c_f32.iter().map(|x| *x as f64).collect();
+
         let id = next_id();
         let mut g = TENSORS.lock().unwrap();
         if g.is_none() {
             *g = Some(HashMap::new());
         }
-        g.as_mut()
-            .unwrap()
-            .insert(id, vec![0.0; (m * n) as usize]);
+        g.as_mut().unwrap().insert(id, c);
         Ok(ЗначениеV3::Целое(id))
+    });
+    ф.регистрация_внешняя("zip_std_gpu_available", |_арг| {
+        Ok(ЗначениеV3::Целое(if crate::gpu_cuda::gpu_доступен() {
+            1
+        } else {
+            0
+        }))
     });
 
     ф.регистрация_внешняя("zip_std_layer_new", |арг| {
@@ -296,6 +345,7 @@ pub fn зарегистрировать(ф: &mut Встроенные) {
         "заполнить_тензор",
         "тензор_всего",
         "матричное_умножение",
+        "gpu_доступен",
         "создать_слой",
         "прямой_проход_слоя",
         "обратный_проход_слоя",
@@ -320,6 +370,7 @@ pub fn зарегистрировать(ф: &mut Встроенные) {
             "заполнить_тензор" => "zip_std_tensor_fill",
             "тензор_всего" => "zip_std_tensor_total",
             "матричное_умножение" => "zip_std_gemm",
+            "gpu_доступен" => "zip_std_gpu_available",
             "создать_слой" => "zip_std_layer_new",
             "прямой_проход_слоя" => "zip_std_layer_forward",
             "обратный_проход_слоя" => "zip_std_layer_backward",

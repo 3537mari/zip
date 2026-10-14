@@ -6,6 +6,17 @@
 версионирование: [Semantic Versioning](https://semver.org/lang/ru/).
 
 
+
+## [7.5.0] — 2026-10-14
+
+### Added
+- CUDA GEMM via `cudarc` + NVRTC (`zip-vm` feature `cuda`)
+- CPU blocked GEMM fallback (`gpu_cuda::gemm_cpu_blocked`)
+- `docs/CUDA.md`, workflow `.github/workflows/cuda.yml`
+
+### Changed
+- `zip_std_gemm` реально считает C = A×B (GPU или CPU), а не только аллоцирует нули
+
 ## [7.4.0] — 2026-10-13
 
 ### Added

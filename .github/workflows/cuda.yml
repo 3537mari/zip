@@ -1,0 +1,48 @@
+name: CUDA Build & Test
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  build-no-cuda:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Build without CUDA
+        run: cargo build --release --manifest-path zip-vm/Cargo.toml
+
+      - name: Run CUDA fallback tests (CPU)
+        run: cargo test --release --manifest-path zip-vm/Cargo.toml --test тест_cuda
+
+  # GitHub-hosted runners не имеют NVIDIA GPU.
+  # Включить, когда появится self-hosted runner с меткой cuda.
+  build-cuda:
+    runs-on: [self-hosted, cuda]
+    if: false
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Verify CUDA
+        run: |
+          nvcc --version
+          nvidia-smi
+
+      - name: Build with CUDA
+        run: |
+          cargo build --release \
+            --features cuda \
+            --manifest-path zip-vm/Cargo.toml
+
+      - name: Run CUDA tests
+        run: |
+          cargo test --release \
+            --features cuda \
+            --manifest-path zip-vm/Cargo.toml \
+            --test тест_cuda

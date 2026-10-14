@@ -63,10 +63,17 @@ path = "tests/тест_riscv.rs"
 name = "тест_windows_arm"
 path = "tests/тест_windows_arm.rs"
 
+[[test]]
+name = "тест_cuda"
+path = "tests/тест_cuda.rs"
+
 [features]
 default = ["cli"]
 cli = ["dep:clap", "dep:anyhow"]
 wasm = ["dep:wasm-bindgen", "dep:js-sys", "dep:web-sys"]
+# NVIDIA CUDA (GEMM). Без toolkit сборка возможна через dynamic-loading;
+# рантайм всё равно требует драйвер/CUDA на машине.
+cuda = ["dep:cudarc"]
 
 [dependencies]
 clap = { version = "4.5", features = ["derive"], optional = true }
@@ -77,6 +84,13 @@ zip-crypto = { path = "../zip-crypto" }
 wasm-bindgen = { version = "=0.2.100", optional = true }
 js-sys = { version = "0.3", optional = true }
 web-sys = { version = "0.3", features = ["console"], optional = true }
+cudarc = { version = "0.19", optional = true, default-features = false, features = [
+    "std",
+    "driver",
+    "nvrtc",
+    "cuda-12000",
+    "fallback-dynamic-loading",
+] }
 
 [target.'cfg(all(not(target_arch = "wasm32"), not(target_os = "android"), not(target_os = "ios")))'.dependencies]
 libloading = "0.8"
