@@ -19,6 +19,8 @@ pub mod встроенные_v3;
 pub mod вывод;
 #[path = "gpu_cuda.rs"]
 pub mod gpu_cuda;
+#[path = "gpu_wgpu.rs"]
+pub mod gpu_wgpu;
 #[path = "zip_std_v4.rs"]
 pub mod zip_std_v4;
 #[path = "zip_self_host.rs"]

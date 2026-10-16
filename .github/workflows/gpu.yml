@@ -1,0 +1,45 @@
+name: GPU (wgpu) Build & Test
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  build-no-gpu:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Build without GPU
+        run: cargo build --release --manifest-path zip-vm/Cargo.toml
+      - name: Test wgpu fallback (CPU)
+        run: cargo test --release --manifest-path zip-vm/Cargo.toml --test тест_wgpu
+
+  build-wgpu:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Vulkan SDK + Lavapipe
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libvulkan-dev mesa-vulkan-drivers vulkan-tools
+          vulkaninfo --summary || true
+
+      - name: Build with wgpu
+        run: |
+          cargo build --release \
+            --features gpu \
+            --manifest-path zip-vm/Cargo.toml
+
+      - name: Run wgpu tests (software Vulkan if no GPU)
+        env:
+          WGPU_BACKEND: vulkan
+        run: |
+          cargo test --release \
+            --features gpu \
+            --manifest-path zip-vm/Cargo.toml \
+            --test тест_wgpu -- --nocapture

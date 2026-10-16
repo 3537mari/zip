@@ -2,25 +2,47 @@
 //! GEMM (матричное умножение) на GPU через NVRTC.
 //! Без feature `cuda` или без NVIDIA GPU — CPU blocked GEMM.
 
-/// Есть ли рабочий CUDA-контекст.
+/// Есть ли любой GPU-бэкенд (wgpu или CUDA).
 pub fn gpu_доступен() -> bool {
+    #[cfg(feature = "gpu")]
+    {
+        if crate::gpu_wgpu::GpuWgpu::новый().is_ok() {
+            return true;
+        }
+    }
     #[cfg(feature = "cuda")]
     {
-        GpuCuda::новый().is_ok()
+        if GpuCuda::новый().is_ok() {
+            return true;
+        }
     }
-    #[cfg(not(feature = "cuda"))]
-    {
-        false
-    }
+    false
 }
 
-/// GEMM: C = A × B для квадратных N×N (f32), с GPU если доступен.
+/// GEMM: C = A × B для квадратных N×N (f32).
+/// Приоритет: wgpu → CUDA → CPU.
 pub fn матричное_умножение(a: &[f32], b: &[f32], n: usize) -> Vec<f32> {
     матричное_умножение_mnk(a, b, n, n, n)
 }
 
 /// GEMM: C[M×N] = A[M×K] × B[K×N] (row-major, f32).
+/// Для прямоугольных пока CUDA/CPU; wgpu — квадратные (m=k=n).
 pub fn матричное_умножение_mnk(a: &[f32], b: &[f32], m: usize, k: usize, n: usize) -> Vec<f32> {
+    // Приоритет 1: wgpu (Vulkan/Metal/DX12/WebGPU) — квадратные
+    #[cfg(feature = "gpu")]
+    {
+        if m == k && k == n {
+            let попытка = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                let gpu = crate::gpu_wgpu::GpuWgpu::новый()?;
+                gpu.gemm(a, b, n)
+            }));
+            if let Ok(Ok(результат)) = попытка {
+                return результат;
+            }
+        }
+    }
+
+    // Приоритет 2: CUDA (NVIDIA)
     #[cfg(feature = "cuda")]
     {
         let попытка = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
@@ -31,6 +53,8 @@ pub fn матричное_умножение_mnk(a: &[f32], b: &[f32], m: usize,
             return результат;
         }
     }
+
+    // Fallback: CPU
     gemm_cpu_blocked(a, b, m, k, n)
 }
 

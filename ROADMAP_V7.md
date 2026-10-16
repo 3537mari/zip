@@ -61,14 +61,18 @@
 - [x] Тесты CPU vs GPU / fallback
 - [x] Docs [docs/CUDA.md](docs/CUDA.md)
 
-## v7.6.0 — GPU: ROCm
+## v7.6.0 (2026-10-16) — GPU: Vulkan через wgpu
+
+- [x] wgpu + WGSL-шейдер GEMM (`feature gpu`)
+- [x] Приоритет: wgpu → CUDA → CPU
+- [x] Intel UHD / NVIDIA / AMD / Apple (Metal)
+- [x] Тесты CPU vs GPU
+- [x] Docs [docs/VULKAN.md](docs/VULKAN.md)
+
+## v7.7.0 — WebGPU в браузере
+
+- [ ] Расширение плейграунда — GPU-вычисления
+
+## v7.8.0 — GPU: ROCm
 
 - [ ] HIP / ROCm
-
-## v7.7.0 — GPU: Metal
-
-- [ ] Metal Performance Shaders
-
-## v7.8.0 — GPU: Vulkan
-
-- [ ] Vulkan Compute

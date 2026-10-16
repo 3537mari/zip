@@ -7,6 +7,17 @@
 
 
 
+
+## [7.6.0] — 2026-10-16
+
+### Added
+- wgpu GEMM (`feature gpu`): Vulkan / Metal / DX12 / WebGPU
+- `zip-vm/src/gpu_wgpu.rs` + WGSL compute shader
+- Docs [docs/VULKAN.md](docs/VULKAN.md), CI `.github/workflows/gpu.yml`
+
+### Changed
+- GEMM priority: **wgpu → CUDA → CPU blocked**
+
 ## [7.5.0] — 2026-10-14
 
 ### Added

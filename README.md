@@ -131,8 +131,10 @@ ZIP — **самокомпилируемый язык**, где компилят
 | **WASM (браузер)** | **wasm-bindgen** | ✅ (v7.0.0-rc) |
 | **Android (ARM64, x86-64)** | Rust + JNI | ✅ (v7.1.0) |
 | **iOS (ARM64 + sim)** | Rust + Swift (C-API / XCFramework) | ✅ (v7.2.0) |
+| GPU (wgpu / Vulkan) | Rust + wgpu | ✅ v7.6.0 (Intel/NVIDIA/AMD/Apple) |
 | GPU (CUDA) | Rust + cudarc | ✅ v7.5.0 (NVIDIA) |
-| GPU (ROCm / Metal / Vulkan) | — | ⏳ v7.6–v7.8 |
+| GPU (WebGPU браузер) | — | ⏳ v7.7 |
+| GPU (ROCm) | — | ⏳ v7.8 |
 
 ## Криптография
 
